@@ -98,6 +98,6 @@ user=> (with-out-str (process ["ls"] {:out *out*}))
 
 ## License
 
-Copyright © 2019-2020 Michiel Borkent
+Copyright © 2020 Michiel Borkent
 
 Distributed under the EPL License. See LICENSE.
