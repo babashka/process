@@ -69,7 +69,7 @@ nil
 user=> LICENSE		README.md	src
 ```
 
-Redirect output stream from one process to inputstream of the next process:
+Redirect output stream from one process to input stream of the next process:
 
 ``` clojure
 (let [is (-> (process ["ls"] {:out :stream}) :out)]
