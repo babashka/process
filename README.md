@@ -10,25 +10,55 @@ Status: alpha, WIP. This code may end up in [babashka](https://github.com/borkdu
 user=> (require '[babashka.process :refer [process]])
 ```
 
-Invoke `ls` and slurp the output stream:
+Invoke `ls`:
 
 ``` clojure
-user=> (-> (process ["ls"]) :out slurp)
+user=> (-> (process ["ls"]) :out)
 "LICENSE\nREADME.md\nsrc\n"
 ```
 
-Output as string:
+Output as stream:
 
 ``` clojure
-user=> (-> (process ["ls"] {:out :string}) :out)
-"LICENSE\nREADME.md\nsrc\n"
+user=> (-> (process ["ls"] {:out :stream}) :out slurp)
+"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
-Error output as string:
+Exit code:
 
 ``` clojure
-user=> (-> (process ["ls" "foo"] {:err :string}) :err)
+user=> (-> (process ["ls" "foo"]) :exit)
+0
+```
+
+By default, `process` throws when the exit code is non-zero:
+
+``` clojure
+user=> (process ["ls" "foo"])
+Execution error (ExceptionInfo) at babashka.process/process (process.clj:54).
+ls: foo: No such file or directory
+```
+
+By setting `:throw` to `false` you can capture the error output as a string or stream:
+
+``` clojure
+user=> (-> (process ["ls" "foo"] {:throw false}) :err)
 "ls: foo: No such file or directory\n"
+
+user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :err slurp)
+"ls: foo: No such file or directory\n"
+```
+
+``` clojure
+user=> (-> (process ["ls" "foo"] {:throw false}) :exit)
+1
+```
+
+When `:out` or `:err` are set to `:stream`, the exit code is wrapped in a future:
+
+``` clojure
+user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :exit deref)
+1
 ```
 
 Redirect output to stdout:
@@ -42,21 +72,16 @@ user=> LICENSE		README.md	src
 Redirect output stream from one process to inputstream of the next process:
 
 ``` clojure
-(let [is (-> (process ["ls"]) :out)]
+(let [is (-> (process ["ls"] {:out :stream}) :out)]
   (process ["cat"] {:in is
                     :out :inherit})
     nil)
-nil
-user=> LICENSE
+LICENSE
 README.md
+deps.edn
 src
-```
-
-Exit code:
-
-``` clojure
-user=> (-> (process ["ls" "foo"]) :exit deref)
-1
+test
+nil
 ```
 
 ## License

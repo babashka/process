@@ -8,14 +8,17 @@
   ([args] (process args nil))
   ([args {:keys [:err
                  :out
-                 :in :in-enc]
+                 :in :in-enc
+                 :timeout
+                 :throw]
           :or {out :string
-               err :string}}]
+               err :string
+               throw true}}]
    (let [args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
               (identical? err  :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
-              (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
-              (identical? in :inherit)  (.redirectInput ProcessBuilder$Redirect/INHERIT))
+              (identical? out  :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
+              (identical? in   :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
          proc (.start pb)]
      (when (string? in)
        (with-open [w (io/writer (.getOutputStream proc))]
@@ -26,16 +29,30 @@
        (future
          (with-open [os (.getOutputStream proc)]
            (io/copy in os :encoding in-enc))))
-     (let [exit (future (.waitFor proc))
+     (let [future? (or (identical? out :stream)
+                       (identical? err :stream)
+                       timeout)
+           exit (if future?
+                  (future (.waitFor proc))
+                  (.waitFor proc))
+           exit (if timeout
+                  (deref exit timeout nil)
+                  exit)
            res {:proc proc
                 :exit exit}
            res (if (identical? out :string)
                  (assoc res :out (slurp (.getInputStream proc)))
                  (assoc res :out (.getInputStream proc)))
-           res (if (identical? err :string)
-                 (assoc res :err (slurp (.getErrorStream proc)))
-                 (assoc res :err (.getErrorStream proc)))]
-       res))))
+           err (if (identical? err :string)
+                 (slurp (.getErrorStream proc))
+                 (.getErrorStream proc))
+           res (assoc res :err err)]
+       (if (and throw
+                (not future?)
+                (string? err)
+                (not (zero? exit)))
+         (throw (ex-info err res))
+         res)))))
 
 ;;;; Examples
 
