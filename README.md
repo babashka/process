@@ -39,7 +39,14 @@ Execution error (ExceptionInfo) at babashka.process/process (process.clj:54).
 ls: foo: No such file or directory
 ```
 
-By setting `:throw` to `false` you can capture the error output as a string or stream:
+By setting `:throw` to `false`, `process` will ... not throw:
+
+``` clojure
+user=> (-> (process ["ls" "foo"] {:throw false}) :exit)
+1
+```
+
+Capture the error output as a string or stream:
 
 ``` clojure
 user=> (-> (process ["ls" "foo"] {:throw false}) :err)
@@ -47,11 +54,6 @@ user=> (-> (process ["ls" "foo"] {:throw false}) :err)
 
 user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :err slurp)
 "ls: foo: No such file or directory\n"
-```
-
-``` clojure
-user=> (-> (process ["ls" "foo"] {:throw false}) :exit)
-1
 ```
 
 When `:out` or `:err` are set to `:stream`, the exit code is wrapped in a future:
