@@ -39,7 +39,7 @@ Execution error (ExceptionInfo) at babashka.process/process (process.clj:54).
 ls: foo: No such file or directory
 ```
 
-By setting `:throw` to `false`, `process` will ... not throw:
+Prevent throwing:
 
 ``` clojure
 user=> (-> (process ["ls" "foo"] {:throw false}) :exit)
