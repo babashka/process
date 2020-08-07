@@ -24,6 +24,13 @@ user=> (-> (process ["ls"] {:out :string}) :out)
 "LICENSE\nREADME.md\nsrc\n"
 ```
 
+Error output as string:
+
+``` clojure
+user=> (-> (process ["ls" "foo"] {:err :string}) :err)
+"ls: foo: No such file or directory\n"
+```
+
 Redirect output to stdout:
 
 ``` clojure
@@ -43,6 +50,13 @@ nil
 user=> LICENSE
 README.md
 src
+```
+
+Exit code:
+
+``` clojure
+user=> (-> (process ["ls" "foo"]) :exit deref)
+1
 ```
 
 ## License

@@ -26,13 +26,14 @@
            (io/copy in os :encoding in-enc))))
      (let [exit (future (.waitFor proc))
            res {:proc proc
-                :exit exit}]
-       (if (identical? out :string)
-         (assoc res :out (let [sw (java.io.StringWriter.)]
-                              (with-open [w (io/reader (.getInputStream proc))]
-                                (io/copy w sw))
-                              (str sw)))
-         (assoc res :out (.getInputStream proc)))))))
+                :exit exit}
+           res (if (identical? out :string)
+                 (assoc res :out (slurp (.getInputStream proc)))
+                 (assoc res :out (.getInputStream proc)))
+           res (if (identical? err :string)
+                 (assoc res :err (slurp (.getErrorStream proc)))
+                 (assoc res :err (.getErrorStream proc)))]
+       res))))
 
 ;;;; Examples
 
