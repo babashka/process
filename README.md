@@ -101,7 +101,7 @@ Forwarding the output of a process as the input of another process can also be d
 ``` clojure
 (-> (process ["ls"])
     (process ["grep" "README"]) :out)
-"README.md"
+"README.md\n"
 ```
 
 ## License
