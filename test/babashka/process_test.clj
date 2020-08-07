@@ -19,4 +19,8 @@
   (testing "copy input from string and copy to *out*"
     (let [s (with-out-str
               (process ["cat"] {:in "foo" :out *out*}))]
-      (is (= "foo" s)))))
+      (is (= "foo" s))))
+  (testing "chaining"
+    (is (= "README.md\n"
+           (-> (process ["ls"])
+               (process ["grep" "README"]) :out)))))

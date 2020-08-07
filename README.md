@@ -56,10 +56,10 @@ user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :err slurp)
 "ls: foo: No such file or directory\n"
 ```
 
-When `:out` or `:err` are set to `:stream`, the exit code is wrapped in a future:
+When `:wait` is set `false`, the exit code is wrapped in a future:
 
 ``` clojure
-user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :exit deref)
+user=> (-> (process ["ls" "foo"] {:throw false :wait false}) :exit deref)
 1
 ```
 
@@ -94,6 +94,14 @@ user=> (with-out-str (process ["cat"] {:in "foo" :out *out*}))
 
 user=> (with-out-str (process ["ls"] {:out *out*}))
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+```
+
+Forwarding the output of a process as the input of another process can also be done with thread-first:
+
+``` clojure
+(-> (process ["ls"])
+    (process ["grep" "README"]) :out)
+"README.md"
 ```
 
 ## License

@@ -1,20 +1,24 @@
 (ns babashka.process
   (:require [clojure.java.io :as io])
-  (:import [java.lang ProcessBuilder$Redirect]
-           [java.io InputStream]))
-
+  (:import [java.lang ProcessBuilder$Redirect]))
 
 (defn process
   ([args] (process args nil))
-  ([args {:keys [:err
-                 :in :in-enc
-                 :out :out-enc
-                 :timeout
-                 :throw]
-          :or {out :string
-               err :string
-               throw true}}]
-   (let [args (mapv str args)
+  ([args opts] (if (map? args)
+                 (process args opts nil)
+                 (process nil args opts)))
+  ([prev args {:keys [:err
+                      :in :in-enc
+                      :out :out-enc
+                      :timeout
+                      :throw
+                      :wait]
+               :or {out :string
+                    err :string
+                    throw true
+                    wait true}}]
+   (let [in (or in (:out prev))
+         args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
               (identical? err  :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
               (identical? out  :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
@@ -29,15 +33,10 @@
        (future
          (with-open [os (.getOutputStream proc)]
            (io/copy in os :encoding in-enc))))
-     (let [future? (or (identical? out :stream)
-                       (identical? err :stream)
-                       timeout)
-           exit (if future?
-                  (future (.waitFor proc))
-                  (.waitFor proc))
-           exit (if timeout
-                  (deref exit timeout nil)
-                  exit)
+     (let [exit (if wait
+                  (.waitFor proc)
+                  (future (.waitFor proc)))
+           _ (when timeout (deref exit timeout ::timed-out))
            res {:proc proc
                 :exit exit}
            res (if (identical? out :string)
@@ -49,11 +48,16 @@
            res (assoc res :err err)]
        (when-not (keyword? out)
          (io/copy (.getInputStream proc) out :encoding out-enc))
-       (if (and throw
-                (not future?)
+       (if throw
+         (if (identical? exit ::timed-out)
+           (throw (ex-info "Timeout." res))
+           (if (and
                 (string? err)
+                exit
+                (number? exit)
                 (not (zero? exit)))
-         (throw (ex-info err res))
+             (throw (ex-info err res))
+             res))
          res)))))
 
 ;;;; Examples
