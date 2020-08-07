@@ -64,9 +64,9 @@ user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :exit deref)
 Redirect output to stdout:
 
 ``` clojure
-user=> (do (-> (process ["ls"] {:out :inherit})) nil)
+user=> (do (process ["ls"] {:out :inherit}) nil)
+LICENSE		README.md	deps.edn	src		test
 nil
-user=> LICENSE		README.md	src
 ```
 
 Redirect output stream from one process to input stream of the next process:
