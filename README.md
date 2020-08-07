@@ -36,8 +36,8 @@ Redirect output stream from one process to inputstream of the next process:
 
 ``` clojure
 (let [is (-> (process ["ls"]) :out)]
-    (process ["cat"] {:in is
-                      :out :inherit})
+  (process ["cat"] {:in is
+                    :out :inherit})
     nil)
 nil
 user=> LICENSE
