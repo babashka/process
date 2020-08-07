@@ -86,7 +86,7 @@ test
 nil
 ```
 
-Both `:in` and `:out` may contain objects that are compatible by `clojure.java.io/copy`:
+Both `:in` and `:out` may contain objects that are compatible with `clojure.java.io/copy`:
 
 ``` clojure
 user=> (with-out-str (process ["cat"] {:in "foo" :out *out*}))
