@@ -8,7 +8,9 @@
   ([args] (process args nil))
   ([args {:keys [:err
                  :out
-                 :in :in-enc]}]
+                 :in :in-enc]
+          :or {out :string
+               err :string}}]
    (let [args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
               (identical? err  :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
