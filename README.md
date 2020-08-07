@@ -2,7 +2,7 @@
 
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
-Status: alpha, WIP.
+Status: alpha, WIP. This code may end up in [babashka](https://github.com/borkdude/babashka).
 
 ## Example usage
 
