@@ -15,4 +15,8 @@
       (is (not (str/blank? out)))
       (is (str/blank? err))
       (is (number? exit))
-      (is (zero? exit)))))
+      (is (zero? exit))))
+  (testing "copy input from string and copy to *out*"
+    (let [s (with-out-str
+              (process ["cat"] {:in "foo" :out *out*}))]
+      (is (= "foo" s)))))

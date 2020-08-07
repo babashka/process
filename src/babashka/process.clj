@@ -7,8 +7,8 @@
 (defn process
   ([args] (process args nil))
   ([args {:keys [:err
-                 :out
                  :in :in-enc
+                 :out :out-enc
                  :timeout
                  :throw]
           :or {out :string
@@ -25,7 +25,7 @@
          (binding [*out* w]
            (print in)
            (flush))))
-     (when (instance? InputStream in)
+     (when-not (keyword? in)
        (future
          (with-open [os (.getOutputStream proc)]
            (io/copy in os :encoding in-enc))))
@@ -47,6 +47,8 @@
                  (slurp (.getErrorStream proc))
                  (.getErrorStream proc))
            res (assoc res :err err)]
+       (when-not (keyword? out)
+         (io/copy (.getInputStream proc) out :encoding out-enc))
        (if (and throw
                 (not future?)
                 (string? err)

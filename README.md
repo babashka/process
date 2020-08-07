@@ -84,6 +84,16 @@ test
 nil
 ```
 
+Both `:in` and `:out` may contain objects that are compatible by `clojure.java.io/copy`:
+
+``` clojure
+user=> (with-out-str (process ["cat"] {:in "foo" :out *out*}))
+"foo"
+
+user=> (with-out-str (process ["ls"] {:out *out*}))
+"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+```
+
 ## License
 
 Copyright © 2019-2020 Michiel Borkent
