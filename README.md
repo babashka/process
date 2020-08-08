@@ -8,7 +8,7 @@ This code may end up in [babashka](https://github.com/borkdude/babashka) but is
 also intended as a JVM library. You can play with this code in babashka today,
 by including this library as a git dep:
 
-``` clojure
+``` shell
 $ export BABASHKA_CLASSPATH=$(clojure -Sdeps '{:deps {babashka/babashka.process {:sha "6c348b5213c0c77ebbdfcf2f5da71da04afee377" :git/url "https://github.com/babashka/babashka.process"}}}' -Spath)
 $ bb -e "(require '[babashka.process :refer [process]]) (process [\"ls\"])"
 ```
