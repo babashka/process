@@ -17,6 +17,13 @@ user=> (-> (process ["ls"]) :out)
 "LICENSE\nREADME.md\nsrc\n"
 ```
 
+Invoke `ls` for different directory than current directory:
+
+``` clojure
+user=> (-> (process ["ls"] {:dir "test/babashka"}) :out)
+"process_test.clj\n"
+```
+
 Output as stream:
 
 ``` clojure

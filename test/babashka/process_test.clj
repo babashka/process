@@ -23,4 +23,11 @@
   (testing "chaining"
     (is (= "README.md\n"
            (-> (process ["ls"])
-               (process ["grep" "README"]) :out)))))
+               (process ["grep" "README"]) :out))))
+  (testing "use of :dir options"
+    (is (= (-> (process ["ls"]) :out)
+           (-> (process ["ls"] {:dir "."}) :out)))
+    (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out)
+           "process_test.clj\n"))
+    (is (not= (-> (process ["ls"]) :out)
+              (-> (process ["ls"] {:dir "test/babashka"}) :out)))))

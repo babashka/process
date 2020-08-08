@@ -10,19 +10,22 @@
   ([prev args {:keys [:err
                       :in :in-enc
                       :out :out-enc
+                      :dir
                       :timeout
                       :throw
                       :wait]
                :or {out :string
                     err :string
+                    dir (System/getProperty "user.dir")
                     throw true
                     wait true}}]
    (let [in (or in (:out prev))
          args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
-              (identical? err  :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
-              (identical? out  :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
-              (identical? in   :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
+              dir (.directory (io/file dir))
+              (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
+              (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
+              (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
          proc (.start pb)]
      (when (string? in)
        (with-open [w (io/writer (.getOutputStream proc))]
@@ -64,14 +67,25 @@
 
 (comment
   ;; slurp output stream
-  (-> (process ["ls"]) :out slurp)
+  (-> (process ["ls"]) :out)
+  ;;=> "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+
+  (-> (process ["ls"] {:dir "test/babashka"}) :out)
+  ;;=> "process_test.clj\n"
+
+  (-> (process ["ls"] {:dir "src/babashka"}) :out)
+  ;;=> "process.clj\n"
+
   ;; return output as string
   (-> (process ["ls"] {:out :string}) :out)
+
   ;; redirect output to stdout
   (do (-> (process ["ls"] {:out :inherit})) nil)
+
   ;; redirect output from one process to input of another process
   (let [is (-> (process ["ls"]) :out)]
     (process ["cat"] {:in is
                       :out :inherit})
     nil)
+
   )
