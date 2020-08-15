@@ -2,6 +2,25 @@
   (:require [clojure.java.io :as io])
   (:import [java.lang ProcessBuilder$Redirect]))
 
+(defn- as-string-map
+  "Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
+
+  Stringifies keyword keys, but otherwise doesn't try to do anything clever with values"
+  [m]
+  (if (map? m)
+    (into {} (map (fn [[k v]] [(str (if (keyword? k) (name k) k)) (str v)])) m)
+    m))
+
+(defn- set-env
+  "Sets environment for a ProcessBuilder instance.
+  Returns instance to participate in thread-first macro."
+  [^ProcessBuilder pb env]
+  (when-let [e (as-string-map env)]
+    (doto (.environment pb)
+      (.clear)
+      (.putAll e)))
+  pb)
+
 (defn process
   ([args] (process args nil))
   ([args opts] (if (map? args)
@@ -11,6 +30,7 @@
                       :in :in-enc
                       :out :out-enc
                       :dir
+                      :env
                       :timeout
                       :throw
                       :wait]
@@ -23,6 +43,7 @@
          args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
               dir (.directory (io/file dir))
+              env (set-env env)
               (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
               (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
               (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
