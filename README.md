@@ -35,6 +35,13 @@ user=> (-> (process ["ls"] {:dir "test/babashka"}) :out)
 "process_test.clj\n"
 ```
 
+Set the process environment.
+
+``` clojure
+user=> (-> (process ["sh" "-c" "echo $FOO"] {:FOO "BAR" }) :out)
+"BAR\n"
+```
+
 Output as stream:
 
 ``` clojure

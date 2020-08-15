@@ -30,4 +30,15 @@
     (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out)
            "process_test.clj\n"))
     (is (not= (-> (process ["ls"]) :out)
-              (-> (process ["ls"] {:dir "test/babashka"}) :out)))))
+              (-> (process ["ls"] {:dir "test/babashka"}) :out))))
+  (testing "use of :env options"
+    (is (= "" (:out (process ["env"] {:env {}}))))
+    (is (= ["SOME_VAR=SOME_VAL"
+            "keyword_val=:keyword-val"
+            "keyword_var=KWVARVAL"]
+           (-> (process ["env"] {:env {"SOME_VAR" "SOME_VAL"
+                                       :keyword_var "KWVARVAL"
+                                       "keyword_val" :keyword-val}})
+               :out
+               (str/split-lines)
+               (sort))))))
