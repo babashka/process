@@ -13,12 +13,11 @@
 
 (defn- set-env
   "Sets environment for a ProcessBuilder instance.
-  Returns instance to participate in thread-first macro."
+  Returns instance to participate in the thread-first macro."
   [^ProcessBuilder pb env]
-  (when-let [e (as-string-map env)]
-    (doto (.environment pb)
-      (.clear)
-      (.putAll e)))
+  (doto (.environment pb)
+    (.clear)
+    (.putAll (as-string-map env)))
   pb)
 
 (defn process
