@@ -35,6 +35,19 @@ user=> (-> (process ["ls"] {:dir "test/babashka"}) :out)
 "process_test.clj\n"
 ```
 
+Use of `:env` to set the environment variable
+
+```clojure
+(-> (process ["sh" "-c" "echo $GREETING"]) :out) 
+;;=> "\n"
+
+(-> (process ["sh" "-c" "echo $GREETING"] {:env {"GREETING" "Hello"}}) :out)
+;;=> "Hello\n"
+
+(-> (process ["sh" "-c" "echo $PATH"]) :out) 
+;;=>  "/usr/local/bin:/usr/sbin:..."
+```
+
 Output as stream:
 
 ``` clojure

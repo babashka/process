@@ -30,4 +30,11 @@
     (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out)
            "process_test.clj\n"))
     (is (not= (-> (process ["ls"]) :out)
-              (-> (process ["ls"] {:dir "test/babashka"}) :out)))))
+              (-> (process ["ls"] {:dir "test/babashka"}) :out))))
+  (testing "use of :env options"
+    (is (= (-> (process ["sh" "-c" "echo $GREETING"]) :out)
+           "\n"))
+    (is (= (-> (process ["sh" "-c" "echo $GREETING"] {:env {"GREETING" "Hello"}}) :out)
+           "Hello\n"))
+    (is (not= (-> (process ["sh" "-c" "echo $PATH"]) :out)
+              "\n"))))

@@ -2,6 +2,15 @@
   (:require [clojure.java.io :as io])
   (:import [java.lang ProcessBuilder$Redirect]))
 
+(defn- add-env
+  [process-builder environment]
+  (if environment
+    (let [process-environment(.environment process-builder)]
+      (doseq [[k v] environment]
+        (.put process-environment k v))
+      process-builder)
+    process-builder))
+
 (defn process
   ([args] (process args nil))
   ([args opts] (if (map? args)
@@ -11,6 +20,7 @@
                       :in :in-enc
                       :out :out-enc
                       :dir
+                      :env
                       :timeout
                       :throw
                       :wait]
@@ -23,6 +33,7 @@
          args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
               dir (.directory (io/file dir))
+              env (add-env env)
               (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
               (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
               (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
@@ -81,6 +92,13 @@
 
   ;; redirect output to stdout
   (do (-> (process ["ls"] {:out :inherit})) nil)
+
+  ;; if we don't define this
+  (-> (process ["/bin/bash" "-c" "echo $INVALID_ENV_VALUE"]) :out)
+  ;;=> "\n"
+
+  (-> (process ["/bin/bash" "-c" "echo $GREETING"] {:env {"GREETING" "Hello"}}) :out)
+  ;;=> "Hello\n"
 
   ;; redirect output from one process to input of another process
   (let [is (-> (process ["ls"]) :out)]
