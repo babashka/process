@@ -38,7 +38,7 @@ user=> (-> (process ["ls"] {:dir "test/babashka"}) :out)
 Set the process environment.
 
 ``` clojure
-user=> (-> (process ["sh" "-c" "echo $FOO"] {:FOO "BAR" }) :out)
+user=> (-> (process ["sh" "-c" "echo $FOO"] {:env {:FOO "BAR" }}) :out)
 "BAR\n"
 ```
 
