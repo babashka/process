@@ -50,8 +50,8 @@
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo #"error123"
             (process ["clojure" "-e" (str err-form)] {:throw true}))
-          "with :err string")
-      (is (thrown?
-            clojure.lang.ExceptionInfo #"failed"
-            (process ["clojure" "-e" (str err-form)] {:throw true :err :inherit}))
-          "With no :err string"))))
+          "with :err string"))
+    (is (thrown?
+          clojure.lang.ExceptionInfo #"failed"
+          (process ["clojure" "-e" (str '(System/exit 1))] {:throw true :err :inherit}))
+        "With no :err string")))
