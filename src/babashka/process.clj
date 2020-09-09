@@ -75,11 +75,12 @@
          (if (identical? exit ::timed-out)
            (throw (ex-info "Timeout." res))
            (if (and
-                (string? err)
                 exit
                 (number? exit)
                 (not (zero? exit)))
-             (throw (ex-info err res))
+             (throw (ex-info
+                      (if (string? err) err "failed")
+                      res))
              res))
          res)))))
 
