@@ -41,4 +41,17 @@
                                        "keyword_val" :keyword-val}})
                :out
                (str/split-lines)
-               (sort))))))
+               (sort)))))
+
+  (testing "with :throw, throws on non-zero exit"
+    (let [err-form '(binding [*out* *err*]
+                      (println "error123")
+                      (System/exit 1))]
+      (is (thrown-with-msg?
+            clojure.lang.ExceptionInfo #"error123"
+            (process ["clojure" "-e" (str err-form)] {:throw true}))
+          "with :err string")
+      (is (thrown?
+            clojure.lang.ExceptionInfo #"failed"
+            (process ["clojure" "-e" (str err-form)] {:throw true :err :inherit}))
+          "With no :err string"))))
