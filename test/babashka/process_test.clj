@@ -55,9 +55,12 @@
           clojure.lang.ExceptionInfo #"failed"
           (process ["clojure" "-e" (str '(System/exit 1))] {:throw true :err :inherit}))
         "With no :err string")
-    (testing "and the exception contains the process arguments"
+    (testing "and the exception"
       (let [args ["clojure" "-e" (str '(System/exit 1))]]
         (try
           (process args {:throw true :err :inherit})
           (catch clojure.lang.ExceptionInfo e
-            (is (= args (:args (ex-data e))))))))))
+            (testing "contains the process arguments"
+              (is (= args (:args (ex-data e)))))
+            (testing "and contains a babashka process type"
+              (is (= :babashka.process/error (:type (ex-data e)))))))))))
