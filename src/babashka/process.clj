@@ -80,7 +80,7 @@
                 (not (zero? exit)))
              (throw (ex-info
                       (if (string? err) err "failed")
-                      res))
+                      (assoc res :args args)))
              res))
          res)))))
 

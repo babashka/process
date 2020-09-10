@@ -54,4 +54,10 @@
     (is (thrown?
           clojure.lang.ExceptionInfo #"failed"
           (process ["clojure" "-e" (str '(System/exit 1))] {:throw true :err :inherit}))
-        "With no :err string")))
+        "With no :err string")
+    (testing "and the exception contains the process arguments"
+      (let [args ["clojure" "-e" (str '(System/exit 1))]]
+        (try
+          (process args {:throw true :err :inherit})
+          (catch clojure.lang.ExceptionInfo e
+            (is (= args (:args (ex-data e))))))))))
