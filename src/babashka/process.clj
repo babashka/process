@@ -32,12 +32,14 @@
                       :env
                       :timeout
                       :throw
-                      :wait]
+                      :wait
+                      :destroy-on-shutdown]
                :or {out :string
                     err :string
                     dir (System/getProperty "user.dir")
                     throw true
-                    wait true}}]
+                    wait true
+                    destroy-on-shutdown true}}]
    (let [in (or in (:out prev))
          args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
@@ -47,6 +49,9 @@
               (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
               (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
          proc (.start pb)]
+     (when destroy-on-shutdown
+        (-> (Runtime/getRuntime)
+            (.addShutdownHook (Thread. #(.destroy proc)))))
      (when (string? in)
        (with-open [w (io/writer (.getOutputStream proc))]
          (binding [*out* w]
@@ -109,6 +114,6 @@
   (let [is (-> (process ["ls"]) :out)]
     (process ["cat"] {:in is
                       :out :inherit})
-    nil)
+    nil))
 
-  )
+
