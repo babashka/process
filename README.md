@@ -1,4 +1,4 @@
-# babashka.process
+# process
 
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
