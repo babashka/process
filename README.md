@@ -18,35 +18,28 @@ Use any later SHA at your convenience.
 ## Example usage
 
 ``` clojure
-user=> (require '[babashka.process :refer [process]])
+user=> (require '[babashka.process :refer [process wait]])
 ```
 
 Invoke `ls`:
 
 ``` clojure
-user=> (-> (process ["ls"]) :out)
+user=> (-> (process ["ls"]) :out slurp)
 "LICENSE\nREADME.md\nsrc\n"
 ```
 
 Invoke `ls` for different directory than current directory:
 
 ``` clojure
-user=> (-> (process ["ls"] {:dir "test/babashka"}) :out)
+user=> (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
 "process_test.clj\n"
 ```
 
 Set the process environment.
 
 ``` clojure
-user=> (-> (process ["sh" "-c" "echo $FOO"] {:env {:FOO "BAR" }}) :out)
+user=> (-> (process ["sh" "-c" "echo $FOO"] {:env {:FOO "BAR" }}) :out slurp)
 "BAR\n"
-```
-
-Output as stream:
-
-``` clojure
-user=> (-> (process ["ls"] {:out :stream}) :out slurp)
-"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
 The exit code is returned as a delay. Realizing that delay will wait until the
@@ -54,32 +47,18 @@ process finishes.
 
 ``` clojure
 user=> (-> (process ["ls" "foo"]) :exit deref)
-0
-```
-
-By default, `process` throws when the exit code is non-zero:
-
-``` clojure
-user=> (process ["ls" "foo"])
-Execution error (ExceptionInfo) at babashka.process/process (process.clj:54).
-ls: foo: No such file or directory
-```
-
-Prevent throwing:
-
-``` clojure
-user=> (-> (process ["ls" "foo"] {:throw false}) :exit)
 1
 ```
 
-Capture the error output as a string or stream:
+The function `wait` takes a process, waits for it to finish and returns
+it. Optionally it throws when the exit-code is non-zero:
 
 ``` clojure
-user=> (-> (process ["ls" "foo"] {:throw false}) :err)
-"ls: foo: No such file or directory\n"
-
-user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :err slurp)
-"ls: foo: No such file or directory\n"
+user=> (-> (process ["ls" "foo"]) wait :exit deref)
+1
+user=> (-> (process ["ls" "foo"]) (wait {:throw true}) :exit deref)
+Execution error (ExceptionInfo) at babashka.process/wait (process.clj:74).
+ls: foo: No such file or directory
 ```
 
 Redirect output to stdout:
@@ -93,7 +72,7 @@ nil
 Redirect output stream from one process to input stream of the next process:
 
 ``` clojure
-(let [is (-> (process ["ls"] {:out :stream}) :out)]
+(let [is (-> (process ["ls"]) :out)]
   (process ["cat"] {:in is
                     :out :inherit})
     nil)
@@ -108,10 +87,10 @@ nil
 Both `:in` and `:out` may contain objects that are compatible with `clojure.java.io/copy`:
 
 ``` clojure
-user=> (with-out-str (process ["cat"] {:in "foo" :out *out*}))
+user=> (with-out-str (wait (process ["cat"] {:in "foo" :out *out*})))
 "foo"
 
-user=> (with-out-str (process ["ls"] {:out *out*}))
+user=> (with-out-str (wait (process ["ls"] {:out *out*})))
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
@@ -119,7 +98,7 @@ Forwarding the output of a process as the input of another process can also be d
 
 ``` clojure
 (-> (process ["ls"])
-    (process ["grep" "README"]) :out)
+    (process ["grep" "README"]) :out slurp)
 "README.md\n"
 ```
 
@@ -130,9 +109,7 @@ Demo of a `cat` process to which we send input while the process is running, the
   (:require [babashka.process :refer [process]]
             [clojure.java.io :as io]))
 
-(def catp
-  (process ["cat"] {:out :stream
-                    :err :inherit}))
+(def catp (process ["cat"]))
 
 (.isAlive (:proc catp)) ;; true
 
@@ -149,6 +126,11 @@ Demo of a `cat` process to which we send input while the process is running, the
 
 (slurp (:out catp)) ;; "hello\n"
 ```
+
+## Notes
+
+Because `process` spawns threads for non-blocking I/O, you might have to run
+`(shutdown-agents)` at the end of your Clojure JVM scripts to force termination.
 
 ## License
 

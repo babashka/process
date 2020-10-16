@@ -1,5 +1,5 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process]]
+  (:require [babashka.process :refer [process wait]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -10,8 +10,8 @@
   delay. Waiting also happens implicitly by not specifying :stream, since
   realizing :out or :err needs the underlying process to finish."
     (let [res (process ["ls"])
-          out (:out res)
-          err (:err res)
+          out (slurp (:out res))
+          err (slurp (:err res))
           exit (:exit res)]
       (is (string? out))
       (is (string? err))
@@ -45,16 +45,16 @@
   (testing "chaining"
     (is (= "README.md\n"
            (-> (process ["ls"])
-               (process ["grep" "README"]) :out))))
+               (process ["grep" "README"]) :out slurp))))
   (testing "use of :dir options"
-    (is (= (-> (process ["ls"]) :out)
-           (-> (process ["ls"] {:dir "."}) :out)))
-    (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out)
+    (is (= (-> (process ["ls"]) :out slurp)
+           (-> (process ["ls"] {:dir "."}) :out slurp)))
+    (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
            "process_test.clj\n"))
-    (is (not= (-> (process ["ls"]) :out)
-              (-> (process ["ls"] {:dir "test/babashka"}) :out))))
+    (is (not= (-> (process ["ls"]) :out slurp)
+              (-> (process ["ls"] {:dir "test/babashka"}) :out slurp))))
   (testing "use of :env options"
-    (is (= "" (:out (process ["env"] {:env {}}))))
+    (is (= "" (-> (process ["env"] {:env {}}) :out slurp)))
     (is (= ["SOME_VAR=SOME_VAL"
             "keyword_val=:keyword-val"
             "keyword_var=KWVARVAL"]
@@ -62,6 +62,7 @@
                                        :keyword_var "KWVARVAL"
                                        "keyword_val" :keyword-val}})
                :out
+               slurp
                (str/split-lines)
                (sort)))))
 
@@ -71,17 +72,19 @@
                       (System/exit 1))]
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo #"error123"
-            (process ["clojure" "-e" (str err-form)] {:throw true}))
+            (-> (process ["clojure" "-e" (str err-form)])
+                (wait {:throw true})))
           "with :err string"))
     (is (thrown?
           clojure.lang.ExceptionInfo #"failed"
-          (process ["clojure" "-e" (str '(System/exit 1))] {:throw true
-                                                            :err :inherit}))
+          (-> (process ["clojure" "-e" (str '(System/exit 1))])
+              (wait {:throw true})))
         "With no :err string")
     (testing "and the exception"
       (let [args ["clojure" "-e" (str '(System/exit 1))]]
         (try
-          (process args {:throw true :err :inherit})
+          (-> (process args)
+              (wait {:throw true}))
           (catch clojure.lang.ExceptionInfo e
             (testing "contains the process arguments"
               (is (= args (:args (ex-data e)))))

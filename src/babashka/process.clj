@@ -31,12 +31,8 @@
                       :in :in-enc
                       :out :out-enc
                       :dir
-                      :env
-                      :throw]
-               :or {out :string
-                    err :string
-                    dir (System/getProperty "user.dir")
-                    throw true}}]
+                      :env]
+               :or {dir (System/getProperty "user.dir")}}]
    (let [in (or in (:out prev))
          args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
@@ -55,7 +51,8 @@
      (let [exit (delay (.waitFor proc))
            res {:proc proc
                 :exit exit
-                :in stdin}
+                :in stdin
+                :args args}
            res (if (identical? out :string)
                  (assoc res :out (slurp (.getInputStream proc)))
                  (assoc res :out (.getInputStream proc)))
@@ -65,15 +62,16 @@
            res (assoc res :err err)]
        (when-not (keyword? out)
          (future (io/copy (.getInputStream proc) out :encoding out-enc)))
-       (if throw
-         (if (and (or (not (.isAlive proc))
-                      (or (string? err)
-                          (identical? :string out)))
-                  (pos? @exit))
-           (throw (ex-info (if (string? err) err
-                               "failed")
-                           (assoc res
-                                  :args args
-                                  :type ::error)))
-           res)
-         res)))))
+       res))))
+
+(defn wait
+  ([proc] (wait proc {}))
+  ([proc opts]
+   (let [exit-code @(:exit proc)]
+     (if (and (pos? exit-code)
+              (:throw opts))
+       (let [err (slurp (:err proc))]
+         (throw (ex-info (if (string? err) err
+                             "failed")
+                         (assoc proc :type ::error))))
+       proc))))
