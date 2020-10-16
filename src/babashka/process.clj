@@ -84,11 +84,11 @@
      (when-not (keyword? out)
        (future (io/copy stdout out :encoding out-enc)))
      (let [exit (delay (.waitFor proc))
-           res (map->Process
-                {:proc proc
-                 :exit exit
-                 :in stdin
-                 :out stdout
-                 :err stderr
-                 :args args})]
+           ;; bb doesn't support map->Process at the moment
+           res (->Process proc
+                          exit
+                          stdin
+                          stdout
+                          stderr
+                          args)]
        res))))
