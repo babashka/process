@@ -66,7 +66,7 @@ user=> (-> (process ["ls" "foo"]) (wait {:throw false}) :exit deref)
 ```
 
 The return value of `process` implements `clojure.lang.IDeref`. When
-dereferences, it will execute `wait` with default option `:throw true`:
+dereferenced, it will execute `wait` with default option `:throw true`:
 
 ``` clojure
 user=> @(process ["ls" "foo"])
