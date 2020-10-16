@@ -49,8 +49,11 @@
          proc (.start pb)
          stdin (.getOutputStream proc)]
      (when in
-       (with-open [os stdin]
-         (io/copy in os :encoding in-enc)))
+       ;; wrap this in a future because clojure.java.shell does this as well,
+       ;; but honestly I don't know why
+       (future
+         (with-open [os stdin]
+           (io/copy in os :encoding in-enc))))
      (let [exit (delay (.waitFor proc))
            _ (when timeout (deref exit timeout ::timed-out))
            res {:proc proc
