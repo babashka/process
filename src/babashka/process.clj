@@ -51,8 +51,6 @@
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
 
-#_(prefer-method print-method clojure.lang.IRecord clojure.lang.IDeref)
-
 (defn process
   ([args] (process args nil))
   ([args opts] (if (map? args)

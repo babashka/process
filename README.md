@@ -149,19 +149,32 @@ Because `process` spawns threads for non-blocking I/O, you might have to run
 `(shutdown-agents)` at the end of your Clojure JVM scripts to force
 termination. Babashka does this automatically.
 
-### Piping infinite input
+### Piping
 
-When piping process with infinite output like `tail -f` you may have to resort to copying the data yourself. E.g.:
+When piping streams with infrequent output like in this example:
 
 ``` clojure
-(-> (process ["tail" "-f" "log.txt"] {:err :inherit})
-    (process ["cat"] {:err :inherit})
-    (process ["grep" "5"] {:out :inherit :err :inherit}))
+(ns pipes
+  (:require [babashka.process :refer [process]]))
+
+;; continually write to log
+(future
+  (loop []
+    (spit "log.txt" (str (rand-int 10) "\n") :append true)
+    (Thread/sleep 10)
+    (recur)))
+
+(def out
+  (-> (process ["tail" "-f" "log.txt"])
+      (process ["cat"])
+      (process ["grep" "5"] {:out :inherit})
+      :out))
 ```
 
-won't ever print to stdout.
+it may take a while before you will start seeing output, due to buffering.
 
-Instead you will have to copy the output of `tail` to the input of `cat` yourself line by line:
+If this is an issue, you can copy the output of `tail` to the input of `cat`
+yourself line by line:
 
 ``` clojure
 (def tail (process ["tail" "-f" "log.txt"] {:err :inherit}))
