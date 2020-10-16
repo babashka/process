@@ -164,11 +164,9 @@ When piping streams with infrequent output like in this example:
     (Thread/sleep 10)
     (recur)))
 
-(def out
-  (-> (process ["tail" "-f" "log.txt"])
-      (process ["cat"])
-      (process ["grep" "5"] {:out :inherit})
-      :out))
+(-> (process ["tail" "-f" "log.txt"])
+    (process ["cat"])
+    (process ["grep" "5"] {:out :inherit}))
 ```
 
 it may take a while before you will start seeing output, due to buffering.
