@@ -129,8 +129,41 @@ Demo of a `cat` process to which we send input while the process is running, the
 
 ## Notes
 
+
+### Script termination
+
 Because `process` spawns threads for non-blocking I/O, you might have to run
-`(shutdown-agents)` at the end of your Clojure JVM scripts to force termination.
+`(shutdown-agents)` at the end of your Clojure JVM scripts to force
+termination. Babashka does this automatically.
+
+### Piping infinite input
+
+When piping process with infinite output like `tail -f` you may have to resort to copying the data yourself. E.g.:
+
+``` clojure
+(-> (process ["tail" "-f" "log.txt"] {:err :inherit})
+    (process ["cat"] {:out :inherit :err :inherit}))
+```
+
+won't ever print to stdout.
+
+Instead you will have to copy the output of `tail` to the input of `cat` yourself line by line:
+
+``` clojure
+(def tail (process ["tail" "-f" "log.txt"] {:err :inherit}))
+
+(def cat-and-grep
+  (-> (process ["cat"]      {:err :inherit})
+      (process ["grep" "5"] {:out :inherit
+                             :err :inherit})))
+
+(binding [*in*  (io/reader (:out tail))
+          *out* (io/writer (:in cat-and-grep))]
+  (loop []
+    (when-let [x (read-line)]
+      (println x)
+      (recur))))
+```
 
 ## License
 
