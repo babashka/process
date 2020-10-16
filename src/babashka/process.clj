@@ -64,7 +64,7 @@
                  (.getErrorStream proc))
            res (assoc res :err err)]
        (when-not (keyword? out)
-         (io/copy (.getInputStream proc) out :encoding out-enc))
+         (future (io/copy (.getInputStream proc) out :encoding out-enc)))
        (if throw
          (if (and (or (not (.isAlive proc))
                       (or (string? err)
@@ -77,30 +77,3 @@
                                   :type ::error)))
            res)
          res)))))
-
-;;;; Examples
-
-(comment
-  ;; slurp output stream
-  (-> (process ["ls"]) :out)
-  ;;=> "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
-
-  (-> (process ["ls"] {:dir "test/babashka"}) :out)
-  ;;=> "process_test.clj\n"
-
-  (-> (process ["ls"] {:dir "src/babashka"}) :out)
-  ;;=> "process.clj\n"
-
-  ;; return output as string
-  (-> (process ["ls"] {:out :string}) :out)
-
-  ;; redirect output to stdout
-  (do (-> (process ["ls"] {:out :inherit})) nil)
-
-  ;; redirect output from one process to input of another process
-  (let [is (-> (process ["ls"]) :out)]
-    (process ["cat"] {:in is
-                      :out :inherit})
-    nil)
-
-  )
