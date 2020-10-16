@@ -1,5 +1,6 @@
 (ns babashka.process
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str])
   (:import [java.lang ProcessBuilder$Redirect]))
 
 (set! *warn-on-reflection* true)
@@ -22,6 +23,11 @@
     (.putAll (as-string-map env)))
   pb)
 
+#_{:clj-kondo/ignore [:unused-private-var]}
+(defn- debug [& strs]
+  (binding [*out* *err*]
+    (println (str/join " " strs))))
+
 (defn process
   ([args] (process args nil))
   ([args opts] (if (map? args)
@@ -42,26 +48,23 @@
               (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
               (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
          proc (.start pb)
-         stdin (.getOutputStream proc)]
+         stdin  (.getOutputStream proc)
+         stdout (.getInputStream proc)
+         stderr (.getErrorStream proc)]
      (when in
        ;; wrap in future, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
        (future
          (with-open [os stdin]
            (io/copy in os :encoding in-enc))))
+     (when-not (keyword? out)
+       (future (io/copy stdout out :encoding out-enc)))
      (let [exit (delay (.waitFor proc))
            res {:proc proc
                 :exit exit
                 :in stdin
-                :args args}
-           res (if (identical? out :string)
-                 (assoc res :out (slurp (.getInputStream proc)))
-                 (assoc res :out (.getInputStream proc)))
-           err (if (identical? err :string)
-                 (slurp (.getErrorStream proc))
-                 (.getErrorStream proc))
-           res (assoc res :err err)]
-       (when-not (keyword? out)
-         (future (io/copy (.getInputStream proc) out :encoding out-enc)))
+                :args args
+                :out stdout
+                :err stderr}]
        res))))
 
 (defn wait
