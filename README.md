@@ -142,7 +142,8 @@ When piping process with infinite output like `tail -f` you may have to resort t
 
 ``` clojure
 (-> (process ["tail" "-f" "log.txt"] {:err :inherit})
-    (process ["cat"] {:out :inherit :err :inherit}))
+    (process ["cat"] {:err :inherit})
+    (process ["grep" "5"] {:out :inherit :err :inherit}))
 ```
 
 won't ever print to stdout.
