@@ -32,7 +32,6 @@
                       :out :out-enc
                       :dir
                       :env
-                      :timeout
                       :throw]
                :or {out :string
                     err :string
@@ -49,13 +48,11 @@
          proc (.start pb)
          stdin (.getOutputStream proc)]
      (when in
-       ;; wrap this in a future because clojure.java.shell does this as well,
-       ;; but honestly I don't know why
+       ;; wrap in future, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
        (future
          (with-open [os stdin]
            (io/copy in os :encoding in-enc))))
      (let [exit (delay (.waitFor proc))
-           _ (when timeout (deref exit timeout ::timed-out))
            res {:proc proc
                 :exit exit
                 :in stdin}
@@ -69,20 +66,16 @@
        (when-not (keyword? out)
          (io/copy (.getInputStream proc) out :encoding out-enc))
        (if throw
-         (if (identical? exit ::timed-out)
-           (throw (ex-info "Timeout." res))
-           (if (and
-                (or (string? (:out res))
-                    (string? err))
-                @exit
-                (number? @exit)
-                (not (zero? @exit)))
-             (throw (ex-info (if (string? err) err
-                                 "failed")
-                             (assoc res
-                                    :args args
-                                    :type ::error)))
-             res))
+         (if (and (or (not (.isAlive proc))
+                      (or (string? err)
+                          (identical? :string out)))
+                  (pos? @exit))
+           (throw (ex-info (if (string? err) err
+                               "failed")
+                           (assoc res
+                                  :args args
+                                  :type ::error)))
+           res)
          res)))))
 
 ;;;; Examples
