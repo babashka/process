@@ -36,10 +36,12 @@
           _ (is (false? (.isAlive (:proc res))))
           out-stream (:out res)]
       (is (= "hello\n" (slurp out-stream)))))
-  (testing "copy input from string and copy to *out*"
-    (let [s (with-out-str
-              (process ["cat"] {:in "foo" :out *out*}))]
-      (is (= "foo" s))))
+  (testing "copy input from string"
+    (let [proc (process ["cat"] {:in "foo" :out :stream})
+          out (:out proc)
+          ret @(:exit proc)]
+      (is (= 0 ret))
+      (is (= "foo" (slurp out)))))
   (testing "chaining"
     (is (= "README.md\n"
            (-> (process ["ls"])

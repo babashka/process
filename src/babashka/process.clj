@@ -48,15 +48,9 @@
               (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
          proc (.start pb)
          stdin (.getOutputStream proc)]
-     (when (string? in)
-       (with-open [w (io/writer stdin)]
-         (binding [*out* w]
-           (print in)
-           (flush))))
-     (when (and in (not (keyword? in)))
-       (future
-         (with-open [os stdin]
-           (io/copy in os :encoding in-enc))))
+     (when in
+       (with-open [os stdin]
+         (io/copy in os :encoding in-enc)))
      (let [exit (delay (.waitFor proc))
            _ (when timeout (deref exit timeout ::timed-out))
            res {:proc proc
