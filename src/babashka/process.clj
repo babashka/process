@@ -3,6 +3,8 @@
             [clojure.string :as str])
   (:import [java.lang ProcessBuilder$Redirect]))
 
+(ns-unmap *ns* 'Process)
+
 (set! *warn-on-reflection* true)
 
 (defn- as-string-map
@@ -27,6 +29,26 @@
 (defn- debug [& strs]
   (binding [*out* *err*]
     (println (str/join " " strs))))
+
+(defn wait
+  ([proc] (wait proc {}))
+  ([proc {:keys [:throw]
+          :or {throw true}}]
+   (let [exit-code @(:exit proc)]
+     (if (and (not (zero? exit-code))
+              throw)
+       (let [err (slurp (:err proc))]
+         (throw (ex-info (if (string? err) err
+                             "failed")
+                         (assoc proc :type ::error))))
+       proc))))
+
+(defrecord Process [proc exit in out err args]
+  clojure.lang.IDeref
+  (deref [this]
+    (wait this)))
+
+#_(prefer-method print-method clojure.lang.IRecord clojure.lang.IDeref)
 
 (defn process
   ([args] (process args nil))
@@ -59,22 +81,11 @@
      (when-not (keyword? out)
        (future (io/copy stdout out :encoding out-enc)))
      (let [exit (delay (.waitFor proc))
-           res {:proc proc
-                :exit exit
-                :in stdin
-                :args args
-                :out stdout
-                :err stderr}]
+           res (map->Process
+                {:proc proc
+                 :exit exit
+                 :in stdin
+                 :out stdout
+                 :err stderr
+                 :args args})]
        res))))
-
-(defn wait
-  ([proc] (wait proc {}))
-  ([proc opts]
-   (let [exit-code @(:exit proc)]
-     (if (and (pos? exit-code)
-              (:throw opts))
-       (let [err (slurp (:err proc))]
-         (throw (ex-info (if (string? err) err
-                             "failed")
-                         (assoc proc :type ::error))))
-       proc))))

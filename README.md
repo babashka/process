@@ -50,13 +50,25 @@ user=> (-> (process ["ls" "foo"]) :exit deref)
 1
 ```
 
-The function `wait` takes a process, waits for it to finish and returns
-it. Optionally it throws when the exit-code is non-zero:
+The function `wait` takes a process, waits for it to finish and returns it. When
+the exit code is non-zero, it will throw, which can be turned off with `{:throw
+false}`.
 
 ``` clojure
 user=> (-> (process ["ls" "foo"]) wait :exit deref)
+Execution error (ExceptionInfo) at babashka.process/wait (process.clj:74).
+ls: foo: No such file or directory
+```
+
+``` clojure
+user=> (-> (process ["ls" "foo"]) (wait {:throw false}) :exit deref)
 1
-user=> (-> (process ["ls" "foo"]) (wait {:throw true}) :exit deref)
+```
+
+The return value of `process` implements `clojure.lang.IDeref`. When dereferences, it will execute `wait`:
+
+``` clojure
+user=> @(process ["ls" "foo"])
 Execution error (ExceptionInfo) at babashka.process/wait (process.clj:74).
 ls: foo: No such file or directory
 ```

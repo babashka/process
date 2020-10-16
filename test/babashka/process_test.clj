@@ -65,15 +65,14 @@
                slurp
                (str/split-lines)
                (sort)))))
-
-  (testing "with :throw, throws on non-zero exit"
+  (testing "wait throws on non-zero exit"
     (let [err-form '(binding [*out* *err*]
                       (println "error123")
                       (System/exit 1))]
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo #"error123"
             (-> (process ["clojure" "-e" (str err-form)])
-                (wait {:throw true})))
+                (wait)))
           "with :err string"))
     (is (thrown?
           clojure.lang.ExceptionInfo #"failed"
@@ -89,4 +88,14 @@
             (testing "contains the process arguments"
               (is (= args (:args (ex-data e)))))
             (testing "and contains a babashka process type"
-              (is (= :babashka.process/error (:type (ex-data e)))))))))))
+              (is (= :babashka.process/error (:type (ex-data e))))))))))
+  (testing "wait doesn't throw when :throw is false"
+    (is (not (zero? (-> (process ["ls" "foo"])
+                        (wait {:throw false})
+                        :exit
+                        deref)))))
+  (testing "dereferencing process executes wait"
+    (is (thrown? Exception
+                 (-> @(process ["ls" "foo"])
+                     :exit
+                     deref)))))
