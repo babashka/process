@@ -1,11 +1,14 @@
 (ns babashka.process-test
   (:require [babashka.process :refer [process]]
-            [clojure.test :as t :refer [deftest is testing]]
-            [clojure.string :as str]))
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :as t :refer [deftest is testing]]))
 
 (deftest process-test
-  (testing "by default process returns string out and err and waits for the
-  process to finish, returning the exit code as a number"
+  (testing "By default process returns string out and err, returning the exit
+  code in a delay. Waiting for the process to end happens through realizing the
+  delay. Waiting also happens implicitly by not specifying :stream, since
+  realizing :out or :err needs the underlying process to finish."
     (let [res (process ["ls"])
           out (:out res)
           err (:err res)
@@ -14,8 +17,25 @@
       (is (string? err))
       (is (not (str/blank? out)))
       (is (str/blank? err))
-      (is (number? exit))
-      (is (zero? exit))))
+      (is (number? @exit))
+      (is (zero? @exit))))
+  (testing "When specifying :out and :err both a non-strings, the process keeps
+  running. :in is the stdin of the process to which we can write. Calling close
+  on that stream closes stdin, so a program like cat will exit. We wait for the
+  process to exit by realizing the exit delay."
+    (let [res (process ["cat"] {:out :stream
+                                :err :inherit})
+          _ (is (true? (.isAlive (:proc res))))
+          in (:in res)
+          w (io/writer in)
+          _ (binding [*out* w]
+              (println "hello"))
+          _ (.close in)
+          exit @(:exit res)
+          _ (is (zero? exit))
+          _ (is (false? (.isAlive (:proc res))))
+          out-stream (:out res)]
+      (is (= "hello\n" (slurp out-stream)))))
   (testing "copy input from string and copy to *out*"
     (let [s (with-out-str
               (process ["cat"] {:in "foo" :out *out*}))]
@@ -53,7 +73,8 @@
           "with :err string"))
     (is (thrown?
           clojure.lang.ExceptionInfo #"failed"
-          (process ["clojure" "-e" (str '(System/exit 1))] {:throw true :err :inherit}))
+          (process ["clojure" "-e" (str '(System/exit 1))] {:throw true
+                                                            :err :inherit}))
         "With no :err string")
     (testing "and the exception"
       (let [args ["clojure" "-e" (str '(System/exit 1))]]

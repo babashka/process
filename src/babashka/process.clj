@@ -2,6 +2,8 @@
   (:require [clojure.java.io :as io])
   (:import [java.lang ProcessBuilder$Redirect]))
 
+(set! *warn-on-reflection* true)
+
 (defn- as-string-map
   "Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
 
@@ -31,13 +33,11 @@
                       :dir
                       :env
                       :timeout
-                      :throw
-                      :wait]
+                      :throw]
                :or {out :string
                     err :string
                     dir (System/getProperty "user.dir")
-                    throw true
-                    wait true}}]
+                    throw true}}]
    (let [in (or in (:out prev))
          args (mapv str args)
          pb (cond-> (ProcessBuilder. ^java.util.List args)
@@ -46,22 +46,22 @@
               (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
               (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
               (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
-         proc (.start pb)]
+         proc (.start pb)
+         stdin (.getOutputStream proc)]
      (when (string? in)
-       (with-open [w (io/writer (.getOutputStream proc))]
+       (with-open [w (io/writer stdin)]
          (binding [*out* w]
            (print in)
            (flush))))
-     (when-not (keyword? in)
+     (when (and in (not (keyword? in)))
        (future
-         (with-open [os (.getOutputStream proc)]
+         (with-open [os stdin]
            (io/copy in os :encoding in-enc))))
-     (let [exit (if wait
-                  (.waitFor proc)
-                  (future (.waitFor proc)))
+     (let [exit (delay (.waitFor proc))
            _ (when timeout (deref exit timeout ::timed-out))
            res {:proc proc
-                :exit exit}
+                :exit exit
+                :in stdin}
            res (if (identical? out :string)
                  (assoc res :out (slurp (.getInputStream proc)))
                  (assoc res :out (.getInputStream proc)))
@@ -75,14 +75,16 @@
          (if (identical? exit ::timed-out)
            (throw (ex-info "Timeout." res))
            (if (and
-                exit
-                (number? exit)
-                (not (zero? exit)))
-             (throw (ex-info
-                      (if (string? err) err "failed")
-                      (assoc res
-                             :args args
-                             :type ::error)))
+                (or (string? (:out res))
+                    (string? err))
+                @exit
+                (number? @exit)
+                (not (zero? @exit)))
+             (throw (ex-info (if (string? err) err
+                                 "failed")
+                             (assoc res
+                                    :args args
+                                    :type ::error)))
              res))
          res)))))
 

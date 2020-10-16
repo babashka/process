@@ -2,7 +2,7 @@
 
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
-Status: alpha, WIP, still in development, breaking changes will be made.
+Status: pre-alpha, WIP, still in development, breaking changes will be made.
 
 This code may end up in [babashka](https://github.com/borkdude/babashka) but is
 also intended as a JVM library. You can play with this code in babashka today,
@@ -49,10 +49,11 @@ user=> (-> (process ["ls"] {:out :stream}) :out slurp)
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
-Exit code:
+The exit code is returned as a delay. Realizing that delay will wait until the
+process finishes.
 
 ``` clojure
-user=> (-> (process ["ls" "foo"]) :exit)
+user=> (-> (process ["ls" "foo"]) :exit deref)
 0
 ```
 
@@ -79,13 +80,6 @@ user=> (-> (process ["ls" "foo"] {:throw false}) :err)
 
 user=> (-> (process ["ls" "foo"] {:throw false :err :stream}) :err slurp)
 "ls: foo: No such file or directory\n"
-```
-
-When `:wait` is set `false`, the exit code is wrapped in a future:
-
-``` clojure
-user=> (-> (process ["ls" "foo"] {:throw false :wait false}) :exit deref)
-1
 ```
 
 Redirect output to stdout:
@@ -127,6 +121,33 @@ Forwarding the output of a process as the input of another process can also be d
 (-> (process ["ls"])
     (process ["grep" "README"]) :out)
 "README.md\n"
+```
+
+Demo of a `cat` process to which we send input while the process is running, then close stdin and read the output of cat afterwards:
+
+``` clojure
+(ns cat-demo
+  (:require [babashka.process :refer [process]]
+            [clojure.java.io :as io]))
+
+(def catp
+  (process ["cat"] {:out :stream
+                    :err :inherit}))
+
+(.isAlive (:proc catp)) ;; true
+
+(def stdin (io/writer (:in catp)))
+
+(binding [*out* stdin]
+  (println "hello"))
+
+(.close stdin)
+
+(def exit @(:exit catp)) ;; 0
+
+(.isAlive (:proc catp)) ;; false
+
+(slurp (:out catp)) ;; "hello\n"
 ```
 
 ## License
