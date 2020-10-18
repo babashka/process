@@ -63,7 +63,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 ## Example usage
 
 ``` clojure
-user=> (require '[babashka.process :refer [process check]])
+user=> (require '[babashka.process :refer [process check pipeline pb]])
 ```
 
 Invoke `ls`:
