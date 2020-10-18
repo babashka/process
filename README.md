@@ -217,53 +217,11 @@ The solution then it to use `pipeline` + `pb`:
 
 ## Notes
 
-
 ### Script termination
 
 Because `process` spawns threads for non-blocking I/O, you might have to run
 `(shutdown-agents)` at the end of your Clojure JVM scripts to force
 termination. Babashka does this automatically.
-
-### Piping
-
-When piping streams with infrequent output like in this example:
-
-``` clojure
-(ns pipes
-  (:require [babashka.process :refer [process]]))
-
-;; continually write to log
-(future
-  (loop []
-    (spit "log.txt" (str (rand-int 10) "\n") :append true)
-    (Thread/sleep 10)
-    (recur)))
-
-(-> (process ["tail" "-f" "log.txt"])
-    (process ["cat"])
-    (process ["grep" "5"] {:out :inherit}))
-```
-
-it may take a while before you will start seeing output, due to buffering.
-
-If this is an issue, you can copy the output of `tail` to the input of `cat`
-yourself line by line:
-
-``` clojure
-(def tail (process ["tail" "-f" "log.txt"] {:err :inherit}))
-
-(def cat-and-grep
-  (-> (process ["cat"]      {:err :inherit})
-      (process ["grep" "5"] {:out :inherit
-                             :err :inherit})))
-
-(binding [*in*  (io/reader (:out tail))
-          *out* (io/writer (:in cat-and-grep))]
-  (loop []
-    (when-let [x (read-line)]
-      (println x)
-      (recur))))
-```
 
 ## License
 
