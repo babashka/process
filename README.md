@@ -51,8 +51,7 @@ user=> (-> (process ["ls" "foo"]) :exit deref)
 ```
 
 The function `check` takes a process, waits for it to finish and returns it. When
-the exit code is non-zero, it will throw, which can be turned off with `{:throw
-false}`.
+the exit code is non-zero, it will throw.
 
 ``` clojure
 user=> (-> (process ["ls" "foo"]) check :exit deref)
@@ -61,7 +60,7 @@ ls: foo: No such file or directory
 ```
 
 The return value of `process` implements `clojure.lang.IDeref`. When
-dereferenced, it will execute `check` with default option `:throw true`:
+dereferenced, it will execute `check`:
 
 ``` clojure
 user=> @(process ["ls" "foo"])
