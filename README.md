@@ -82,12 +82,13 @@ user=> (-> (process ["sh" "-c" "echo $FOO"] {:env {:FOO "BAR" }}) :out slurp)
 "BAR\n"
 ```
 
-The exit code is returned as a delay. Realizing that delay will wait until the
-process finishes.
+The return value of `process` implements `clojure.lang.IDeref`. When
+dereferenced, it will wait for the process to finish and will add the `:exit` value:
 
 ``` clojure
-user=> (-> (process ["ls" "foo"]) :exit deref)
-1
+user=> (-> @(process ["ls" "foo"]) :exit)
+Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
+ls: foo: No such file or directory
 ```
 
 The function `check` takes a process, waits for it to finish and returns it. When
@@ -95,15 +96,6 @@ the exit code is non-zero, it will throw.
 
 ``` clojure
 user=> (-> (process ["ls" "foo"]) check :out slurp)
-Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
-ls: foo: No such file or directory
-```
-
-The return value of `process` implements `clojure.lang.IDeref`. When
-dereferenced, it will execute `check`:
-
-``` clojure
-user=> (-> @(process ["ls" "foo"]) :out slurp)
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
@@ -167,7 +159,7 @@ Demo of a `cat` process to which we send input while the process is running, the
 
 (.close stdin)
 
-(def exit @(:exit catp)) ;; 0
+(def exit (:exit @catp)) ;; 0
 
 (.isAlive (:proc catp)) ;; false
 
