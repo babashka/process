@@ -30,6 +30,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
       `:out` or `:err` you will typically use `slurp`. Slurping those streams
       will block the current thread until the process is finished.
     - `:command`: the command that was passed to create the process.
+    - `:prev`: previous process record in case of a pipe.
 
   The returned record may be passed to `deref`. Doing so will cause the current
   thread to block until the process is finished and will populate `:exit` with
