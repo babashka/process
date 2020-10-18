@@ -33,8 +33,8 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
   current thread until process is finished.
     - `:command`: the command that was passed to create the process.
 
-  The returned record implements `IDeref`, realizing it is equivalent to calling
-  `check` on the record.
+  The returned record may be passed to `deref`. Doing so will run `check` on the
+  record.
 
   Supported options:
     - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
