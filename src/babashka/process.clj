@@ -62,9 +62,15 @@
                cmd)))
 
 (defmacro ^:private jdk9+ []
-  (when-not (identical? ::ex
-                        (try (import 'java.lang.ProcessHandle)
-                             (catch Exception _ ::ex)))
+  (if (identical? ::ex (try (import 'java.lang.ProcessHandle)
+                            (catch Exception _ ::ex)))
+    '(defn pipeline
+       "Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders."
+       ([proc]
+        (if-let [prev (:prev proc)]
+          (conj (pipeline prev) proc)
+          [proc])))
     '(defn pipeline
       "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders."

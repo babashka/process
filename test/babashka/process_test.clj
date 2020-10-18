@@ -1,5 +1,5 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process check pb]]
+  (:require [babashka.process :refer [process check]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -99,11 +99,16 @@
               (is (= :babashka.process/error (:type (ex-data e)))))))))))
 
 (defmacro ^:private jdk9+ []
-  (when-not (identical? ::ex
-                        (try (import 'java.lang.ProcessHandle)
-                             (catch Exception _ ::ex)))
+  (if (identical? ::ex
+                  (try (import 'java.lang.ProcessHandle)
+                       (catch Exception _ ::ex)))
     '(do
        (require '[babashka.process :refer [pipeline]])
+       (deftest pipeline-test
+         (testing "pipeline returns processes nested with ->"
+           (is (= [["ls"] ["cat"]] (map :cmd (pipeline (-> (process ["ls"]) (process ["cat"])))))))))
+    '(do
+       (require '[babashka.process :refer [pipeline pb]])
        (deftest pipeline-test
          (testing "pipeline returns processes nested with ->"
            (is (= [["ls"] ["cat"]] (map :cmd (pipeline (-> (process ["ls"]) (process ["cat"])))))))

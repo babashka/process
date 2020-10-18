@@ -58,7 +58,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 
 - `pipeline`:
   Arity 1: returns the process records of a pipeline created with `->`.
-  Varargs: creates a pipeline from multiple `ProcessBuilder` objects and returns process records.
+  Varargs: creates a pipeline from multiple `ProcessBuilder` objects and returns process records (JDK9+ only).
 
 ## Example usage
 
@@ -217,6 +217,9 @@ The solution then it to use `pipeline` + `pb`:
           (pb ["cat"])
           (pb ["grep" "5"] {:out :inherit}))
 ```
+
+The varargs arity of `pipeline` is only available in JDK9 or higher due to the
+availability of `ProcessBuilder/startPipeline`.
 
 ## Notes
 
