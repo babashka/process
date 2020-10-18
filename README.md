@@ -195,8 +195,8 @@ ls: foo: No such file or directory
 
 Although you can create pipelines with `->`, for some applications it may be
 preferable to create a pipeline with `pipeline` which defers to
-`ProcessBuilder/startPipeline` on multiple process builders. In the following
-case it takes a long time before you would see any output due to buffering.
+`ProcessBuilder/startPipeline`. In the following case it takes a long time
+before you would see any output due to buffering.
 
 ``` clojure
 (future
