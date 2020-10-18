@@ -180,6 +180,9 @@ was created with `->` or by passing multiple `ProcessBuilder` objects:
 ``` clojure
 (mapv :cmd (pipeline (-> (process ["ls"]) (process ["cat"]))))
 [["ls"] ["cat"]]
+
+(mapv :cmd (pipeline (pb ["ls"]) (pb ["cat"])))
+[["ls"] ["cat"]]
 ```
 
 To check an entire pipeline for non-zero exit codes, you can use:
