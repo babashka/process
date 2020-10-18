@@ -57,8 +57,8 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 - `pb`: returns a `java.lang.ProcessBuilder` for use in `pipeline`.
 
 - `pipeline`:
-  - Arity 1: returns the process records of a pipeline created with `->`.
-  - Varargs: creates a pipeline from multiple `ProcessBuilder` objects and returns process records (JDK9+ only).
+  - Arity 1: returns the processes of a pipeline created with `->`.
+  - Varargs: creates a pipeline from multiple `ProcessBuilder` objects and returns processes (JDK9+ only).
 
 ## Example usage
 
