@@ -46,7 +46,9 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 
   Piping can be achieved with the `->` macro:
 
+  ``` clojure
   (-> (process ["echo" "hello"]) (process ["cat"]) :out slurp) ;;=> "hello\n"
+  ```
 
 - `check`: takes a record as produced by `process`, waits until all underlying
   processes are finished (the process in the current record and any previous
