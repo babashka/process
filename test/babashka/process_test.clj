@@ -12,13 +12,13 @@
     (let [res (process ["ls"])
           out (slurp (:out res))
           err (slurp (:err res))
-          exit (:exit res)]
+          exit (:exit @res)]
       (is (string? out))
       (is (string? err))
       (is (not (str/blank? out)))
       (is (str/blank? err))
-      (is (number? @exit))
-      (is (zero? @exit))))
+      (is (number? exit))
+      (is (zero? exit))))
   (testing "When specifying :out and :err both a non-strings, the process keeps
   running. :in is the stdin of the process to which we can write. Calling close
   on that stream closes stdin, so a program like cat will exit. We wait for the
@@ -30,7 +30,7 @@
           _ (binding [*out* w]
               (println "hello"))
           _ (.close in)
-          exit @(:exit res)
+          exit (:exit @res)
           _ (is (zero? exit))
           _ (is (false? (.isAlive (:proc res))))
           out-stream (:out res)]
@@ -38,7 +38,7 @@
   (testing "copy input from string"
     (let [proc (process ["cat"] {:in "foo"})
           out (:out proc)
-          ret @(:exit proc)]
+          ret (:exit @proc)]
       (is (= 0 ret))
       (is (= "foo" (slurp out)))))
   (testing "copy output to *out*"
@@ -48,7 +48,7 @@
   (testing "copy stderr to *out*"
     (let [s (with-out-str
               (-> (process ["curl" "foo"] {:err *out*})
-                  :exit deref))]
+                  deref :exit))]
       (is (pos? (count s)))))
   (testing "chaining"
     (is (= "README.md\n"
@@ -99,6 +99,6 @@
               (is (= :babashka.process/error (:type (ex-data e))))))))))
   (testing "dereferencing process executes check"
     (is (thrown? Exception
-                 (-> @(process ["ls" "foo"])
-                     :exit
-                     deref)))))
+                 (-> (process ["ls" "foo"])
+                     check
+                     :exit)))))

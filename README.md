@@ -29,12 +29,11 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
     - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
       `:out` or `:err` you will typically use `slurp`. Slurping those streams
       will block the current thread until the process is finished.
-    - `:exit`: delay containing the exit code. Realizing the delay will block
-  current thread until process is finished.
     - `:command`: the command that was passed to create the process.
 
-  The returned record may be passed to `deref`. Doing so will run `check` on the
-  record.
+  The returned record may be passed to `deref`. Doing so will cause the current
+  thread to block until the process is finished and will populate `:exit` with
+  the exit code.
 
   Supported options:
     - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
@@ -45,9 +44,14 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
     - `:dir`: working directory.
     - `:env`: a map of environment variables.
 
-- `check`: takes a record as produced by `process`, checks the exit code of the
-  underlying process (blocking until the process is finished) and throws if it
-  was non-zero.
+  Piping can be achieved with the `->` macro:
+
+  (-> (process ["echo" "hello"]) (process ["cat"]) :out slurp) ;;=> "hello\n"
+
+- `check`: takes a record as produced by `process`, waits until all underlying
+  processes are finished (the process in the current record and any previous
+  ones in case of a pipe) and throws if any of the underlying process exit with
+  a non-zero value.
 
 ## Example usage
 

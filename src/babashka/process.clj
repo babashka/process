@@ -30,21 +30,28 @@
   (binding [*out* *err*]
     (println (str/join " " strs))))
 
-(defn check
-  [proc]
-  (let [exit-code @(:exit proc)]
-    (if (not (zero? exit-code))
-      (let [err (slurp (:err proc))]
-        (throw (ex-info (if (string? err)
-                          err
-                          "failed")
-                        (assoc proc :type ::error))))
-      proc)))
+(defn- prevs [proc]
+  (if-let [prev (:prev proc)]
+    (conj (prevs prev) prev)
+    []))
 
-(defrecord Process [proc exit in out err command]
+(defn check
+  ([proc]
+   (run! check (prevs proc))
+   (let [exit-code (:exit @proc)]
+     (if (not (zero? exit-code))
+       (let [err (slurp (:err proc))]
+         (throw (ex-info (if (string? err)
+                           err
+                           "failed")
+                         (assoc proc :type ::error))))
+       proc))))
+
+(defrecord Process [^java.lang.Process proc exit in out err prev command]
   clojure.lang.IDeref
   (deref [this]
-    (check this)))
+    (let [exit-code (.waitFor proc)]
+      (assoc this :exit exit-code))))
 
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
@@ -79,12 +86,39 @@
        (future (io/copy stdout out :encoding out-enc)))
      (when (and err (not (identical? :inherit err)))
        (future (io/copy stderr err :encoding err-enc)))
-     (let [exit (delay (.waitFor proc))
-           ;; bb doesn't support map->Process at the moment
+     (let [;; bb doesn't support map->Process at the moment
            res (->Process proc
-                          exit
+                          nil
                           stdin
                           stdout
                           stderr
+                          prev
                           command)]
        res))))
+
+(defn- format-arg [arg]
+  (cond
+    (symbol? arg) (str arg)
+    (seq? arg) (let [f (first arg)]
+                 (if (and (symbol? f) (= "unquote" (name f)))
+                   (second arg)
+                   arg))
+    (string? arg) arg
+    :else (pr-str arg)))
+
+(defn- split [syms]
+  (reduce (fn [acc sym]
+            (if (= '| sym)
+              (conj acc [])
+              (conj (pop acc) (conj (peek acc) sym))))
+          [[]] syms))
+
+(defmacro $
+  "Experimental, undocumented."
+  [& args]
+  (let [commands (split args)
+        commands (mapv (fn [command] (mapv format-arg command)) commands)]
+    `(reduce (fn [acc# command#]
+               (-> acc# (process command#)))
+             (process (first ~commands))
+             (rest ~commands))))
