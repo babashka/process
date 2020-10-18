@@ -61,26 +61,32 @@
                prev
                cmd)))
 
-(defn pipeline
-  "Returns the processes for one pipe created with -> or creates
+(defmacro ^:private jdk9+ []
+  (when-not (identical? ::ex
+                        (try (import 'java.lang.ProcessHandle)
+                             (catch Exception _ ::ex)))
+    '(defn pipeline
+      "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders."
-  ([proc]
-   (if-let [prev (:prev proc)]
-     (conj (pipeline prev) proc)
-     [proc]))
-  ([pb & pbs]
-   (let [pbs (cons pb pbs)
-         procs (ProcessBuilder/startPipeline pbs)
-         pb+procs (map vector pbs procs)]
-     (-> (reduce (fn [{:keys [:prev :procs]}
-                      [pb proc]]
-                   (let [cmd (.command ^java.lang.ProcessBuilder pb)
-                         new-prev (proc->Process proc cmd prev)
-                         new-procs (conj procs new-prev)]
-                     {:prev new-prev :procs new-procs}))
-                 {:prev nil :procs []}
-                 pb+procs)
-         :procs))))
+      ([proc]
+       (if-let [prev (:prev proc)]
+         (conj (pipeline prev) proc)
+         [proc]))
+      ([pb & pbs]
+       (let [pbs (cons pb pbs)
+             procs (ProcessBuilder/startPipeline pbs)
+             pb+procs (map vector pbs procs)]
+         (-> (reduce (fn [{:keys [:prev :procs]}
+                          [pb proc]]
+                       (let [cmd (.command ^java.lang.ProcessBuilder pb)
+                             new-prev (proc->Process proc cmd prev)
+                             new-procs (conj procs new-prev)]
+                         {:prev new-prev :procs new-procs}))
+                     {:prev nil :procs []}
+                     pb+procs)
+             :procs))))))
+
+(jdk9+)
 
 (defn ^java.lang.ProcessBuilder pb
   ([cmd] (pb cmd nil))
