@@ -18,7 +18,7 @@ Use any later SHA at your convenience.
 ## Example usage
 
 ``` clojure
-user=> (require '[babashka.process :refer [process wait]])
+user=> (require '[babashka.process :refer [process check]])
 ```
 
 Invoke `ls`:
@@ -50,27 +50,21 @@ user=> (-> (process ["ls" "foo"]) :exit deref)
 1
 ```
 
-The function `wait` takes a process, waits for it to finish and returns it. When
-the exit code is non-zero, it will throw, which can be turned off with `{:throw
-false}`.
+The function `check` takes a process, waits for it to finish and returns it. When
+the exit code is non-zero, it will throw.
 
 ``` clojure
-user=> (-> (process ["ls" "foo"]) wait :exit deref)
-Execution error (ExceptionInfo) at babashka.process/wait (process.clj:74).
+user=> (-> (process ["ls" "foo"]) check :exit deref)
+Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
 
-``` clojure
-user=> (-> (process ["ls" "foo"]) (wait {:throw false}) :exit deref)
-1
-```
-
 The return value of `process` implements `clojure.lang.IDeref`. When
-dereferenced, it will execute `wait` with default option `:throw true`:
+dereferenced, it will execute `check`:
 
 ``` clojure
 user=> @(process ["ls" "foo"])
-Execution error (ExceptionInfo) at babashka.process/wait (process.clj:74).
+Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
 
@@ -100,10 +94,10 @@ nil
 Both `:in` and `:out` may contain objects that are compatible with `clojure.java.io/copy`:
 
 ``` clojure
-user=> (with-out-str (wait (process ["cat"] {:in "foo" :out *out*})))
+user=> (with-out-str (check (process ["cat"] {:in "foo" :out *out*})))
 "foo"
 
-user=> (with-out-str (wait (process ["ls"] {:out *out*})))
+user=> (with-out-str (check (process ["ls"] {:out *out*})))
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 

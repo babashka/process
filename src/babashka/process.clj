@@ -30,23 +30,21 @@
   (binding [*out* *err*]
     (println (str/join " " strs))))
 
-(defn wait
-  ([proc] (wait proc {}))
-  ([proc {:keys [:throw]
-          :or {throw true}}]
-   (let [exit-code @(:exit proc)]
-     (if (and (not (zero? exit-code))
-              throw)
-       (let [err (slurp (:err proc))]
-         (throw (ex-info (if (string? err) err
-                             "failed")
-                         (assoc proc :type ::error))))
-       proc))))
+(defn check
+  [proc]
+  (let [exit-code @(:exit proc)]
+    (if (not (zero? exit-code))
+      (let [err (slurp (:err proc))]
+        (throw (ex-info (if (string? err)
+                          err
+                          "failed")
+                        (assoc proc :type ::error))))
+      proc)))
 
 (defrecord Process [proc exit in out err args]
   clojure.lang.IDeref
   (deref [this]
-    (wait this)))
+    (check this)))
 
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))

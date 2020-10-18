@@ -1,5 +1,5 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process wait]]
+  (:require [babashka.process :refer [process check]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -65,36 +65,31 @@
                slurp
                (str/split-lines)
                (sort)))))
-  (testing "wait throws on non-zero exit"
+  (testing "check throws on non-zero exit"
     (let [err-form '(binding [*out* *err*]
                       (println "error123")
                       (System/exit 1))]
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo #"error123"
             (-> (process ["clojure" "-e" (str err-form)])
-                (wait)))
+                (check)))
           "with :err string"))
     (is (thrown?
           clojure.lang.ExceptionInfo #"failed"
           (-> (process ["clojure" "-e" (str '(System/exit 1))])
-              (wait {:throw true})))
+              (check)))
         "With no :err string")
     (testing "and the exception"
       (let [args ["clojure" "-e" (str '(System/exit 1))]]
         (try
           (-> (process args)
-              (wait {:throw true}))
+              (check))
           (catch clojure.lang.ExceptionInfo e
             (testing "contains the process arguments"
               (is (= args (:args (ex-data e)))))
             (testing "and contains a babashka process type"
               (is (= :babashka.process/error (:type (ex-data e))))))))))
-  (testing "wait doesn't throw when :throw is false"
-    (is (not (zero? (-> (process ["ls" "foo"])
-                        (wait {:throw false})
-                        :exit
-                        deref)))))
-  (testing "dereferencing process executes wait"
+  (testing "dereferencing process executes check"
     (is (thrown? Exception
                  (-> @(process ["ls" "foo"])
                      :exit
