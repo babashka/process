@@ -29,7 +29,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
     - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
       `:out` or `:err` you will typically use `slurp`. Slurping those streams
       will block the current thread until the process is finished.
-    - `:command`: the command that was passed to create the process.
+    - `:cmd`: the command that was passed to create the process.
     - `:prev`: previous process record in case of a pipe.
 
   The returned record may be passed to `deref`. Doing so will cause the current
@@ -51,10 +51,14 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
   (-> (process ["echo" "hello"]) (process ["cat"]) :out slurp) ;;=> "hello\n"
   ```
 
-- `check`: takes a record as produced by `process`, waits until all underlying
-  processes are finished (the process in the current record and any previous
-  ones in case of a pipe) and throws if any of the underlying process exit with
-  a non-zero value.
+- `check`: takes a record as produced by `process`, waits until is finished and
+  throws if exit code is non-zero.
+
+- `pb`: returns a `java.lang.ProcessBuilder` for use in `pipeline`.
+
+- `pipeline`:
+  Arity 1: returns the process records of a pipeline created with `->`.
+  Varargs: creates a pipeline from multiple `ProcessBuilder` objects and returns process records.
 
 ## Example usage
 
@@ -142,7 +146,8 @@ Forwarding the output of a process as the input of another process can also be d
 "README.md\n"
 ```
 
-Demo of a `cat` process to which we send input while the process is running, then close stdin and read the output of cat afterwards:
+Demo of a `cat` process to which we send input while the process is running,
+then close stdin and read the output of cat afterwards:
 
 ``` clojure
 (ns cat-demo
@@ -165,6 +170,49 @@ Demo of a `cat` process to which we send input while the process is running, the
 (.isAlive (:proc catp)) ;; false
 
 (slurp (:out catp)) ;; "hello\n"
+```
+
+## Pipelines
+
+The `pipeline` function returns a sequential of processes from a process that
+was created with `->` or by passing multiple `ProcessBuilder` objects:
+
+``` clojure
+(mapv :cmd (pipeline (-> (process ["ls"]) (process ["cat"]))))
+[["ls"] ["cat"]]
+```
+
+To check an entire pipeline for non-zero exit codes, you can use:
+
+``` clojure
+(run! check (pipeline (-> (process ["ls" "foo"]) (process ["cat"]))))
+Execution error (ExceptionInfo) at babashka.process/check (process.clj:37).
+ls: foo: No such file or directory
+```
+
+Although you can create pipelines with `->`, for some applications it may be
+preferable to create a pipeline with `pipeline` which defers to
+`ProcessBuilder/startPipeline` on multiple process builders. In the following
+case it takes a long time before you would see any output due to buffering.
+
+``` clojure
+(future
+  (loop []
+    (spit "log.txt" (str (rand-int 10) "\n") :append true)
+    (Thread/sleep 10)
+    (recur)))
+
+(-> (process ["tail" "-f" "log.txt"])
+    (process ["cat"])
+    (process ["grep" "5"] {:out :inherit}))
+```
+
+The solution then it to use `pipeline` + `pb`:
+
+``` clojure
+(pipeline (pb ["tail" "-f" "log.txt"])
+          (pb ["cat"])
+          (pb ["grep" "5"] {:out :inherit}))
 ```
 
 ## Notes

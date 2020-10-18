@@ -30,24 +30,17 @@
   (binding [*out* *err*]
     (println (str/join " " strs))))
 
-(defn- prevs [proc]
-  (if-let [prev (:prev proc)]
-    (conj (prevs prev) prev)
-    []))
+(defn check [proc]
+  (let [exit-code (:exit @proc)]
+    (if (not (zero? exit-code))
+      (let [err (slurp (:err proc))]
+        (throw (ex-info (if (string? err)
+                          err
+                          "failed")
+                        (assoc proc :type ::error))))
+      proc)))
 
-(defn check
-  ([proc]
-   (run! check (prevs proc))
-   (let [exit-code (:exit @proc)]
-     (if (not (zero? exit-code))
-       (let [err (slurp (:err proc))]
-         (throw (ex-info (if (string? err)
-                           err
-                           "failed")
-                         (assoc proc :type ::error))))
-       proc))))
-
-(defrecord Process [^java.lang.Process proc exit in out err prev command]
+(defrecord Process [^java.lang.Process proc exit in out err prev cmd]
   clojure.lang.IDeref
   (deref [this]
     (let [exit-code (.waitFor proc)]
@@ -56,24 +49,65 @@
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
 
-(defn process
-  ([command] (process command nil))
-  ([command opts] (if (map? command)
-                 (process command opts nil)
-                 (process nil command opts)))
-  ([prev command {:keys [:in  :in-enc
-                         :out :out-enc
-                         :err :err-enc
-                         :dir
-                         :env]}]
-   (let [in (or in (:out prev))
-         command (mapv str command)
-         pb (cond-> (ProcessBuilder. ^java.util.List command)
+(defn- proc->Process [^java.lang.Process proc cmd prev]
+  (let [stdin  (.getOutputStream proc)
+        stdout (.getInputStream proc)
+        stderr (.getErrorStream proc)]
+    (->Process proc
+               nil
+               stdin
+               stdout
+               stderr
+               prev
+               cmd)))
+
+(defn pipeline
+  "Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders."
+  ([proc]
+   (if-let [prev (:prev proc)]
+     (conj (pipeline prev) proc)
+     [proc]))
+  ([pb & pbs]
+   (let [pbs (cons pb pbs)
+         procs (ProcessBuilder/startPipeline pbs)
+         pb+procs (map vector pbs procs)]
+     (-> (reduce (fn [{:keys [:prev :procs]}
+                      [pb proc]]
+                   (let [cmd (.command ^java.lang.ProcessBuilder pb)
+                         new-prev (proc->Process proc cmd prev)
+                         new-procs (conj procs new-prev)]
+                     {:prev new-prev :procs new-procs}))
+                 {:prev nil :procs []}
+                 pb+procs)
+         :procs))))
+
+(defn ^java.lang.ProcessBuilder pb
+  ([cmd] (pb cmd nil))
+  ([^java.util.List cmd {:keys [:in
+                                :out
+                                :err
+                                :dir
+                                :env]}]
+   (let [cmd (mapv str cmd)
+         pb (cond-> (ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
               (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
               (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
-              (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))
+              (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))]
+     pb)))
+
+(defn process
+  ([cmd] (process cmd nil))
+  ([cmd opts] (if (map? cmd) ;; prev
+                    (process cmd opts nil)
+                    (process nil cmd opts)))
+  ([prev cmd {:keys [:in  :in-enc
+                         :out :out-enc
+                         :err :err-enc] :as opts}]
+   (let [in (or in (:out prev))
+         pb (pb cmd opts)
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
@@ -93,8 +127,10 @@
                           stdout
                           stderr
                           prev
-                          command)]
+                          cmd)]
        res))))
+
+;;;; EXPERIMENTAL
 
 (defn- format-arg [arg]
   (cond
@@ -116,9 +152,9 @@
 (defmacro $
   "Experimental, undocumented."
   [& args]
-  (let [commands (split args)
-        commands (mapv (fn [command] (mapv format-arg command)) commands)]
-    `(reduce (fn [acc# command#]
-               (-> acc# (process command#)))
-             (process (first ~commands))
-             (rest ~commands))))
+  (let [cmds (split args)
+        cmds (mapv (fn [cmd] (mapv format-arg cmd)) cmds)]
+    `(reduce (fn [acc# cmd#]
+               (-> acc# (process cmd#)))
+             (process (first ~cmds))
+             (rest ~cmds))))

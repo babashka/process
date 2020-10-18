@@ -1,5 +1,5 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process check]]
+  (:require [babashka.process :refer [process check pipeline pb]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -94,11 +94,10 @@
               (check))
           (catch clojure.lang.ExceptionInfo e
             (testing "contains the process arguments"
-              (is (= command (:command (ex-data e)))))
+              (is (= command (:cmd (ex-data e)))))
             (testing "and contains a babashka process type"
               (is (= :babashka.process/error (:type (ex-data e))))))))))
-  (testing "dereferencing process executes check"
-    (is (thrown? Exception
-                 (-> (process ["ls" "foo"])
-                     check
-                     :exit)))))
+  (testing "pipeline returns processes nested with ->"
+    (is (= [["ls"] ["cat"]] (map :cmd (pipeline (-> (process ["ls"]) (process ["cat"])))))))
+  (testing "pipeline returns processes created with pb"
+    (is (= [["ls"] ["cat"]] (map :cmd (pipeline (pb ["ls"]) (pb ["cat"])))))))
