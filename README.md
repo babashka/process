@@ -21,7 +21,33 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 
 ## API
 
-- `process`: takes a vector of strings as the command and optionally a map of options.
+- `process`: takes a command (vector of strings) and optionally a map of
+  options.
+
+  Returns: a record with
+    - `:proc`: an instance `java.lang.Process` instance
+    - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
+      `:out` or `:err` you will typicall use `slurp`. Slurping those streams
+      will block the current thread until the process is finished.
+    - `:exit`: delay containing the exit code. Realizing the delay will block
+  current thread until process is finished.
+    - `:command`: the command that was passed to create the process.
+
+  The returned record implements `IDeref`, realizing it is equivalent to calling
+  `check` on the record.
+
+  Supported options:
+    - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
+      will be copied to or from the process's corresponding stream. May be set
+      to `:inherit` for redirecting to the parent process's corresponding
+      stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
+      be passed along to `clojure.java.io/copy`.
+    - `:dir`: working directory.
+    - `:env`: a map of environment variables.
+
+- `check`: takes a record as produced by `process`, checks the exit code of the
+  underlying process (blocking until the process is finished) and throws if it
+  was non-zero.
 
 ## Example usage
 
@@ -36,7 +62,7 @@ user=> (-> (process ["ls"]) :out slurp)
 "LICENSE\nREADME.md\nsrc\n"
 ```
 
-Invoke `ls` for different directory than current directory:
+Change working directory:
 
 ``` clojure
 user=> (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
@@ -62,7 +88,7 @@ The function `check` takes a process, waits for it to finish and returns it. Whe
 the exit code is non-zero, it will throw.
 
 ``` clojure
-user=> (-> (process ["ls" "foo"]) check :exit deref)
+user=> (-> (process ["ls" "foo"]) check :out slurp)
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
@@ -71,7 +97,7 @@ The return value of `process` implements `clojure.lang.IDeref`. When
 dereferenced, it will execute `check`:
 
 ``` clojure
-user=> @(process ["ls" "foo"])
+user=> (-> @(process ["ls" "foo"]) :out slurp)
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```

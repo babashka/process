@@ -50,17 +50,15 @@
   (.write w (pr-str (into {} proc))))
 
 (defn process
-  ""
   ([command] (process command nil))
   ([command opts] (if (map? command)
                  (process command opts nil)
                  (process nil command opts)))
-  ([prev command {:keys [:err
-                         :in :in-enc
+  ([prev command {:keys [:in  :in-enc
                          :out :out-enc
+                         :err :err-enc
                          :dir
-                         :env]
-                  :or {dir (System/getProperty "user.dir")}}]
+                         :env]}]
    (let [in (or in (:out prev))
          command (mapv str command)
          pb (cond-> (ProcessBuilder. ^java.util.List command)
@@ -73,13 +71,14 @@
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
          stderr (.getErrorStream proc)]
-     (when in
-       ;; wrap in future, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-       (future
-         (with-open [os stdin]
-           (io/copy in os :encoding in-enc))))
-     (when-not (keyword? out)
+     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
+     (when (and in (not (identical? :inherit out)))
+       (future (with-open [stdin stdin] ;; needed to close stdin after writing
+                 (io/copy in stdin :encoding in-enc))))
+     (when (and out (not (identical? :inherit out)))
        (future (io/copy stdout out :encoding out-enc)))
+     (when (and err (not (identical? :inherit err)))
+       (future (io/copy stderr err :encoding err-enc)))
      (let [exit (delay (.waitFor proc))
            ;; bb doesn't support map->Process at the moment
            res (->Process proc
