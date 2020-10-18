@@ -27,7 +27,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
   Returns: a record with
     - `:proc`: an instance of `java.lang.Process`
     - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
-      `:out` or `:err` you will typicall use `slurp`. Slurping those streams
+      `:out` or `:err` you will typically use `slurp`. Slurping those streams
       will block the current thread until the process is finished.
     - `:exit`: delay containing the exit code. Realizing the delay will block
   current thread until process is finished.
