@@ -219,7 +219,27 @@ The solution then it to use `pipeline` + `pb`:
 ```
 
 The varargs arity of `pipeline` is only available in JDK9 or higher due to the
-availability of `ProcessBuilder/startPipeline`.
+availability of `ProcessBuilder/startPipeline`. If you are on JDK8 or lower, the
+following solution that reads the output of `tail` line by line may work for
+you:
+
+``` clojure
+(def tail (process ["tail" "-f" "log.txt"] {:err :inherit}))
+
+(def cat-and-grep
+  (-> (process ["cat"]      {:err :inherit})
+      (process ["grep" "5"] {:out :inherit
+                             :err :inherit})))
+
+(binding [*in*  (io/reader (:out tail))
+          *out* (io/writer (:in cat-and-grep))]
+  (loop []
+    (when-let [x (read-line)]
+      (println x)
+      (recur))))
+```
+
+Another solution is to let bash handle the pipes by shelling out with `bash -c`.
 
 ## Notes
 
