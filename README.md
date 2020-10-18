@@ -2,18 +2,26 @@
 
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
-Status: pre-alpha, WIP, still in development, breaking changes will be made.
+Status: alpha.
 
 This code may end up in [babashka](https://github.com/borkdude/babashka) but is
 also intended as a JVM library. You can play with this code in babashka today,
 by either copying the code or including this library as a git dep:
 
 ``` shell
-$ export BABASHKA_CLASSPATH=$(clojure -Sdeps '{:deps {babashka/babashka.process {:sha "6c348b5213c0c77ebbdfcf2f5da71da04afee377" :git/url "https://github.com/babashka/babashka.process"}}}' -Spath)
-$ bb -e "(require '[babashka.process :refer [process]]) (process [\"ls\"])"
+$ export BABASHKA_CLASSPATH=$(clojure -Sdeps '{:deps {babashka/babashka.process {:sha "<latest-sha>" :git/url "https://github.com/babashka/babashka.process"}}}' -Spath)
+
+user=> (require '[clojure.string :as str])
+nil
+user=> (require '[babashka.process :refer [process]])
+nil
+user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
+"total 136776"
 ```
 
-Use any later SHA at your convenience.
+## API
+
+- `process`: takes a vector of strings as the command and optionally a map of options.
 
 ## Example usage
 

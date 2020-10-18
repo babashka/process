@@ -41,7 +41,7 @@
                         (assoc proc :type ::error))))
       proc)))
 
-(defrecord Process [proc exit in out err args]
+(defrecord Process [proc exit in out err command]
   clojure.lang.IDeref
   (deref [this]
     (check this)))
@@ -50,19 +50,20 @@
   (.write w (pr-str (into {} proc))))
 
 (defn process
-  ([args] (process args nil))
-  ([args opts] (if (map? args)
-                 (process args opts nil)
-                 (process nil args opts)))
-  ([prev args {:keys [:err
-                      :in :in-enc
-                      :out :out-enc
-                      :dir
-                      :env]
-               :or {dir (System/getProperty "user.dir")}}]
+  ""
+  ([command] (process command nil))
+  ([command opts] (if (map? command)
+                 (process command opts nil)
+                 (process nil command opts)))
+  ([prev command {:keys [:err
+                         :in :in-enc
+                         :out :out-enc
+                         :dir
+                         :env]
+                  :or {dir (System/getProperty "user.dir")}}]
    (let [in (or in (:out prev))
-         args (mapv str args)
-         pb (cond-> (ProcessBuilder. ^java.util.List args)
+         command (mapv str command)
+         pb (cond-> (ProcessBuilder. ^java.util.List command)
               dir (.directory (io/file dir))
               env (set-env env)
               (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
@@ -86,5 +87,5 @@
                           stdin
                           stdout
                           stderr
-                          args)]
+                          command)]
        res))))

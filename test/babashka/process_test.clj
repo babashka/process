@@ -80,13 +80,13 @@
               (check)))
         "With no :err string")
     (testing "and the exception"
-      (let [args ["clojure" "-e" (str '(System/exit 1))]]
+      (let [command ["clojure" "-e" (str '(System/exit 1))]]
         (try
-          (-> (process args)
+          (-> (process command)
               (check))
           (catch clojure.lang.ExceptionInfo e
             (testing "contains the process arguments"
-              (is (= args (:args (ex-data e)))))
+              (is (= command (:command (ex-data e)))))
             (testing "and contains a babashka process type"
               (is (= :babashka.process/error (:type (ex-data e))))))))))
   (testing "dereferencing process executes check"
