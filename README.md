@@ -4,9 +4,9 @@ A Clojure wrapper around `java.lang.ProcessBuilder`.
 
 Status: alpha.
 
-This code may end up in [babashka](https://github.com/borkdude/babashka) but is
-also intended as a JVM library. You can play with this code in babashka today,
-by either copying the code or including this library as a git dep:
+This library will be included in
+[babashka](https://github.com/borkdude/babashka) but is also intended as a JVM
+library. You can play with this code in babashka today by using it as git dep:
 
 ``` shell
 $ export BABASHKA_CLASSPATH=$(clojure -Sdeps '{:deps {babashka/babashka.process {:sha "<latest-sha>" :git/url "https://github.com/babashka/babashka.process"}}}' -Spath)
