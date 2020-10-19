@@ -192,10 +192,11 @@ To obtain the right-most process from the pipeline, simply use `last`:
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
-Note that this is true for a pipeline `p`:
+Calling `pipeline` on the right-most process returns the pipeline:
 
 ``` clojure
 (= p (pipeline (last p))
+true
 ```
 
 To check an entire pipeline for non-zero exit codes, you can use:
