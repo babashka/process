@@ -144,21 +144,24 @@
                           cmd)]
        res))))
 
+(defn- process-unquote [arg]
+  (let [f (first arg)]
+    (if (and (symbol? f) (= "unquote" (name f)))
+      (second arg)
+      arg)))
+
 (defn- format-arg [arg]
   (cond
     (symbol? arg) (str arg)
-    (seq? arg) (let [f (first arg)]
-                 (if (and (symbol? f) (= "unquote" (name f)))
-                   (second arg)
-                   arg))
+    (seq? arg) (process-unquote arg)
     (string? arg) arg
     :else (pr-str arg)))
 
 (defmacro $
   [& args]
-  (let [opts (let [l (last args)]
-               (when (map? l)
-                 l))
-        args (if opts (butlast args) args)
+  (let [opts (-> (drop-while #(not (identical? ::opts %)) args)
+                 second)
+        opts (if (seq? opts) (process-unquote opts) opts)
+        args (take-while #(not (identical? ::opts %)) args)
         cmd (mapv format-arg args)]
     `(process ~cmd ~opts)))
