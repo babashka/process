@@ -185,6 +185,19 @@ was created with `->` or by passing multiple `ProcessBuilder` objects:
 [["ls"] ["cat"]]
 ```
 
+To obtain the right-most process from the pipeline, simply use `last`:
+
+``` clojure
+(-> (pipeline (pb ["ls"]) (pb ["cat"])) last :out slurp)
+"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+```
+
+Note that this is true for a pipeline `p`:
+
+``` clojure
+(= p (pipeline (last p))
+```
+
 To check an entire pipeline for non-zero exit codes, you can use:
 
 ``` clojure
