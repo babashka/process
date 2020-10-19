@@ -52,6 +52,15 @@ user=> (-> (process '[ls -la]) :out slurp str/split-lines first)
   ```
   or using the `pipeline` function (see below)
 
+- `$`: convenience macro around `process`. Takes a number of objects, all which
+  will be stringified with `str` and an optional option map as the last arg. Supports interpolation via `~`.
+
+  ``` clojure
+  (def config {:output {:format :edn}})
+  (-> ($ clj-kondo --config ~config --lint "src") :out slurp edn/read-string)
+  {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
+  ```
+
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
 
@@ -259,46 +268,6 @@ you:
 ```
 
 Another solution is to let bash handle the pipes by shelling out with `bash -c`.
-
-<!-- ## Shell macro -->
-
-<!-- The following macro is interesting, but not part of this library yet due to its -->
-<!-- experimental nature: -->
-
-<!-- ``` clojure -->
-<!-- (defn- format-arg [arg] -->
-<!--   (cond -->
-<!--     (symbol? arg) (str arg) -->
-<!--     (seq? arg) (let [f (first arg)] -->
-<!--                  (if (and (symbol? f) (= "unquote" (name f))) -->
-<!--                    (second arg) -->
-<!--                    arg)) -->
-<!--     (string? arg) arg -->
-<!--     :else (pr-str arg))) -->
-
-<!-- (defn- split [syms] -->
-<!--   (reduce (fn [acc sym] -->
-<!--             (if (= '| sym) -->
-<!--               (conj acc []) -->
-<!--               (conj (pop acc) (conj (peek acc) sym)))) -->
-<!--           [[]] syms)) -->
-
-<!-- (defmacro $ -->
-<!--   "Experimental, undocumented." -->
-<!--   [& args] -->
-<!--   (let [cmds (split args) -->
-<!--         cmds (mapv (fn [cmd] (mapv format-arg cmd)) cmds)] -->
-<!--     `(reduce (fn [acc# cmd#] -->
-<!--                (-> acc# (process cmd#))) -->
-<!--              (process (first ~cmds)) -->
-<!--              (rest ~cmds)))) -->
-<!-- ``` -->
-
-<!-- It can be used as follows: -->
-
-<!-- ``` clojure -->
-
-<!-- ``` -->
 
 ## Notes
 

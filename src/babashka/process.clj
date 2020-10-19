@@ -49,6 +49,7 @@
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
 
+#_{:clj-kondo/ignore [:unused-private-var]}
 (defn- proc->Process [^java.lang.Process proc cmd prev]
   (let [stdin  (.getOutputStream proc)
         stdout (.getInputStream proc)
@@ -143,8 +144,6 @@
                           cmd)]
        res))))
 
-;;;; EXPERIMENTAL
-
 (defn- format-arg [arg]
   (cond
     (symbol? arg) (str arg)
@@ -155,19 +154,11 @@
     (string? arg) arg
     :else (pr-str arg)))
 
-(defn- split [syms]
-  (reduce (fn [acc sym]
-            (if (= '| sym)
-              (conj acc [])
-              (conj (pop acc) (conj (peek acc) sym))))
-          [[]] syms))
-
 (defmacro $
-  "Experimental, undocumented."
   [& args]
-  (let [cmds (split args)
-        cmds (mapv (fn [cmd] (mapv format-arg cmd)) cmds)]
-    `(reduce (fn [acc# cmd#]
-               (-> acc# (process cmd#)))
-             (process (first ~cmds))
-             (rest ~cmds))))
+  (let [opts (let [l (last args)]
+               (when (map? l)
+                 l))
+        args (if opts (butlast args) args)
+        cmd (mapv format-arg args)]
+    `(process ~cmd ~opts)))
