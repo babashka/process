@@ -30,7 +30,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
       `:out` or `:err` you will typically use `slurp`. Slurping those streams
       will block the current thread until the process is finished.
     - `:cmd`: the command that was passed to create the process.
-    - `:prev`: previous process record in case of a pipe.
+    - `:prev`: previous process record in case of a pipeline.
 
   The returned record may be passed to `deref`. Doing so will cause the current
   thread to block until the process is finished and will populate `:exit` with
@@ -57,8 +57,8 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 - `pb`: returns a `java.lang.ProcessBuilder` for use in `pipeline`.
 
 - `pipeline`:
-  - Arity 1: returns the processes of a pipeline created with `->`.
-  - Varargs: creates a pipeline from multiple `ProcessBuilder` objects and returns processes (JDK9+ only).
+  - Passing a process, returns the processes of a pipeline created with `->` or `pipeline`.
+  - Passing two or more `ProcessBuilder` objects: creates a pipeline as a list of processes (JDK9+ only).
 
 ## Example usage
 
