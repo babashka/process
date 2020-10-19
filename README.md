@@ -57,8 +57,8 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
 - `pb`: returns a `java.lang.ProcessBuilder` for use in `pipeline`.
 
 - `pipeline`:
-  - Passing a process, returns the processes of a pipeline created with `->` or `pipeline`.
-  - Passing two or more `ProcessBuilder` objects: creates a pipeline as a list of processes (JDK9+ only).
+  - When passing a process, returns the processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more `ProcessBuilder` objects: creates a pipeline as a list of processes (JDK9+ only).
 
 ## Example usage
 
