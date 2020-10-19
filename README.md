@@ -58,7 +58,11 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
 
-- `pb`: returns a `java.lang.ProcessBuilder` for use in `pipeline`.
+- `pb`: returns a `java.lang.ProcessBuilder`.
+
+- `*escape-fn*`: var that is used to escape special characters in arguments. On
+  Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other OSes it
+  defaults to `identity`.
 
 - `pipeline`:
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
