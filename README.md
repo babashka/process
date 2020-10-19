@@ -50,6 +50,7 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
   ``` clojure
   (-> (process ["echo" "hello"]) (process ["cat"]) :out slurp) ;;=> "hello\n"
   ```
+  or using the `pipeline` function (see below)
 
 - `check`: takes a record as produced by `process`, waits until is finished and
   throws if exit code is non-zero.
