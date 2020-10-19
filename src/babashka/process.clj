@@ -119,6 +119,7 @@
                          :out :out-enc
                          :err :err-enc] :as opts}]
    (let [in (or in (:out prev))
+         cmd (mapv str cmd)
          pb (pb cmd opts)
          proc (.start pb)
          stdin  (.getOutputStream proc)

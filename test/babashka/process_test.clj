@@ -23,7 +23,7 @@
   running. :in is the stdin of the process to which we can write. Calling close
   on that stream closes stdin, so a program like cat will exit. We wait for the
   process to exit by realizing the exit delay."
-    (let [res (process ["cat"] {:err :inherit})
+    (let [res (process '[cat] {:err :inherit})
           _ (is (true? (.isAlive (:proc res))))
           in (:in res)
           w (io/writer in)
@@ -36,18 +36,18 @@
           out-stream (:out res)]
       (is (= "hello\n" (slurp out-stream)))))
   (testing "copy input from string"
-    (let [proc (process ["cat"] {:in "foo"})
+    (let [proc (process '[cat] {:in "foo"})
           out (:out proc)
           ret (:exit @proc)]
       (is (= 0 ret))
       (is (= "foo" (slurp out)))))
   (testing "copy output to *out*"
     (let [s (with-out-str
-                 @(process ["cat"] {:in "foo" :out *out*}))]
+              @(process '[cat] {:in "foo" :out *out*}))]
       (is (= "foo" s))))
   (testing "copy stderr to *out*"
     (let [s (with-out-str
-              (-> (process ["curl" "foo"] {:err *out*})
+              (-> (process '[curl "foo"] {:err *out*})
                   deref :exit))]
       (is (pos? (count s)))))
   (testing "chaining"

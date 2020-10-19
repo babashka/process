@@ -15,14 +15,14 @@ user=> (require '[clojure.string :as str])
 nil
 user=> (require '[babashka.process :refer [process]])
 nil
-user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
+user=> (-> (process '[ls -la]) :out slurp str/split-lines first)
 "total 136776"
 ```
 
 ## API
 
-- `process`: takes a command (vector of strings) and optionally a map of
-  options.
+- `process`: takes a command (vector of strings or objects that will be turned
+  into strings) and optionally a map of options.
 
   Returns: a record with
     - `:proc`: an instance of `java.lang.Process`
@@ -48,18 +48,18 @@ user=> (-> (process ["ls" "-la"]) :out slurp str/split-lines first)
   Piping can be achieved with the `->` macro:
 
   ``` clojure
-  (-> (process ["echo" "hello"]) (process ["cat"]) :out slurp) ;;=> "hello\n"
+  (-> (process '[echo hello]) (process '[cat]) :out slurp) ;;=> "hello\n"
   ```
   or using the `pipeline` function (see below)
 
-- `check`: takes a record as produced by `process`, waits until is finished and
+- `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
 
 - `pb`: returns a `java.lang.ProcessBuilder` for use in `pipeline`.
 
 - `pipeline`:
-  - When passing a process, returns the list of processes of a pipeline created with `->` or `pipeline`.
-  - When passing two or more `ProcessBuilder` objects: creates a pipeline as a list of processes (JDK9+ only).
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more `ProcessBuilder` objects: creates a pipeline as a vector of processes (JDK9+ only).
 
   Also see [Pipelines](#pipelines).
 
@@ -72,21 +72,21 @@ user=> (require '[babashka.process :refer [process check pipeline pb]])
 Invoke `ls`:
 
 ``` clojure
-user=> (-> (process ["ls"]) :out slurp)
+user=> (-> (process '[ls]) :out slurp)
 "LICENSE\nREADME.md\nsrc\n"
 ```
 
 Change working directory:
 
 ``` clojure
-user=> (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
+user=> (-> (process '[ls] {:dir "test/babashka"}) :out slurp)
 "process_test.clj\n"
 ```
 
 Set the process environment.
 
 ``` clojure
-user=> (-> (process ["sh" "-c" "echo $FOO"] {:env {:FOO "BAR" }}) :out slurp)
+user=> (-> (process '[sh -c "echo $FOO"] {:env {:FOO "BAR" }}) :out slurp)
 "BAR\n"
 ```
 
@@ -94,7 +94,7 @@ The return value of `process` implements `clojure.lang.IDeref`. When
 dereferenced, it will wait for the process to finish and will add the `:exit` value:
 
 ``` clojure
-user=> (-> @(process ["ls" "foo"]) :exit)
+user=> (-> @(process '[ls foo]) :exit)
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
@@ -103,7 +103,7 @@ The function `check` takes a process, waits for it to finish and returns it. Whe
 the exit code is non-zero, it will throw.
 
 ``` clojure
-user=> (-> (process ["ls" "foo"]) check :out slurp)
+user=> (-> (process '[ls foo]) check :out slurp)
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
@@ -111,7 +111,7 @@ ls: foo: No such file or directory
 Redirect output to stdout:
 
 ``` clojure
-user=> (do (process ["ls"] {:out :inherit}) nil)
+user=> (do (process '[ls] {:out :inherit}) nil)
 LICENSE		README.md	deps.edn	src		test
 nil
 ```
@@ -119,7 +119,7 @@ nil
 Redirect output stream from one process to input stream of the next process:
 
 ``` clojure
-(let [is (-> (process ["ls"]) :out)]
+(let [is (-> (process '[ls]) :out)]
   (process ["cat"] {:in is
                     :out :inherit})
     nil)
@@ -134,18 +134,18 @@ nil
 Both `:in` and `:out` may contain objects that are compatible with `clojure.java.io/copy`:
 
 ``` clojure
-user=> (with-out-str (check (process ["cat"] {:in "foo" :out *out*})))
+user=> (with-out-str (check (process '[cat] {:in "foo" :out *out*})))
 "foo"
 
-user=> (with-out-str (check (process ["ls"] {:out *out*})))
+user=> (with-out-str (check (process '[ls] {:out *out*})))
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
 Forwarding the output of a process as the input of another process can also be done with thread-first:
 
 ``` clojure
-(-> (process ["ls"])
-    (process ["grep" "README"]) :out slurp)
+(-> (process '[ls])
+    (process '[grep "README"]) :out slurp)
 "README.md\n"
 ```
 
@@ -157,7 +157,7 @@ then close stdin and read the output of cat afterwards:
   (:require [babashka.process :refer [process]]
             [clojure.java.io :as io]))
 
-(def catp (process ["cat"]))
+(def catp (process '[cat]))
 
 (.isAlive (:proc catp)) ;; true
 
@@ -181,14 +181,14 @@ The `pipeline` function returns a sequential of processes from a process that
 was created with `->` or by passing multiple `ProcessBuilder` objects:
 
 ``` clojure
-(mapv :cmd (pipeline (-> (process ["ls"]) (process ["cat"]))))
+(mapv :cmd (pipeline (-> (process '[ls]) (process '[cat]))))
 [["ls"] ["cat"]]
 
-(mapv :cmd (pipeline (pb ["ls"]) (pb ["cat"])))
+(mapv :cmd (pipeline (pb '[ls]) (pb '[cat])))
 [["ls"] ["cat"]]
 ```
 
-To obtain the right-most process from the pipeline, simply use `last`:
+To obtain the right-most process from the pipeline, use `last` (or `peek`):
 
 ``` clojure
 (-> (pipeline (pb ["ls"]) (pb ["cat"])) last :out slurp)
@@ -198,14 +198,16 @@ To obtain the right-most process from the pipeline, simply use `last`:
 Calling `pipeline` on the right-most process returns the pipeline:
 
 ``` clojure
-(= p (pipeline (last p))
+(def p (pipeline (pb ["ls"]) (pb ["cat"])))
+#'user/p
+(= p (pipeline (last p)))
 true
 ```
 
 To check an entire pipeline for non-zero exit codes, you can use:
 
 ``` clojure
-(run! check (pipeline (-> (process ["ls" "foo"]) (process ["cat"]))))
+(run! check (pipeline (-> (process '[ls "foo"]) (process '[cat]))))
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:37).
 ls: foo: No such file or directory
 ```
@@ -222,17 +224,17 @@ before you would see any output due to buffering.
     (Thread/sleep 10)
     (recur)))
 
-(-> (process ["tail" "-f" "log.txt"])
-    (process ["cat"])
-    (process ["grep" "5"] {:out :inherit}))
+(-> (process '[tail -f "log.txt"])
+    (process '[cat])
+    (process '[grep "5"] {:out :inherit}))
 ```
 
 The solution then it to use `pipeline` + `pb`:
 
 ``` clojure
-(pipeline (pb ["tail" "-f" "log.txt"])
-          (pb ["cat"])
-          (pb ["grep" "5"] {:out :inherit}))
+(pipeline (pb '[tail -f "log.txt"])
+          (pb '[cat])
+          (pb '[grep "5"] {:out :inherit}))
 ```
 
 The varargs arity of `pipeline` is only available in JDK9 or higher due to the
@@ -241,12 +243,12 @@ following solution that reads the output of `tail` line by line may work for
 you:
 
 ``` clojure
-(def tail (process ["tail" "-f" "log.txt"] {:err :inherit}))
+(def tail (process '[tail -f "log.txt"] {:err :inherit}))
 
 (def cat-and-grep
-  (-> (process ["cat"]      {:err :inherit})
-      (process ["grep" "5"] {:out :inherit
-                             :err :inherit})))
+  (-> (process '[cat]      {:err :inherit})
+      (process '[grep "5"] {:out :inherit
+                            :err :inherit})))
 
 (binding [*in*  (io/reader (:out tail))
           *out* (io/writer (:in cat-and-grep))]
@@ -257,6 +259,46 @@ you:
 ```
 
 Another solution is to let bash handle the pipes by shelling out with `bash -c`.
+
+<!-- ## Shell macro -->
+
+<!-- The following macro is interesting, but not part of this library yet due to its -->
+<!-- experimental nature: -->
+
+<!-- ``` clojure -->
+<!-- (defn- format-arg [arg] -->
+<!--   (cond -->
+<!--     (symbol? arg) (str arg) -->
+<!--     (seq? arg) (let [f (first arg)] -->
+<!--                  (if (and (symbol? f) (= "unquote" (name f))) -->
+<!--                    (second arg) -->
+<!--                    arg)) -->
+<!--     (string? arg) arg -->
+<!--     :else (pr-str arg))) -->
+
+<!-- (defn- split [syms] -->
+<!--   (reduce (fn [acc sym] -->
+<!--             (if (= '| sym) -->
+<!--               (conj acc []) -->
+<!--               (conj (pop acc) (conj (peek acc) sym)))) -->
+<!--           [[]] syms)) -->
+
+<!-- (defmacro $ -->
+<!--   "Experimental, undocumented." -->
+<!--   [& args] -->
+<!--   (let [cmds (split args) -->
+<!--         cmds (mapv (fn [cmd] (mapv format-arg cmd)) cmds)] -->
+<!--     `(reduce (fn [acc# cmd#] -->
+<!--                (-> acc# (process cmd#))) -->
+<!--              (process (first ~cmds)) -->
+<!--              (rest ~cmds)))) -->
+<!-- ``` -->
+
+<!-- It can be used as follows: -->
+
+<!-- ``` clojure -->
+
+<!-- ``` -->
 
 ## Notes
 
