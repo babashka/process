@@ -95,6 +95,13 @@
 
 (jdk9+)
 
+(def windows? (-> (System/getProperty "os.name")
+                  (str/lower-case)
+                  (str/includes? "windows")))
+
+(def ^:dynamic *escape-fn*
+  (if windows? #(str/replace % "\"" "\\\"") identity))
+
 (defn ^java.lang.ProcessBuilder pb
   ([cmd] (pb cmd nil))
   ([^java.util.List cmd {:keys [:in
@@ -102,7 +109,7 @@
                                 :err
                                 :dir
                                 :env]}]
-   (let [cmd (mapv str cmd)
+   (let [cmd (mapv (comp *escape-fn* str) cmd)
          pb (cond-> (ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
@@ -120,8 +127,8 @@
                          :out :out-enc
                          :err :err-enc] :as opts}]
    (let [in (or in (:out prev))
-         cmd (mapv str cmd)
          pb (pb cmd opts)
+         cmd (vec (.command pb))
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
