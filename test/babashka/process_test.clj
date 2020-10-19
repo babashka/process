@@ -1,5 +1,5 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process check]]
+  (:require [babashka.process :refer [process check $]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -96,7 +96,10 @@
             (testing "contains the process arguments"
               (is (= command (:cmd (ex-data e)))))
             (testing "and contains a babashka process type"
-              (is (= :babashka.process/error (:type (ex-data e)))))))))))
+              (is (= :babashka.process/error (:type (ex-data e))))))))))
+  (testing "$ macro"
+    (let [config {:a 1}]
+      (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp))))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex

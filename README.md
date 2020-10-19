@@ -273,6 +273,30 @@ Another solution is to let bash handle the pipes by shelling out with `bash -c`.
 
 ## Notes
 
+### Clj-kondo hook
+
+To make clj-kondo understand the dollar-sign macro, you can use the following config + hook code:
+
+`config.edn`:
+``` clojure
+{:hooks {:analyze-call {babashka.process/$ hooks.dollar/$}}}
+```
+
+`hooks/dollar.clj`:
+``` clojure
+(ns hooks.dollar
+  (:require [clj-kondo.hooks-api :as api]))
+
+(defn $ [{:keys [:node]}]
+  (let [children (doall (keep (fn [child]
+                                (let [s (api/sexpr child)]
+                                  (when (and (seq? s)
+                                             (= 'unquote (first s)))
+                                    (first (:children child)))))
+                              (:children node)))]
+    {:node (assoc node :children children)}))
+```
+
 ### Script termination
 
 Because `process` spawns threads for non-blocking I/O, you might have to run
