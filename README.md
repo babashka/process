@@ -52,9 +52,8 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
   ```
   or using the `pipeline` function (see below)
 
-- `$`: convenience macro around `process`. Takes a number of objects, all of
-  which will be stringified with `str`. Options to `process` can be passed using
-  `:babashka.process/opts {}` as the last args. Supports interpolation via `~`.
+- `$`: convenience macro around `process`. Takes command as varargs. Options can be passed using
+  a map literal as the first arg. Supports interpolation via `~`.
 
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.

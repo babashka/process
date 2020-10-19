@@ -159,9 +159,8 @@
 
 (defmacro $
   [& args]
-  (let [opts (-> (drop-while #(not (identical? ::opts %)) args)
-                 second)
-        opts (if (seq? opts) (process-unquote opts) opts)
-        args (take-while #(not (identical? ::opts %)) args)
+  (let [[opts args] (if (map? (first args))
+                      [(first args) (rest args)]
+                      [nil args])
         cmd (mapv format-arg args)]
     `(process ~cmd ~opts)))

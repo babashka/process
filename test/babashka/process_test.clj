@@ -100,9 +100,8 @@
   (let [config {:a 1}]
     (testing "$ macro"
       (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
-      (let [sw (java.io.StringWriter.)
-            opts {:out sw}]
-        (is (= "{:a 1}\n" (do @($ echo ~config ::p/opts ~opts)
+      (let [sw (java.io.StringWriter.)]
+        (is (= "{:a 1}\n" (do @($ {:out sw} echo ~config)
                               (str sw))))))))
 
 (defmacro ^:private jdk9+ []
