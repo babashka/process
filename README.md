@@ -298,6 +298,12 @@ To make clj-kondo understand the dollar-sign macro, you can use the following co
     {:node (assoc node :children children)}))
 ```
 
+Alternatively, you can suppress unresolved symbols using the following config:
+
+``` clojure
+{:linters {:unresolved-symbol {:exclude [(babashka.process/$)]}}}
+```
+
 ### Script termination
 
 Because `process` spawns threads for non-blocking I/O, you might have to run
