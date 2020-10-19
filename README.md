@@ -13,9 +13,9 @@ $ export BABASHKA_CLASSPATH=$(clojure -Sdeps '{:deps {babashka/babashka.process 
 
 user=> (require '[clojure.string :as str])
 nil
-user=> (require '[babashka.process :refer [process]])
+user=> (require '[babashka.process :refer [$]])
 nil
-user=> (-> (process '[ls -la]) :out slurp str/split-lines first)
+user=> (-> ($ ls -la) :out slurp str/split-lines first)
 "total 136776"
 ```
 
@@ -54,12 +54,6 @@ user=> (-> (process '[ls -la]) :out slurp str/split-lines first)
 
 - `$`: convenience macro around `process`. Takes a number of objects, all which
   will be stringified with `str` and an optional option map as the last arg. Supports interpolation via `~`.
-
-  ``` clojure
-  (def config {:output {:format :edn}})
-  (-> ($ clj-kondo --config ~config --lint "src") :out slurp edn/read-string)
-  {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
-  ```
 
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
@@ -156,6 +150,14 @@ Forwarding the output of a process as the input of another process can also be d
 (-> (process '[ls])
     (process '[grep "README"]) :out slurp)
 "README.md\n"
+```
+
+`$` is a convenience macro around `process`:
+
+``` clojure
+(def config {:output {:format :edn}})
+(-> ($ clj-kondo --config ~config --lint "src") :out slurp edn/read-string)
+{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
 ```
 
 Demo of a `cat` process to which we send input while the process is running,
