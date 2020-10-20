@@ -42,6 +42,7 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
       to `:inherit` for redirecting to the parent process's corresponding
       stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
       be passed along to `clojure.java.io/copy`.
+    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.
     - `:env`: a map of environment variables.
 

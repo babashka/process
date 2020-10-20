@@ -109,14 +109,18 @@
                                 :out
                                 :err
                                 :dir
-                                :env]}]
+                                :env
+                                :inherit]}]
    (let [cmd (mapv (comp *escape-fn* str) cmd)
          pb (cond-> (ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
-              (identical? err :inherit) (.redirectError ProcessBuilder$Redirect/INHERIT)
-              (identical? out :inherit) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
-              (identical? in  :inherit) (.redirectInput ProcessBuilder$Redirect/INHERIT))]
+              (or inherit
+                  (identical? err :inherit)) (.redirectError ProcessBuilder$Redirect/INHERIT)
+              (or inherit
+                  (identical? out :inherit)) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
+              (or inherit
+                  (identical? in  :inherit)) (.redirectInput ProcessBuilder$Redirect/INHERIT))]
      pb)))
 
 (defn process
