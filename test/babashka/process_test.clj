@@ -1,5 +1,5 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process check $] :as p]
+  (:require [babashka.process :refer [process check $ pb start] :as p]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -99,15 +99,20 @@
               (is (= command (:cmd (ex-data e)))))
             (testing "and contains a babashka process type"
               (is (= :babashka.process/error (:type (ex-data e))))))))))
-  (let [config {:a 1}]
-    (testing "$ macro"
-      (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
-      (let [sw (java.io.StringWriter.)]
-        (is (= "{:a 1}\n" (do (-> ^{:out sw}
-                                  ($ echo ~config)
-                                  ($ cat)
-                                  deref)
+  (testing "$ macro"
+    (let [config {:a 1}]
+      (testing "$ macro"
+        (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
+        (let [sw (java.io.StringWriter.)]
+          (is (= "{:a 1}\n" (do (-> ^{:out sw}
+                                    ($ echo ~config)
+                                    ($ cat)
+                                    deref)
                                 (str sw))))))))
+  (testing "pb + start = process"
+    (let [out (-> (process ["ls"]) :out slurp)]
+      (is (and (string? out) (not (str/blank? out))))
+      (is (= out (-> (pb ["ls"]) (start) :out slurp))))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex

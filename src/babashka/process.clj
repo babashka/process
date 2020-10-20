@@ -122,6 +122,49 @@
    (->ProcessBuilder (build cmd opts)
                      opts)))
 
+(defn process
+  ([cmd] (process cmd nil))
+  ([cmd opts] (if (map? cmd) ;; prev
+                (process cmd opts nil)
+                (process nil cmd opts)))
+  ([prev cmd {:keys [:in :in-enc
+                     :out :out-enc
+                     :err :err-enc
+                     :shutdown] :as opts}]
+   (let [shutdown (or shutdown *default-shutdown-hook*)
+         in (or in (:out prev))
+         ^java.lang.ProcessBuilder pb
+         (if (instance? java.lang.ProcessBuilder cmd)
+           cmd
+           (build cmd opts))
+         cmd (vec (.command pb))
+         proc (.start pb)
+         stdin  (.getOutputStream proc)
+         stdout (.getInputStream proc)
+         stderr (.getErrorStream proc)]
+     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
+     (when (and in (not (identical? :inherit in)))
+       (future (with-open [stdin stdin] ;; needed to close stdin after writing
+                 (io/copy in stdin :encoding in-enc))))
+     (when (and out (not (identical? :inherit out)))
+       (future (io/copy stdout out :encoding out-enc)))
+     (when (and err (not (identical? :inherit err)))
+       (future (io/copy stderr err :encoding err-enc)))
+     (let [;; bb doesn't support map->Process at the moment
+           res (->Process proc
+                          nil
+                          stdin
+                          stdout
+                          stderr
+                          prev
+                          cmd)]
+       (-> (Runtime/getRuntime)
+           (.addShutdownHook (Thread. (fn [] (shutdown res)))))
+       res))))
+
+(defn start [pb]
+  (process (:pb pb) (:opts pb)))
+
 (jdk9+-conditional
  (defn pipeline
    "Returns the processes for one pipe created with -> or creates
@@ -157,43 +200,6 @@
                    {:prev nil :procs []}
                    pbs+opts+procs)
            :procs)))))
-
-(defn process
-  ([cmd] (process cmd nil))
-  ([cmd opts] (if (map? cmd) ;; prev
-                (process cmd opts nil)
-                (process nil cmd opts)))
-  ([prev cmd {:keys [:in :in-enc
-                     :out :out-enc
-                     :err :err-enc
-                     :shutdown] :as opts}]
-   (let [shutdown (or shutdown *default-shutdown-hook*)
-         in (or in (:out prev))
-         pb (build cmd opts)
-         cmd (vec (.command pb))
-         proc (.start pb)
-         stdin  (.getOutputStream proc)
-         stdout (.getInputStream proc)
-         stderr (.getErrorStream proc)]
-     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-     (when (and in (not (identical? :inherit in)))
-       (future (with-open [stdin stdin] ;; needed to close stdin after writing
-                 (io/copy in stdin :encoding in-enc))))
-     (when (and out (not (identical? :inherit out)))
-       (future (io/copy stdout out :encoding out-enc)))
-     (when (and err (not (identical? :inherit err)))
-       (future (io/copy stderr err :encoding err-enc)))
-     (let [;; bb doesn't support map->Process at the moment
-           res (->Process proc
-                          nil
-                          stdin
-                          stdout
-                          stderr
-                          prev
-                          cmd)]
-       (-> (Runtime/getRuntime)
-           (.addShutdownHook (Thread. (fn [] (shutdown res)))))
-       res))))
 
 (defn- process-unquote [arg]
   (let [f (first arg)]

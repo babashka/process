@@ -21,6 +21,10 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 
 ## API
 
+You will probably mostly need `process` or `$` and `check` so it would be good
+to start reading the docs for these. Skim over the rest and come back when you
+need it.
+
 - `process`: takes a command (vector of strings or objects that will be turned
   into strings) and optionally a map of options.
 
@@ -55,6 +59,9 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
   ```
   or using the `pipeline` function (see below)
 
+- `check`: takes a process, waits until is finished and
+  throws if exit code is non-zero.
+
 - `*default-escape-fn*`: dynamic var for escaping special characters in
   arguments. On Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other
   operating systems it defaults to `identity`.
@@ -66,21 +73,21 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 - `$`: convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form. Supports interpolation via `~`.
 
-- `check`: takes a process, waits until is finished and
-  throws if exit code is non-zero.
+- `pb`: returns a process builder (as record).
 
-- `pb`: returns an object to be used with `pipeline`.
+- `start`: takes a process builder, calls start and returns a process (as record).
 
 - `pipeline`:
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
-  - When passing two or more objects created with `pb`: creates a pipeline as a vector of processes (JDK9+ only).
+  - When passing two or more process builders created with `pb`: creates a
+    pipeline as a vector of processes (JDK9+ only).
 
   Also see [Pipelines](#pipelines).
 
 ## Example usage
 
 ``` clojure
-user=> (require '[babashka.process :refer [process check pipeline pb]])
+user=> (require '[babashka.process :refer [process $ check]])
 ```
 
 Invoke `ls`:
