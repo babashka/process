@@ -200,7 +200,7 @@ then close stdin and read the output of cat afterwards:
 ## Pipelines
 
 The `pipeline` function returns a sequential of processes from a process that
-was created with `->` or by passing multiple `ProcessBuilder` objects:
+was created with `->` or by passing multiple objects created with `pb`:
 
 ``` clojure
 (mapv :cmd (pipeline (-> (process '[ls]) (process '[cat]))))
