@@ -73,7 +73,7 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 
 - `pipeline`:
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
-  - When passing two or more `ProcessBuilder` objects: creates a pipeline as a vector of processes (JDK9+ only).
+  - When passing two or more objects created with `pb`: creates a pipeline as a vector of processes (JDK9+ only).
 
   Also see [Pipelines](#pipelines).
 
