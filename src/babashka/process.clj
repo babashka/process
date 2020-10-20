@@ -100,7 +100,7 @@
                   (str/lower-case)
                   (str/includes? "windows")))
 
-(def ^:dynamic *escape-fn*
+(def ^:dynamic *default-escape-fn*
   (if windows? #(str/replace % "\"" "\\\"") identity))
 
 (defn ^java.lang.ProcessBuilder pb
@@ -110,8 +110,11 @@
                                 :err
                                 :dir
                                 :env
-                                :inherit]}]
-   (let [cmd (mapv (comp *escape-fn* str) cmd)
+                                :inherit
+                                :escape]}]
+   (let [escape-fn (or escape *default-escape-fn*)
+         str-fn (comp escape-fn str)
+         cmd (mapv str-fn cmd)
          pb (cond-> (ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
@@ -123,15 +126,25 @@
                   (identical? in  :inherit)) (.redirectInput ProcessBuilder$Redirect/INHERIT))]
      pb)))
 
+(defn- default-shutdown-hook [proc]
+  (let [handle (.toHandle ^java.lang.Process (:proc proc))]
+    (run! (fn [^java.lang.ProcessHandle handle]
+            (.destroy handle))
+          (cons handle (iterator-seq (.iterator (.descendants handle)))))))
+
+(def ^:dynamic *default-shutdown-hook* default-shutdown-hook)
+
 (defn process
   ([cmd] (process cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
                     (process cmd opts nil)
                     (process nil cmd opts)))
-  ([prev cmd {:keys [:in  :in-enc
-                         :out :out-enc
-                         :err :err-enc] :as opts}]
-   (let [in (or in (:out prev))
+  ([prev cmd {:keys [:in :in-enc
+                     :out :out-enc
+                     :err :err-enc
+                     :shutdown] :as opts}]
+   (let [shutdown (or shutdown *default-shutdown-hook*)
+         in (or in (:out prev))
          pb (pb cmd opts)
          cmd (vec (.command pb))
          proc (.start pb)
@@ -154,6 +167,9 @@
                           stderr
                           prev
                           cmd)]
+       (when shutdown
+         (-> (Runtime/getRuntime)
+             (.addShutdownHook (Thread. (fn [] (shutdown res))))))
        res))))
 
 (defn- process-unquote [arg]

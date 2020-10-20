@@ -45,6 +45,8 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
     - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.
     - `:env`: a map of environment variables.
+    - `:escape`: overrides `*default-escape-fn*`.
+    - `:shutdown`: overrides `*default-shutdown-hook*`.
 
   Piping can be achieved with the `->` macro:
 
@@ -61,9 +63,13 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 
 - `pb`: returns a `java.lang.ProcessBuilder`.
 
-- `*escape-fn*`: var that is used to escape special characters in arguments. On
-  Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other OSes it
-  defaults to `identity`.
+- `*default-escape-fn*`: dynamic var for escaping special characters in
+  arguments. On Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other
+  operating systems it defaults to `identity`.
+
+- `*default-shutdown-hook`: dynamic var for setting shutdown hook for created
+  processes. Defaults to destroying the created process and its descendants
+  using `.destroy`.
 
 - `pipeline`:
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
