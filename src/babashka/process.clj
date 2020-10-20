@@ -31,7 +31,8 @@
     (println (str/join " " strs))))
 
 (defn check [proc]
-  (let [exit-code (:exit @proc)]
+  (let [proc @proc
+        exit-code (:exit proc)]
     (if (not (zero? exit-code))
       (let [err (slurp (:err proc))]
         (throw (ex-info (if (string? err)

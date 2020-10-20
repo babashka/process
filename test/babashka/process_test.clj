@@ -12,7 +12,9 @@
     (let [res (process ["ls"])
           out (slurp (:out res))
           err (slurp (:err res))
-          exit (:exit @res)]
+          checked (check res) ;; check should return process with :exit code
+                              ;; populated
+          exit (:exit checked)]
       (is (string? out))
       (is (string? err))
       (is (not (str/blank? out)))
