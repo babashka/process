@@ -101,8 +101,11 @@
     (testing "$ macro"
       (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
       (let [sw (java.io.StringWriter.)]
-        (is (= "{:a 1}\n" (do @($ {:out sw} echo ~config)
-                              (str sw))))))))
+        (is (= "{:a 1}\n" (do (-> ^{:out sw}
+                                  ($ echo ~config)
+                                  ($ cat)
+                                  deref)
+                                (str sw))))))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex

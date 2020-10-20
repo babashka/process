@@ -52,8 +52,8 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
   ```
   or using the `pipeline` function (see below)
 
-- `$`: convenience macro around `process`. Takes command as varargs. Options can be passed using
-  a map literal as the first arg. Supports interpolation via `~`.
+- `$`: convenience macro around `process`. Takes command as varargs. Options can
+  be passed via metadata on the form. Supports interpolation via `~`.
 
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.

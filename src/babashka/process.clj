@@ -134,7 +134,7 @@
          stdout (.getInputStream proc)
          stderr (.getErrorStream proc)]
      ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-     (when (and in (not (identical? :inherit out)))
+     (when (and in (not (identical? :inherit in)))
        (future (with-open [stdin stdin] ;; needed to close stdin after writing
                  (io/copy in stdin :encoding in-enc))))
      (when (and out (not (identical? :inherit out)))
@@ -159,15 +159,33 @@
 
 (defn- format-arg [arg]
   (cond
-    (symbol? arg) (str arg)
     (seq? arg) (process-unquote arg)
-    (string? arg) arg
-    :else (pr-str arg)))
+    :else (list 'quote arg)))
 
 (defmacro $
   [& args]
-  (let [[opts args] (if (map? (first args))
-                      [(first args) (rest args)]
-                      [nil args])
+  (let [opts (meta &form)
         cmd (mapv format-arg args)]
-    `(process ~cmd ~opts)))
+    `(let [cmd# ~cmd
+           [prev# cmd#]
+           (if-let [p# (first cmd#)]
+             (if #_(instance? Process p#) (:proc p#) ;; workaround for sci#432
+               [p# (rest cmd#)]
+               [nil cmd#])
+             [nil cmd#])
+           #_#_[opts# cmd#]
+           (if-let [o# (first cmd#)]
+             (if (map? o#)
+                 [o# (rest cmd#)]
+                 [nil cmd#])
+             [nil cmd#])]
+       (process prev# cmd# ~opts))))
+
+#_(defmacro my-foo [env]
+  (with-meta '($ bash -c "echo $FOO")
+    {:env env}))
+
+;; user=> (def x 10)
+;; #'user/x
+;; user=> (-> (my-foo {:FOO x}) :out slurp)
+;; "10\n"
