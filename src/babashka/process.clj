@@ -72,7 +72,7 @@
                prev
                cmd)))
 
-(defmacro jdk9+-conditional [pre-9 post-8]
+(defmacro ^:private jdk9+-conditional [pre-9 post-8]
   (if (identical? ::ex (try (import 'java.lang.ProcessHandle)
                             (catch Exception _ ::ex)))
     pre-9
@@ -89,9 +89,10 @@
 
 (def ^:dynamic *default-shutdown-hook* default-shutdown-hook)
 
-(def windows? (-> (System/getProperty "os.name")
-                  (str/lower-case)
-                  (str/includes? "windows")))
+(def ^:private windows?
+  (-> (System/getProperty "os.name")
+      (str/lower-case)
+      (str/includes? "windows")))
 
 (def ^:dynamic *default-escape-fn*
   (if windows? #(str/replace % "\"" "\\\"") identity))
@@ -122,6 +123,7 @@
               (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
      pb)))
 
+#_:clj-kondo/ignore ;; this needs fixing!
 (defrecord ProcessBuilder [pb opts])
 
 (defn pb
@@ -130,7 +132,7 @@
    (->ProcessBuilder (build cmd opts)
                      opts)))
 
-(defn copy [in out encoding]
+(defn- copy [in out encoding]
   (let [[out post-fn] (if (keyword? out)
                         (case :string
                           [(java.io.StringWriter.) str])
