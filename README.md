@@ -55,21 +55,21 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
   ```
   or using the `pipeline` function (see below)
 
+- `*default-escape-fn*`: dynamic var for escaping special characters in
+  arguments. On Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other
+  operating systems it defaults to `identity`.
+
+- `*default-shutdown-hook`: dynamic var for setting shutdown hook for created
+  processes. Defaults to destroying the created process using `.destroy`. On
+  JDK9+ it will also kill all of its descendants.
+
 - `$`: convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form. Supports interpolation via `~`.
 
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
 
-- `pb`: returns a `java.lang.ProcessBuilder`.
-
-- `*default-escape-fn*`: dynamic var for escaping special characters in
-  arguments. On Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other
-  operating systems it defaults to `identity`.
-
-- `*default-shutdown-hook`: dynamic var for setting shutdown hook for created
-  processes. Defaults to destroying the created process and its descendants
-  using `.destroy`.
+- `pb`: returns an object to be used with `pipeline`.
 
 - `pipeline`:
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.

@@ -4,6 +4,7 @@
   (:import [java.lang ProcessBuilder$Redirect]))
 
 (ns-unmap *ns* 'Process)
+(ns-unmap *ns* 'ProcessBuilder)
 
 (set! *warn-on-reflection* true)
 
@@ -19,7 +20,7 @@
 (defn- set-env
   "Sets environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro."
-  ^ProcessBuilder [^ProcessBuilder pb env]
+  ^java.lang.ProcessBuilder [^java.lang.ProcessBuilder pb env]
   (doto (.environment pb)
     (.clear)
     (.putAll (as-string-map env)))
@@ -63,38 +64,22 @@
                prev
                cmd)))
 
-(defmacro ^:private jdk9+ []
+(defmacro jdk9+-conditional [pre-9 post-8]
   (if (identical? ::ex (try (import 'java.lang.ProcessHandle)
                             (catch Exception _ ::ex)))
-    '(defn pipeline
-       "Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders."
-       ([proc]
-        (if-let [prev (:prev proc)]
-          (conj (pipeline prev) proc)
-          [proc])))
-    '(defn pipeline
-      "Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders."
-      ([proc]
-       (if-let [prev (:prev proc)]
-         (conj (pipeline prev) proc)
-         [proc]))
-      ([pb & pbs]
-       (let [pbs (cons pb pbs)
-             procs (ProcessBuilder/startPipeline pbs)
-             pb+procs (map vector pbs procs)]
-         (-> (reduce (fn [{:keys [:prev :procs]}
-                          [pb proc]]
-                       (let [cmd (.command ^java.lang.ProcessBuilder pb)
-                             new-prev (proc->Process proc cmd prev)
-                             new-procs (conj procs new-prev)]
-                         {:prev new-prev :procs new-procs}))
-                     {:prev nil :procs []}
-                     pb+procs)
-             :procs))))))
+    pre-9
+    post-8))
 
-(jdk9+)
+(jdk9+-conditional
+ (defn- default-shutdown-hook [proc]
+   (.destroy ^java.lang.Process (:proc proc)))
+ (defn- default-shutdown-hook [proc]
+   (let [handle (.toHandle ^java.lang.Process (:proc proc))]
+     (run! (fn [^java.lang.ProcessHandle handle]
+             (.destroy handle))
+           (cons handle (iterator-seq (.iterator (.descendants handle))))))))
+
+(def ^:dynamic *default-shutdown-hook* default-shutdown-hook)
 
 (def windows? (-> (System/getProperty "os.name")
                   (str/lower-case)
@@ -103,8 +88,8 @@
 (def ^:dynamic *default-escape-fn*
   (if windows? #(str/replace % "\"" "\\\"") identity))
 
-(defn ^java.lang.ProcessBuilder pb
-  ([cmd] (pb cmd nil))
+(defn- ^java.lang.ProcessBuilder build
+  ([cmd] (build cmd nil))
   ([^java.util.List cmd {:keys [:in
                                 :out
                                 :err
@@ -115,37 +100,76 @@
    (let [escape-fn (or escape *default-escape-fn*)
          str-fn (comp escape-fn str)
          cmd (mapv str-fn cmd)
-         pb (cond-> (ProcessBuilder. ^java.util.List cmd)
+         pb (cond-> (java.lang.ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
               (or inherit
-                  (identical? err :inherit)) (.redirectError ProcessBuilder$Redirect/INHERIT)
+                  (identical? err :inherit))
+              (.redirectError java.lang.ProcessBuilder$Redirect/INHERIT)
               (or inherit
-                  (identical? out :inherit)) (.redirectOutput ProcessBuilder$Redirect/INHERIT)
+                  (identical? out :inherit))
+              (.redirectOutput java.lang.ProcessBuilder$Redirect/INHERIT)
               (or inherit
-                  (identical? in  :inherit)) (.redirectInput ProcessBuilder$Redirect/INHERIT))]
+                  (identical? in  :inherit))
+              (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
      pb)))
 
-(defn- default-shutdown-hook [proc]
-  (let [handle (.toHandle ^java.lang.Process (:proc proc))]
-    (run! (fn [^java.lang.ProcessHandle handle]
-            (.destroy handle))
-          (cons handle (iterator-seq (.iterator (.descendants handle)))))))
+(defrecord ProcessBuilder [pb opts])
 
-(def ^:dynamic *default-shutdown-hook* default-shutdown-hook)
+(defn pb
+  ([cmd] (pb cmd nil))
+  ([cmd opts]
+   (->ProcessBuilder (build cmd opts)
+                     opts)))
+
+(jdk9+-conditional
+ (defn pipeline
+   "Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders."
+   ([proc]
+    (if-let [prev (:prev proc)]
+      (conj (pipeline prev) proc)
+      [proc])))
+ (defn pipeline
+    "Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders."
+    ([proc]
+     (if-let [prev (:prev proc)]
+       (conj (pipeline prev) proc)
+       [proc]))
+    ([pb & pbs]
+     (let [pbs (cons pb pbs)
+           opts (map :opts pbs)
+           pbs (map :pb pbs)
+           procs (java.lang.ProcessBuilder/startPipeline pbs)
+           pbs+opts+procs (map vector pbs opts procs)]
+       (-> (reduce (fn [{:keys [:prev :procs]}
+                        [pb opts proc]]
+                     (let [shutdown (or (:shutdown opts) *default-shutdown-hook*)
+                           cmd (.command ^java.lang.ProcessBuilder pb)
+                           new-proc (proc->Process proc cmd prev)
+                           new-procs (conj procs new-proc)]
+                       (-> (Runtime/getRuntime)
+                           (.addShutdownHook (Thread.
+                                              (fn []
+                                                (shutdown new-proc)))))
+                       {:prev new-proc :procs new-procs}))
+                   {:prev nil :procs []}
+                   pbs+opts+procs)
+           :procs)))))
 
 (defn process
   ([cmd] (process cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
-                    (process cmd opts nil)
-                    (process nil cmd opts)))
+                (process cmd opts nil)
+                (process nil cmd opts)))
   ([prev cmd {:keys [:in :in-enc
                      :out :out-enc
                      :err :err-enc
                      :shutdown] :as opts}]
    (let [shutdown (or shutdown *default-shutdown-hook*)
          in (or in (:out prev))
-         pb (pb cmd opts)
+         pb (build cmd opts)
          cmd (vec (.command pb))
          proc (.start pb)
          stdin  (.getOutputStream proc)
@@ -167,9 +191,8 @@
                           stderr
                           prev
                           cmd)]
-       (when shutdown
-         (-> (Runtime/getRuntime)
-             (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+       (-> (Runtime/getRuntime)
+           (.addShutdownHook (Thread. (fn [] (shutdown res)))))
        res))))
 
 (defn- process-unquote [arg]
@@ -191,20 +214,20 @@
            [prev# cmd#]
            (if-let [p# (first cmd#)]
              (if #_(instance? Process p#) (:proc p#) ;; workaround for sci#432
-               [p# (rest cmd#)]
-               [nil cmd#])
+                 [p# (rest cmd#)]
+                 [nil cmd#])
              [nil cmd#])
            #_#_[opts# cmd#]
            (if-let [o# (first cmd#)]
              (if (map? o#)
-                 [o# (rest cmd#)]
-                 [nil cmd#])
+               [o# (rest cmd#)]
+               [nil cmd#])
              [nil cmd#])]
        (process prev# cmd# ~opts))))
 
 #_(defmacro my-foo [env]
-  (with-meta '($ bash -c "echo $FOO")
-    {:env env}))
+    (with-meta '($ bash -c "echo $FOO")
+      {:env env}))
 
 ;; user=> (def x 10)
 ;; #'user/x
