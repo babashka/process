@@ -33,9 +33,12 @@
 
 (defn check [proc]
   (let [proc @proc
-        exit-code (:exit proc)]
+        exit-code (:exit proc)
+        err (:err proc)]
     (if (not (zero? exit-code))
-      (let [err (slurp (:err proc))]
+      (let [err (if (string? err)
+                  err
+                  (slurp (:err proc)))]
         (throw (ex-info (if (string? err)
                           err
                           "failed")
@@ -45,8 +48,13 @@
 (defrecord Process [^java.lang.Process proc exit in out err prev cmd]
   clojure.lang.IDeref
   (deref [this]
-    (let [exit-code (.waitFor proc)]
-      (assoc this :exit exit-code))))
+    (let [exit-code (.waitFor proc)
+          out (if (future? out) @out out)
+          err (if (future? err) @err err)]
+      (assoc this
+             :exit exit-code
+             :out out
+             :err err))))
 
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
@@ -122,6 +130,14 @@
    (->ProcessBuilder (build cmd opts)
                      opts)))
 
+(defn copy [in out encoding]
+  (let [[out post-fn] (if (keyword? out)
+                        (case :string
+                          [(java.io.StringWriter.) str])
+                        [out identity])]
+    (io/copy in out :encoding encoding)
+    (post-fn out)))
+
 (defn process
   ([cmd] (process cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
@@ -130,7 +146,7 @@
   ([prev cmd {:keys [:in :in-enc
                      :out :out-enc
                      :err :err-enc
-                     :shutdown] :as opts}]
+                     :shutdown :inherit] :as opts}]
    (let [shutdown (or shutdown *default-shutdown-hook*)
          in (or in (:out prev))
          ^java.lang.ProcessBuilder pb
@@ -141,21 +157,23 @@
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
-         stderr (.getErrorStream proc)]
+         stderr (.getErrorStream proc)
+         out (if (and out (not (or inherit (identical? :inherit out))))
+               (future (copy stdout out out-enc))
+               stdout)
+         err (if (and err (not (or inherit (identical? :inherit err))))
+               (future (copy stderr err err-enc))
+               stderr)]
      ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-     (when (and in (not (identical? :inherit in)))
+     (when (and in (not (or inherit (identical? :inherit in))))
        (future (with-open [stdin stdin] ;; needed to close stdin after writing
                  (io/copy in stdin :encoding in-enc))))
-     (when (and out (not (identical? :inherit out)))
-       (future (io/copy stdout out :encoding out-enc)))
-     (when (and err (not (identical? :inherit err)))
-       (future (io/copy stderr err :encoding err-enc)))
      (let [;; bb doesn't support map->Process at the moment
            res (->Process proc
                           nil
                           stdin
-                          stdout
-                          stderr
+                          out
+                          err
                           prev
                           cmd)]
        (-> (Runtime/getRuntime)

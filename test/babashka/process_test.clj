@@ -81,8 +81,7 @@
                       (System/exit 1))]
       (is (thrown-with-msg?
             clojure.lang.ExceptionInfo #"error123"
-            (-> (process ["clojure" "-e" (str err-form)])
-                (check)))
+            (-> (process ["clojure" "-e" (str err-form)]) (check)))
           "with :err string"))
     (is (thrown?
           clojure.lang.ExceptionInfo #"failed"
@@ -112,7 +111,11 @@
   (testing "pb + start = process"
     (let [out (-> (process ["ls"]) :out slurp)]
       (is (and (string? out) (not (str/blank? out))))
-      (is (= out (-> (pb ["ls"]) (start) :out slurp))))))
+      (is (= out (-> (pb ["ls"]) (start) :out slurp)))))
+  (testing "output to string"
+    (is (string? (-> (process ["ls"] {:out :string})
+                     check
+                     :out)))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
