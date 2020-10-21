@@ -28,7 +28,7 @@ need it.
 - `process`: takes a command (vector of strings or objects that will be turned
   into strings) and optionally a map of options.
 
-  Returns: a record with
+  Returns: a record (called "the process" in this README) with
     - `:proc`: an instance of `java.lang.Process`
     - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
       `:out` or `:err` you will typically use `slurp`. Slurping those streams
@@ -44,21 +44,21 @@ need it.
     - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
       will be copied to or from the process's corresponding stream. May be set
       to `:inherit` for redirecting to the parent process's corresponding
-      stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
+      stream.Optional `:in-enc`, `:out-enc` and `:err-enc` values will
       be passed along to `clojure.java.io/copy`.
+
+      The `:out` and `:err` options support `:string` for writing to a string
+      output. You will need to `deref` the process before accessing the string
+      via the process's `:out`.
+
     - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.
     - `:env`: a map of environment variables.
     - `:escape`: function that will applied to each stringified argument. On
-      Windows this defaults to prepending a backslash before a double quote.
-    - `:shutdown`: shutdown hook. Required: map with `:proc`
+      Windows this defaults to prepending a backslash before a double quote. On
+      other operating systems it defaults to `identity`.
+    - `:shutdown`: shutdown hook. Takes a map with `:proc`
       (`java.lang.ProcessBuilder`). Defaults to `default-shutdown-hook`.
-
-- `default-shutdown-hook`: function of map with `:proc`
-  (`java.lang.ProcessBuilder`). Destroys the process and all of its descendants.
-
-- `*defaults*`: dynamic var containing overridable default options. Use
-  `alter-var-root` to change permanently or `binding` to change temporarily.
 
   Piping can be achieved with the `->` macro:
 
@@ -72,6 +72,12 @@ need it.
 
 - `$`: convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form. Supports interpolation via `~`.
+
+- `*defaults*`: dynamic var containing overridable default options. Use
+  `alter-var-root` to change permanently or `binding` to change temporarily.
+
+- `default-shutdown-hook`: function of map with `:proc`
+  (`java.lang.ProcessBuilder`). Destroys the process and all of its descendants.
 
 - `pb`: returns a process builder (as record).
 
