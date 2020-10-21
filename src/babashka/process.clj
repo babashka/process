@@ -79,35 +79,35 @@
     post-8))
 
 (jdk9+-conditional
- (defn- default-shutdown-hook [proc]
+ (defn default-shutdown-hook [proc]
    (.destroy ^java.lang.Process (:proc proc)))
- (defn- default-shutdown-hook [proc]
+ (defn default-shutdown-hook [proc]
    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
      (run! (fn [^java.lang.ProcessHandle handle]
              (.destroy handle))
            (cons handle (iterator-seq (.iterator (.descendants handle))))))))
-
-(def ^:dynamic *default-shutdown-hook* default-shutdown-hook)
 
 (def ^:private windows?
   (-> (System/getProperty "os.name")
       (str/lower-case)
       (str/includes? "windows")))
 
-(def ^:dynamic *default-escape-fn*
-  (if windows? #(str/replace % "\"" "\\\"") identity))
+(def ^:dynamic *defaults*
+  {:shutdown default-shutdown-hook
+   :escape (if windows? #(str/replace % "\"" "\\\"") identity)})
 
 (defn- ^java.lang.ProcessBuilder build
   ([cmd] (build cmd nil))
-  ([^java.util.List cmd {:keys [:in
-                                :out
-                                :err
-                                :dir
-                                :env
-                                :inherit
-                                :escape]}]
-   (let [escape-fn (or escape *default-escape-fn*)
-         str-fn (comp escape-fn str)
+  ([^java.util.List cmd opts]
+   (let [opts (merge *defaults* opts)
+         {:keys [:in
+                 :out
+                 :err
+                 :dir
+                 :env
+                 :inherit
+                 :escape]} opts
+         str-fn (comp escape str)
          cmd (mapv str-fn cmd)
          pb (cond-> (java.lang.ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
@@ -123,7 +123,6 @@
               (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
      pb)))
 
-#_:clj-kondo/ignore ;; this needs fixing!
 (defrecord ProcessBuilder [pb opts])
 
 (defn pb
@@ -145,11 +144,12 @@
   ([cmd opts] (if (map? cmd) ;; prev
                 (process cmd opts nil)
                 (process nil cmd opts)))
-  ([prev cmd {:keys [:in :in-enc
-                     :out :out-enc
-                     :err :err-enc
-                     :shutdown :inherit] :as opts}]
-   (let [shutdown (or shutdown *default-shutdown-hook*)
+  ([prev cmd opts]
+   (let [opts (merge *defaults* opts)
+         {:keys [:in :in-enc
+                 :out :out-enc
+                 :err :err-enc
+                 :shutdown :inherit]} opts
          in (or in (:out prev))
          ^java.lang.ProcessBuilder pb
          (if (instance? java.lang.ProcessBuilder cmd)
@@ -179,7 +179,9 @@
                           prev
                           cmd)]
        (-> (Runtime/getRuntime)
-           (.addShutdownHook (Thread. (fn [] (shutdown res)))))
+           ;; NOTE: we're only passing proc here, so the rest can be garbage
+           ;; collected before shutdown
+           (.addShutdownHook (Thread. (fn [] (shutdown {:proc proc})))))
        res))))
 
 (defn start [pb]
@@ -208,7 +210,7 @@
            pbs+opts+procs (map vector pbs opts procs)]
        (-> (reduce (fn [{:keys [:prev :procs]}
                         [pb opts proc]]
-                     (let [shutdown (or (:shutdown opts) *default-shutdown-hook*)
+                     (let [shutdown (:shutdown opts)
                            cmd (.command ^java.lang.ProcessBuilder pb)
                            new-proc (proc->Process proc cmd prev)
                            new-procs (conj procs new-proc)]

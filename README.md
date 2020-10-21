@@ -49,8 +49,16 @@ need it.
     - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.
     - `:env`: a map of environment variables.
-    - `:escape`: overrides `*default-escape-fn*`.
-    - `:shutdown`: overrides `*default-shutdown-hook*`.
+    - `:escape`: function that will applied to each stringified argument. On
+      Windows this defaults to prepending a backslash before a double quote.
+    - `:shutdown`: shutdown hook. Required: map with `:proc`
+      (`java.lang.ProcessBuilder`). Defaults to `default-shutdown-hook`.
+
+- `default-shutdown-hook`: function of map with `:proc`
+  (`java.lang.ProcessBuilder`). Destroys the process and all of its descendants.
+
+- `*defaults*`: dynamic var containing overridable default options. Use
+  `alter-var-root` to change permanently or `binding` to change temporarily.
 
   Piping can be achieved with the `->` macro:
 
@@ -61,14 +69,6 @@ need it.
 
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
-
-- `*default-escape-fn*`: dynamic var for escaping special characters in
-  arguments. On Windows it defaults to `#(str/replace % "\"" "\\\"")`. On other
-  operating systems it defaults to `identity`.
-
-- `*default-shutdown-hook`: dynamic var for setting shutdown hook for created
-  processes. Defaults to destroying the created process using `.destroy`. On
-  JDK9+ it will also kill all of its descendants.
 
 - `$`: convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form. Supports interpolation via `~`.
