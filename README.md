@@ -19,6 +19,16 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 "total 136776"
 ```
 
+## Differences with `clojure.java.shell/sh`:
+
+- `sh` is blocking, process makes blocking explicit via `deref`
+- `sh` focuses on convenience but limits what you can do with the underlying
+  process, process exposes as much as possible while still offering an ergonomic
+  API
+- process supports piping processes via `->` or `pipeline`
+- `sh` offers integration with `clojure.java.io/copy` for `:in`, process extends
+  this to `:out` and `:err`
+
 ## API
 
 You will probably mostly need `process` or `$` and `check` so it would be good
@@ -321,7 +331,8 @@ To make clj-kondo understand the dollar-sign macro, you can use the following co
     {:node (assoc node :children children)}))
 ```
 
-Alternatively, you can suppress unresolved symbols using the following config:
+Alternatively, you can either use string arguments or suppress unresolved
+symbols using the following config:
 
 ``` clojure
 {:linters {:unresolved-symbol {:exclude [(babashka.process/$)]}}}
