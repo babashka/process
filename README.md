@@ -90,7 +90,7 @@ need it.
 - `destroy`: function of process or map with `:proc`
   (`java.lang.ProcessBuilder`). Destroys the process and returns the input arg.
 
-- `destroy-tree`: same as `destroy` but also destroys all descendants
+- `destroy-tree`: same as `destroy` but also destroys all descendants. JDK9+ only.
 
 - `pb`: returns a process builder (as record).
 
