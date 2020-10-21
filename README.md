@@ -226,7 +226,7 @@ then close stdin and read the output of cat afterwards:
 
 ## Pipelines
 
-The `pipeline` function returns a sequential of processes from a process that
+The `pipeline` function returns a [`Sequential`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/sequential?) of processes from a process that
 was created with `->` or by passing multiple objects created with `pb`:
 
 ``` clojure
