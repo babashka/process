@@ -226,8 +226,10 @@ then close stdin and read the output of cat afterwards:
 
 ## Pipelines
 
-The `pipeline` function returns a [`Sequential`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/sequential?) of processes from a process that
-was created with `->` or by passing multiple objects created with `pb`:
+The `pipeline` function returns a
+[`sequential`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/sequential?)
+of processes from a process that was created with `->` or by passing multiple
+objects created with `pb`:
 
 ``` clojure
 (mapv :cmd (pipeline (-> (process '[ls]) (process '[cat]))))
