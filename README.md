@@ -67,8 +67,9 @@ need it.
     - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
-    - `:shutdown`: shutdown hook. Takes a map with `:proc`
-      (`java.lang.ProcessBuilder`). Defaults to `default-shutdown-hook`.
+    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
+      map. Typically used with `destroy` or `destroy-tree` to ensure long
+      running processes are cleaned up on shutdown.
 
   Piping can be achieved with the `->` macro:
 
@@ -86,8 +87,10 @@ need it.
 - `*defaults*`: dynamic var containing overridable default options. Use
   `alter-var-root` to change permanently or `binding` to change temporarily.
 
-- `default-shutdown-hook`: function of map with `:proc`
-  (`java.lang.ProcessBuilder`). Destroys the process and all of its descendants.
+- `destroy`: function of process or map with `:proc`
+  (`java.lang.ProcessBuilder`). Destroys the process and returns the input arg.
+
+- `destroy-tree`: same as `destroy` but also destroys all descendants
 
 - `pb`: returns a process builder (as record).
 

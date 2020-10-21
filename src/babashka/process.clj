@@ -78,14 +78,18 @@
     pre-9
     post-8))
 
+(defn destroy [proc]
+  (.destroy ^java.lang.Process (:proc proc))
+  proc)
+
 (jdk9+-conditional
- (defn default-shutdown-hook [proc]
-   (.destroy ^java.lang.Process (:proc proc)))
- (defn default-shutdown-hook [proc]
+ nil
+ (defn destroy-tree [proc]
    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
      (run! (fn [^java.lang.ProcessHandle handle]
              (.destroy handle))
-           (cons handle (iterator-seq (.iterator (.descendants handle))))))))
+           (cons handle (iterator-seq (.iterator (.descendants handle))))))
+   proc))
 
 (def ^:private windows?
   (-> (System/getProperty "os.name")
@@ -93,7 +97,7 @@
       (str/includes? "windows")))
 
 (def ^:dynamic *defaults*
-  {:shutdown default-shutdown-hook
+  {:shutdown nil
    :escape (if windows? #(str/replace % "\"" "\\\"") identity)})
 
 (defn- ^java.lang.ProcessBuilder build
@@ -179,10 +183,9 @@
                           err
                           prev
                           cmd)]
-       (-> (Runtime/getRuntime)
-           ;; NOTE: we're only passing proc here, so the rest can be garbage
-           ;; collected before shutdown
-           (.addShutdownHook (Thread. (fn [] (shutdown {:proc proc})))))
+       (when shutdown
+         (-> (Runtime/getRuntime)
+             (.addShutdownHook (Thread. (fn [] (shutdown res))))))
        res))))
 
 (defn start [pb]
@@ -215,10 +218,11 @@
                            cmd (.command ^java.lang.ProcessBuilder pb)
                            new-proc (proc->Process proc cmd prev)
                            new-procs (conj procs new-proc)]
-                       (-> (Runtime/getRuntime)
-                           (.addShutdownHook (Thread.
-                                              (fn []
-                                                (shutdown {:proc proc})))))
+                       (when shutdown
+                         (-> (Runtime/getRuntime)
+                             (.addShutdownHook (Thread.
+                                                (fn []
+                                                  (shutdown new-proc))))))
                        {:prev new-proc :procs new-procs}))
                    {:prev nil :procs []}
                    pbs+opts+procs)
