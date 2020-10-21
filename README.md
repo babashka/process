@@ -21,12 +21,12 @@ user=> (-> ($ ls -la) :out slurp str/split-lines first)
 
 ## Differences with `clojure.java.shell/sh`:
 
-- `sh` is blocking, process makes blocking explicit via `deref`
+- `sh` is blocking, `process` makes blocking explicit via `deref`
 - `sh` focuses on convenience but limits what you can do with the underlying
-  process, process exposes as much as possible while still offering an ergonomic
+  process, `process` exposes as much as possible while still offering an ergonomic
   API
-- process supports piping processes via `->` or `pipeline`
-- `sh` offers integration with `clojure.java.io/copy` for `:in`, process extends
+- `process` supports piping processes via `->` or `pipeline`
+- `sh` offers integration with `clojure.java.io/copy` for `:in`, `process` extends
   this to `:out` and `:err`
 
 ## API
