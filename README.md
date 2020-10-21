@@ -41,12 +41,13 @@ need it.
   Returns: a record (called "the process" in this README) with
     - `:proc`: an instance of `java.lang.Process`
     - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
-      `:out` or `:err` you will typically use `slurp`. Slurping those streams
-      will block the current thread until the process is finished.
+      `:out` or `:err` you will typically use `slurp` or use the `:string`
+      option (see below). Slurping those streams will block the current thread
+      until the process is finished.
     - `:cmd`: the command that was passed to create the process.
     - `:prev`: previous process record in case of a pipeline.
 
-  The returned record may be passed to `deref`. Doing so will cause the current
+  The returned record can be passed to `deref`. Doing so will cause the current
   thread to block until the process is finished and will populate `:exit` with
   the exit code.
 
