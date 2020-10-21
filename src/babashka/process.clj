@@ -128,8 +128,9 @@
 (defn pb
   ([cmd] (pb cmd nil))
   ([cmd opts]
-   (->ProcessBuilder (build cmd opts)
-                     opts)))
+   (let [opts (merge *defaults* opts)]
+     (->ProcessBuilder (build cmd opts)
+                       opts))))
 
 (defn- copy [in out encoding]
   (let [[out post-fn] (if (keyword? out)
@@ -217,7 +218,7 @@
                        (-> (Runtime/getRuntime)
                            (.addShutdownHook (Thread.
                                               (fn []
-                                                (shutdown new-proc)))))
+                                                (shutdown {:proc proc})))))
                        {:prev new-proc :procs new-procs}))
                    {:prev nil :procs []}
                    pbs+opts+procs)
