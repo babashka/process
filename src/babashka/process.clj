@@ -127,14 +127,18 @@
               (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
      pb)))
 
-(defrecord ProcessBuilder [pb opts])
+(defrecord ProcessBuilder [pb opts prev])
 
 (defn pb
-  ([cmd] (pb cmd nil))
-  ([cmd opts]
+  ([cmd] (pb nil cmd nil))
+  ([cmd opts] (if (map? cmd) ;; prev
+                (pb cmd opts nil)
+                (pb nil cmd opts)))
+  ([prev cmd opts]
    (let [opts (merge *defaults* opts)]
      (->ProcessBuilder (build cmd opts)
-                       opts))))
+                       opts
+                       prev))))
 
 (defn- copy [in out encoding]
   (let [[out post-fn] (if (keyword? out)
@@ -145,7 +149,7 @@
     (post-fn out)))
 
 (defn process
-  ([cmd] (process cmd nil))
+  ([cmd] (process nil cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
                 (process cmd opts nil)
                 (process nil cmd opts)))
@@ -188,9 +192,6 @@
              (.addShutdownHook (Thread. (fn [] (shutdown res))))))
        res))))
 
-(defn start [pb]
-  (process (:pb pb) (:opts pb)))
-
 (jdk9+-conditional
  (defn pipeline
    "Returns the processes for one pipe created with -> or creates
@@ -227,6 +228,12 @@
                    {:prev nil :procs []}
                    pbs+opts+procs)
            :procs)))))
+
+(defn start [pb]
+  (let [pipe (pipeline pb)]
+    (if (= 1 (count pipe))
+      (process (:pb pb) (:opts pb))
+      (last (apply pipeline pipe)))))
 
 (defn- process-unquote [arg]
   (let [f (first arg)]

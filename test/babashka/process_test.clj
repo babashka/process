@@ -132,6 +132,10 @@
          (testing "pipeline returns processes nested with ->"
            (is (= [["ls"] ["cat"]] (map :cmd (pipeline (-> (process ["ls"]) (process ["cat"])))))))
          (testing "pipeline returns processes created with pb"
-           (is (= [["ls"] ["cat"]] (map :cmd (pipeline (pb ["ls"]) (pb ["cat"]))))))))))
+           (is (= [["ls"] ["cat"]] (map :cmd (pipeline (pb ["ls"]) (pb ["cat"]))))))
+         (testing "pbs can be chained with ->"
+           (let [chain (-> (pb ["ls"]) (pb ["cat"] {:out :string}) start deref)]
+             (is (string? (slurp (:out chain))))
+             (is (= [["ls"] ["cat"]] (map :cmd (pipeline chain))))))))))
 
 (jdk9+)
