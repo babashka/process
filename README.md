@@ -157,6 +157,24 @@ LICENSE		README.md	deps.edn	src		test
 nil
 ```
 
+Both `:in`, `:out` may contain objects that are compatible with `clojure.java.io/copy`:
+
+``` clojure
+user=> (with-out-str (check (process '[cat] {:in "foo" :out *out*})))
+"foo"
+
+user=> (with-out-str (check (process '[ls] {:out *out*})))
+"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+```
+
+The `:out` option also supports `:string`. You will need to `deref` the process
+in order for the string to be there:
+
+``` clojure
+user=> (-> @(process '[ls] {:out :string}) :out)
+"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+```
+
 Redirect output stream from one process to input stream of the next process:
 
 ``` clojure
@@ -170,16 +188,6 @@ deps.edn
 src
 test
 nil
-```
-
-Both `:in` and `:out` may contain objects that are compatible with `clojure.java.io/copy`:
-
-``` clojure
-user=> (with-out-str (check (process '[cat] {:in "foo" :out *out*})))
-"foo"
-
-user=> (with-out-str (check (process '[ls] {:out *out*})))
-"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
 Forwarding the output of a process as the input of another process can also be done with thread-first:
@@ -217,11 +225,11 @@ then close stdin and read the output of cat afterwards:
 
 (.close stdin)
 
+(slurp (:out catp)) ;; "hello\n"
+
 (def exit (:exit @catp)) ;; 0
 
 (.isAlive (:proc catp)) ;; false
-
-(slurp (:out catp)) ;; "hello\n"
 ```
 
 ## Output buffering
