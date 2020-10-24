@@ -13,9 +13,9 @@ $ clojure -Sdeps '{:deps {babashka/babashka.process {:sha "<latest-sha>" :git/ur
 
 user=> (require '[clojure.string :as str])
 nil
-user=> (require '[babashka.process :refer [$]])
+user=> (require '[babashka.process :refer [$ check]])
 nil
-user=> (-> ($ ls -la) :out slurp str/split-lines first)
+user=> (-> ^{:out :string} ($ ls -la) check :out str/split-lines first)
 "total 136776"
 ```
 
@@ -104,7 +104,7 @@ need it.
 
   Also see [Pipelines](#pipelines).
 
-## Example usage
+## Usage
 
 ``` clojure
 user=> (require '[babashka.process :refer [process $ check]])
@@ -222,6 +222,26 @@ then close stdin and read the output of cat afterwards:
 (.isAlive (:proc catp)) ;; false
 
 (slurp (:out catp)) ;; "hello\n"
+```
+
+## Output buffering
+
+Note that `check` will wait for the process to end in order to check the exit
+code. When the process has lots of data to write to stdout, it is recommended to
+add an explicit `:out` option to prevent deadlock due to buffering. This example
+will deadlock because the process is buffering the output stream but it's not
+being consumed, so the process won't be able to finish:
+
+``` clojure
+user=> (-> (process ["cat"] {:in (slurp "https://datahub.io/datahq/1mb-test/r/1mb-test.csv")}) check :out slurp count)
+```
+
+The way to deal with this is providing an explicit `:out` option so the process
+can finish writing its output:
+
+``` clojure
+user=> (-> (process ["cat"] {:in (slurp "https://datahub.io/datahq/1mb-test/r/1mb-test.csv") :out :string}) check :out count)
+1043005
 ```
 
 ## Pipelines
