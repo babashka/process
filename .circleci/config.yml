@@ -66,11 +66,13 @@ workflows:
   version: 2
   ci:
     jobs:
-      - jvm
+      - java-8
+      - java-11
       - deploy:
           filters:
             branches:
               only: master
           requires:
-            - jvm
+            - java-8
+            - java-11
 
