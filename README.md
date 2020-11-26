@@ -2,17 +2,16 @@
 
 [![Clojars Project](https://img.shields.io/clojars/v/babashka/process.svg)](https://clojars.org/babashka/process)
 
-
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
 Status: alpha.
 
 This library is included in
 [babashka](https://github.com/borkdude/babashka) since [0.2.3](https://github.com/borkdude/babashka/blob/master/CHANGELOG.md#v023-2020-10-21) but is also intended as a JVM
-library. You can use it as a git dep:
+library:
 
-``` shell
-$ clojure -Sdeps '{:deps {babashka/babashka.process {:sha "<latest-sha>" :git/url "https://github.com/babashka/babashka.process"}}}'
+``` clojure
+$ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.0.1"}}}'
 
 user=> (require '[clojure.string :as str])
 nil
@@ -22,7 +21,11 @@ user=> (-> ^{:out :string} ($ ls -la) check :out str/split-lines first)
 "total 136776"
 ```
 
-## Differences with `clojure.java.shell/sh`:
+## Differences with `clojure.java.shell/sh`
+
+If `clojure.java.shell` works for your purposes, keep using it. But there are
+contexts in which you need more flexibility. The major differences compared with
+this library:
 
 - `sh` is blocking, `process` makes blocking explicit via `deref`
 - `sh` focuses on convenience but limits what you can do with the underlying
