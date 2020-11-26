@@ -1,0 +1,32 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: "ubuntu-latest"
+
+    steps:
+    - name: "Checkout code"
+      uses: "actions/checkout@v2"
+
+    - name: "Prepare Java"
+      uses: "actions/setup-java@v1"
+      with:
+        java-version: "8"
+
+    - name: "Restore Cache"
+      uses: "actions/cache@v1"
+      with:
+        path: "~/.m2/repository"
+        key: "${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}"
+        restore-keys: "${{ runner.os }}-deps-"
+
+    - name: "Setup Clojure"
+      uses: DeLaGuardo/setup-clojure@master
+      with:
+        tools-deps: '1.10.1.727'
+
+    - name: "Run tests"
+      run: "clojure -M:test"

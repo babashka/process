@@ -1,5 +1,8 @@
 # process
 
+[![Clojars Project](https://img.shields.io/clojars/v/babashka/process.svg)](https://clojars.org/babashka/process)
+
+
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
 Status: alpha.
