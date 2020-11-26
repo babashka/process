@@ -1,2 +1,4 @@
 .cpcache
 .clj-kondo/.cache
+.lein-failures
+/target
