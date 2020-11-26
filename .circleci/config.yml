@@ -1,0 +1,76 @@
+# Clojure CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-clojure/ for more details
+#
+version: 2.1
+jobs:
+  java-8:
+    docker:
+      # specify the version you desire here
+      - image: circleci/clojure:openjdk-8-lein
+    working_directory: ~/repo
+    environment:
+      LEIN_ROOT: "true"
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+          name: Run JVM tests
+          command: |
+            script/test
+  java-11:
+    docker:
+      # specify the version you desire here
+      - image: circleci/clojure:openjdk-11-lein
+    working_directory: ~/repo
+    environment:
+      LEIN_ROOT: "true"
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+          name: Run JVM tests
+          command: |
+            script/test
+  deploy:
+    resource_class: large
+    docker:
+      - image: circleci/clojure:openjdk-8-lein
+    working_directory: ~/repo
+    environment:
+      LEIN_ROOT: "true"
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "project.clj" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run: .circleci/script/deploy
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+workflows:
+  version: 2
+  ci:
+    jobs:
+      - jvm
+      - deploy:
+          filters:
+            branches:
+              only: master
+          requires:
+            - jvm
+
