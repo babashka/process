@@ -7,7 +7,7 @@ A Clojure wrapper around `java.lang.ProcessBuilder`.
 Status: alpha.
 
 This library is included in
-[babashka](https://github.com/borkdude/babashka) since [0.2.3](https://github.com/borkdude/babashka/blob/master/CHANGELOG.md#v023-2020-10-21) but is also intended as a JVM
+[babashka](https://github.com/babashka/babashka) since [0.2.3](https://github.com/babashka/babashka/blob/master/CHANGELOG.md#v023-2020-10-21) but is also intended as a JVM
 library:
 
 ``` clojure
