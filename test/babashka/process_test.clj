@@ -77,6 +77,9 @@
               (-> (process ["ls"] {:dir "test/babashka"}) :out slurp))))
   (testing "use of :env options"
     (is (= "" (-> (process ["env"] {:env {}}) :out slurp)))
+    (let [out (-> (sh "env" {:extra-env {:FOO "BAR"}}) :out)]
+      (is (str/includes? out "PATH"))
+      (is (str/includes? out "FOO=BAR")))
     (is (= ["SOME_VAR=SOME_VAL"
             "keyword_val=:keyword-val"
             "keyword_var=KWVARVAL"]

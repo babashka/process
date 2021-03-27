@@ -70,7 +70,7 @@ need it.
 
     - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.
-    - `:env`: a map of environment variables. Also see [Add environment](#add-environment)
+    - `:env`, `:extra-env`: a map of environment variables. See [Add environment](#add-environment).
     - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
@@ -290,12 +290,10 @@ user=> (-> (process ["cat"] {:in (slurp "https://datahub.io/datahq/1mb-test/r/1m
 
 ## Add Environment
 
-The current behavior of the `:env` option replaces your entire
-environment with the provided map. If is desired to only include more
-variables in the current environment you can proceed as follow:
+The `:env` option replaces your entire environment with the provided map. To add environment variables you can use `:extra-env` instead:
 
 ```clojure
-:env (assoc (into {} (System/getenv)) "FOO" "BAR")
+:extra-env {"FOO" "BAR"}
 ```
 
 ## Pipelines

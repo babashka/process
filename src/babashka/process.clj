@@ -69,6 +69,14 @@
     (.putAll (as-string-map env)))
   pb)
 
+(defn- add-env
+  "Adds environment for a ProcessBuilder instance.
+  Returns instance to participate in the thread-first macro."
+  ^java.lang.ProcessBuilder [^java.lang.ProcessBuilder pb env]
+  (doto (.environment pb)
+    (.putAll (as-string-map env)))
+  pb)
+
 #_{:clj-kondo/ignore [:unused-private-var]}
 (defn- debug [& strs]
   (binding [*out* *err*]
@@ -152,6 +160,7 @@
                  :err
                  :dir
                  :env
+                 :extra-env
                  :inherit
                  :escape]} opts
          str-fn (comp escape str)
@@ -159,6 +168,7 @@
          pb (cond-> (java.lang.ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
+              extra-env (add-env extra-env)
               (or inherit
                   (identical? err :inherit))
               (.redirectError java.lang.ProcessBuilder$Redirect/INHERIT)
