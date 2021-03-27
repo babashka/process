@@ -91,6 +91,10 @@ need it.
 - `$`: convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form. Supports interpolation via `~`.
 
+- `sh`: convenience function similar to `clojure.java.shell/sh` that sets `:out`
+  and `:err` to `:string` by default and blocks. Similar to `cjs/sh` it does not
+  check the exit code (this can be done with `check`).
+
 - `*defaults*`: dynamic var containing overridable default options. Use
   `alter-var-root` to change permanently or `binding` to change temporarily.
 
@@ -204,14 +208,6 @@ Forwarding the output of a process as the input of another process can also be d
 "README.md\n"
 ```
 
-`$` is a convenience macro around `process`:
-
-``` clojure
-(def config {:output {:format :edn}})
-(-> ($ clj-kondo --config ~config --lint "src") :out slurp edn/read-string)
-{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
-```
-
 Demo of a `cat` process to which we send input while the process is running,
 then close stdin and read the output of cat afterwards:
 
@@ -236,6 +232,40 @@ then close stdin and read the output of cat afterwards:
 (def exit (:exit @catp)) ;; 0
 
 (.isAlive (:proc catp)) ;; false
+```
+
+## $ and sh
+
+`$` is a convenience macro around `process`:
+
+``` clojure
+(def config {:output {:format :edn}})
+(-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string)
+{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
+```
+
+`sh` is a convenience function around `process` which sets `:out` and `:err` to
+`:string` and blocks automatically, similar to `clojure.java.shell/sh` and unlike `$`:
+
+``` clojure
+(def config {:output {:format :edn}})
+(-> (sh ["clj-kondo" "--config" config" "--lint" "src"]) :out slurp edn/read-string)
+{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
+```
+
+## Tokenization
+
+Both `process`, `$` and `sh` support tokenization when passed a single string argument:
+
+``` clojure
+(-> (sh "echo hello there") :out)
+"hello there\n"
+```
+
+``` clojure
+(-> (sh "clj-kondo --lint -" {:in "(inc)"}) :out print)
+<stdin>:1:1: error: clojure.core/inc is called with 0 args but expects 1
+linting took 11ms, errors: 1, warnings: 0
 ```
 
 ## Output buffering
@@ -267,7 +297,6 @@ variables in the current environment you can proceed as follow:
 ```clojure
 :env (assoc (into {} (System/getenv)) "FOO" "BAR")
 ```
-
 
 ## Pipelines
 
@@ -357,37 +386,6 @@ you:
 Another solution is to let bash handle the pipes by shelling out with `bash -c`.
 
 ## Notes
-
-### Clj-kondo hook
-
-To make clj-kondo understand the dollar-sign macro, you can use the following config + hook code:
-
-`config.edn`:
-``` clojure
-{:hooks {:analyze-call {babashka.process/$ hooks.dollar/$}}}
-```
-
-`hooks/dollar.clj`:
-``` clojure
-(ns hooks.dollar
-  (:require [clj-kondo.hooks-api :as api]))
-
-(defn $ [{:keys [:node]}]
-  (let [children (doall (keep (fn [child]
-                                (let [s (api/sexpr child)]
-                                  (when (and (seq? s)
-                                             (= 'unquote (first s)))
-                                    (first (:children child)))))
-                              (:children node)))]
-    {:node (assoc node :children children)}))
-```
-
-Alternatively, you can either use string arguments or suppress unresolved
-symbols using the following config:
-
-``` clojure
-{:linters {:unresolved-symbol {:exclude [(babashka.process/$)]}}}
-```
 
 ### Script termination
 

@@ -1,8 +1,18 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [process check $ pb start] :as p]
+  (:require [babashka.process :refer [tokenize process check sh $ pb start] :as p]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
+
+(deftest tokenize-test
+  (is (= [] (tokenize "")))
+  (is (= ["hello"] (tokenize "hello")))
+  (is (= ["hello" "world"] (tokenize "  hello   world ")))
+  (is (= ["foo   bar" "a" "b" "c" "the d"] (tokenize "\"foo   bar\"    a b c \"the d\"")))
+  (is (= ["foo \"  bar" "a" "b" "c" "the d"] (tokenize "\"foo \\\"  bar\"    a b c \"the d\"")))
+  (is (= ["echo" "foo bar"] (tokenize "echo 'foo bar'")))
+  (is (= ["echo" "{\"AccessKeyId\":\"****\",\"SecretAccessKey\":\"***\",\"Version\":1}"]
+         (tokenize "echo '{\"AccessKeyId\":\"****\",\"SecretAccessKey\":\"***\",\"Version\":1}'"))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit
@@ -117,6 +127,15 @@
   (testing "output to string"
     (is (string? (-> (process ["ls"] {:out :string})
                      check
+                     :out))))
+  (testing "tokenize"
+    (is (string? (-> (process "ls -la" {:out :string})
+                     check
+                     :out)))
+    (is (string? (-> ^{:out :string} ($ "ls -la" )
+                     check
+                     :out)))
+    (is (string? (-> (sh "ls -la")
                      :out)))))
 
 (defmacro ^:private jdk9+ []

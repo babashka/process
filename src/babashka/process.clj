@@ -1,12 +1,55 @@
 (ns babashka.process
   (:require [clojure.java.io :as io]
-            [clojure.string :as str])
-  (:import [java.lang ProcessBuilder$Redirect]))
+            [clojure.string :as str]))
 
 (ns-unmap *ns* 'Process)
 (ns-unmap *ns* 'ProcessBuilder)
 
 (set! *warn-on-reflection* true)
+
+(defn tokenize
+  "Tokenize string to list of individual space separated arguments.
+  If argument contains space you can wrap it with `'` or `\"`."
+  [s]
+  (loop [s (java.io.StringReader. s)
+         in-double-quotes? false
+         in-single-quotes? false
+         buf (java.io.StringWriter.)
+         parsed []]
+    (let [c (.read s)]
+      (cond
+        (= -1 c) (if (pos? (count (str buf)))
+                   (conj parsed (str buf))
+                   parsed)
+        (= 39 c) ;; single-quotes
+        (if in-single-quotes?
+        ;; exit single-quoted string
+          (recur s in-double-quotes? false (java.io.StringWriter.) (conj parsed (str buf)))
+        ;; enter single-quoted string
+          (recur s in-double-quotes? true buf parsed))
+
+        (= 92 c) ;; assume escaped quote
+        (let [escaped (.read s)
+              buf (doto buf (.write escaped))]
+          (recur s in-double-quotes? in-single-quotes? buf parsed))
+
+        (and (not in-single-quotes?) (= 34 c)) ;; double quote
+        (if in-double-quotes?
+        ;; exit double-quoted string
+          (recur s false in-single-quotes? (java.io.StringWriter.) (conj parsed (str buf)))
+        ;; enter double-quoted string
+          (recur s true in-single-quotes? buf parsed))
+
+        (and (not in-double-quotes?)
+             (not in-single-quotes?)
+             (Character/isWhitespace c))
+        (recur s in-double-quotes? in-single-quotes? (java.io.StringWriter.)
+               (let [bs (str buf)]
+                 (cond-> parsed
+                   (not (str/blank? bs)) (conj bs))))
+        :else (do
+                (.write buf c)
+                (recur s in-double-quotes? in-single-quotes? buf parsed))))))
 
 (defn- as-string-map
   "Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
@@ -160,6 +203,9 @@
                  :err :err-enc
                  :shutdown :inherit]} opts
          in (or in (:out prev))
+         cmd (if (string? cmd)
+               (tokenize cmd)
+               cmd)
          ^java.lang.ProcessBuilder pb
          (if (instance? java.lang.ProcessBuilder cmd)
            cmd
@@ -249,27 +295,22 @@
 (defmacro $
   [& args]
   (let [opts (meta &form)
+        args (if (and (= 1 (count args))
+                      (string? (first args)))
+               (tokenize (first args))
+              args)
         cmd (mapv format-arg args)]
     `(let [cmd# ~cmd
            [prev# cmd#]
            (if-let [p# (first cmd#)]
-             (if #_(instance? Process p#) (:proc p#) ;; workaround for sci#432
+             (if (:proc p#)
                  [p# (rest cmd#)]
                  [nil cmd#])
-             [nil cmd#])
-           #_#_[opts# cmd#]
-           (if-let [o# (first cmd#)]
-             (if (map? o#)
-               [o# (rest cmd#)]
-               [nil cmd#])
              [nil cmd#])]
        (process prev# cmd# ~opts))))
 
-#_(defmacro my-foo [env]
-    (with-meta '($ bash -c "echo $FOO")
-      {:env env}))
-
-;; user=> (def x 10)
-;; #'user/x
-;; user=> (-> (my-foo {:FOO x}) :out slurp)
-;; "10\n"
+(defn sh
+  ([cmd] (sh cmd nil))
+  ([cmd opts]
+   @(process cmd (merge {:out :string
+                         :err :string} opts))))
