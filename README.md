@@ -249,7 +249,7 @@ then close stdin and read the output of cat afterwards:
 
 ``` clojure
 (def config {:output {:format :edn}})
-(-> (sh ["clj-kondo" "--config" config" "--lint" "src"]) :out slurp edn/read-string)
+(-> (sh ["clj-kondo" "--lint" "src"]) :out slurp edn/read-string)
 {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
 ```
 
