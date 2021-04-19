@@ -15,9 +15,9 @@ $ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.0.1"}}}'
 
 user=> (require '[clojure.string :as str])
 nil
-user=> (require '[babashka.process :refer [$ check]])
+user=> (require '[babashka.process :refer [process check]])
 nil
-user=> (-> ^{:out :string} ($ ls -la) check :out str/split-lines first)
+user=> (-> (process ["ls" "-la"] {:out :string}) check :out str/split-lines first)
 "total 136776"
 ```
 
@@ -37,7 +37,7 @@ this library:
 
 ## API
 
-You will probably mostly need `process` or `$` and `check` so it would be good
+You will probably mostly need `process` and `check` so it would be good
 to start reading the docs for these. Skim over the rest and come back when you
 need it.
 
@@ -89,7 +89,8 @@ need it.
   throws if exit code is non-zero.
 
 - `$`: convenience macro around `process`. Takes command as varargs. Options can
-  be passed via metadata on the form. Supports interpolation via `~`.
+  be passed via metadata on the form or as a first map arg. Supports
+  interpolation via `~`.
 
 - `sh`: convenience function similar to `clojure.java.shell/sh` that sets `:out`
   and `:err` to `:string` by default and blocks. Similar to `cjs/sh` it does not
