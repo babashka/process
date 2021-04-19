@@ -211,7 +211,7 @@
          {:keys [:in :in-enc
                  :out :out-enc
                  :err :err-enc
-                 :shutdown :inherit]} opts
+                 :shutdown]} opts
          in (or in (:out prev))
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
