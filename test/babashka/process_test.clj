@@ -115,14 +115,20 @@
               (is (= :babashka.process/error (:type (ex-data e))))))))))
   (testing "$ macro"
     (let [config {:a 1}]
-      (testing "$ macro"
-        (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
-        (let [sw (java.io.StringWriter.)]
-          (is (= "{:a 1}\n" (do (-> ^{:out sw}
-                                    ($ echo ~config)
-                                    ($ cat)
-                                    deref)
-                                (str sw))))))))
+      (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
+      (let [sw (java.io.StringWriter.)]
+        (is (= "{:a 1}\n" (do (-> ^{:out sw}
+                                  ($ echo ~config)
+                                  deref)
+                              (str sw)))))
+      (let [sw (java.io.StringWriter.)]
+        (is (= "{:a 1}\n" (do (-> ($ ~{:out sw} echo ~config)
+                                  deref)
+                              (str sw)))))
+      (let [sw (java.io.StringWriter.)]
+        (is (= "{:a 1}\n" (do (-> ($ {:out sw} echo ~config)
+                                  deref)
+                              (str sw)))))))
   (testing "pb + start = process"
     (let [out (-> (process ["ls"]) :out slurp)]
       (is (and (string? out) (not (str/blank? out))))

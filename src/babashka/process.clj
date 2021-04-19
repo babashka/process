@@ -213,7 +213,8 @@
                  :err :err-enc
                  :shutdown :inherit]} opts
          in (or in (:out prev))
-         cmd (if (string? cmd)
+         cmd (if (and (string? cmd)
+                      (not (.exists (io/file cmd))))
                (tokenize cmd)
                cmd)
          ^java.lang.ProcessBuilder pb
@@ -305,19 +306,33 @@
 (defmacro $
   [& args]
   (let [opts (meta &form)
+        farg (first args)
         args (if (and (= 1 (count args))
-                      (string? (first args)))
-               (tokenize (first args))
-              args)
-        cmd (mapv format-arg args)]
+                      (and (string? farg)
+                           (not (.exists (io/file farg)))))
+               (tokenize farg)
+               args)
+        farg (first args)
+        marg? (map? farg)
+        cmd (if marg?
+              (vec (cons farg (mapv format-arg (rest args))))
+              (mapv format-arg args))]
     `(let [cmd# ~cmd
+           opts# ~opts
+           fcmd# (first cmd#)
+           [opts# cmd#]
+           (if (map? fcmd#)
+             [(merge opts# fcmd#) (rest cmd#)]
+             [opts# cmd#])
+           fcmd# (first cmd#)
            [prev# cmd#]
-           (if-let [p# (first cmd#)]
-             (if (:proc p#)
-                 [p# (rest cmd#)]
-                 [nil cmd#])
+           (if fcmd#
+             (if (:proc fcmd#)
+               [fcmd# (rest cmd#)]
+               [nil cmd#])
              [nil cmd#])]
-       (process prev# cmd# ~opts))))
+       ;; (prn (list 'process prev# cmd# opts#))
+       (process prev# cmd# opts#))))
 
 (defn sh
   ([cmd] (sh cmd nil))
