@@ -147,6 +147,27 @@
     (is (string? (-> (sh "ls -la")
                      :out)))))
 
+(deftest inherit-test
+  (let [proc (process "echo" {:inherit true})
+        null-input-stream-class (class (:out proc))
+        null-output-stream-class (class (:in proc))]
+    (is (= null-input-stream-class (class (:err proc))))
+    (let [x (process ["cat"] {:inherit true
+                              :in "foo"})]
+      (is (not= null-output-stream-class (class (:in x))))
+      (is (= null-input-stream-class (class (:out x))))
+      (is (= null-input-stream-class (class (:err x)))))
+    (let [x (process ["cat"] {:inherit true
+                              :out "foo"})]
+      (is (= null-output-stream-class (class (:in x))))
+      (is (not= null-input-stream-class (class (:out x))))
+      (is (= null-input-stream-class (class (:err x)))))
+    (let [x (process ["cat"] {:inherit true
+                              :err "foo"})]
+      (is (= null-output-stream-class (class (:in x))))
+      (is (= null-input-stream-class (class (:out x))))
+      (is (not= null-input-stream-class (class (:err x)))))))
+
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
                   (try (import 'java.lang.ProcessHandle)

@@ -169,13 +169,13 @@
               dir (.directory (io/file dir))
               env (set-env env)
               extra-env (add-env extra-env)
-              (or inherit
+              (or (and (not err) inherit)
                   (identical? err :inherit))
               (.redirectError java.lang.ProcessBuilder$Redirect/INHERIT)
-              (or inherit
+              (or (and (not out) inherit)
                   (identical? out :inherit))
               (.redirectOutput java.lang.ProcessBuilder$Redirect/INHERIT)
-              (or inherit
+              (or (and (not in) inherit)
                   (identical? in  :inherit))
               (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
      pb)))
@@ -226,14 +226,14 @@
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
          stderr (.getErrorStream proc)
-         out (if (and out (not (or inherit (identical? :inherit out))))
+         out (if (and out (not (identical? :inherit out)))
                (future (copy stdout out out-enc))
                stdout)
-         err (if (and err (not (or inherit (identical? :inherit err))))
+         err (if (and err (not (identical? :inherit err)))
                (future (copy stderr err err-enc))
                stderr)]
      ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-     (when (and in (not (or inherit (identical? :inherit in))))
+     (when (and in (not (identical? :inherit in)))
        (future (with-open [stdin stdin] ;; needed to close stdin after writing
                  (io/copy in stdin :encoding in-enc))))
      (let [;; bb doesn't support map->Process at the moment
