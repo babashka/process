@@ -23,7 +23,7 @@
           out (slurp (:out res))
           err (slurp (:err res))
           checked (check res) ;; check should return process with :exit code
-                              ;; populated
+          ;; populated
           exit (:exit checked)]
       (is (string? out))
       (is (string? err))
@@ -95,13 +95,13 @@
                       (println "error123")
                       (System/exit 1))]
       (is (thrown-with-msg?
-            clojure.lang.ExceptionInfo #"error123"
-            (-> (process ["clojure" "-e" (str err-form)]) (check)))
+           clojure.lang.ExceptionInfo #"error123"
+           (-> (process ["clojure" "-e" (str err-form)]) (check)))
           "with :err string"))
     (is (thrown?
-          clojure.lang.ExceptionInfo #"failed"
-          (-> (process ["clojure" "-e" (str '(System/exit 1))])
-              (check)))
+         clojure.lang.ExceptionInfo #"failed"
+         (-> (process ["clojure" "-e" (str '(System/exit 1))])
+             (check)))
         "With no :err string")
     (testing "and the exception"
       (let [command ["clojure" "-e" (str '(System/exit 1))]]
@@ -147,31 +147,6 @@
     (is (string? (-> (sh "ls -la")
                      :out)))))
 
-(deftest inherit-test
-  (let [proc (process "echo" {:shutdown p/destroy-tree
-                              :inherit true})
-        null-input-stream-class (class (:out proc))
-        null-output-stream-class (class (:in proc))]
-    (is (= null-input-stream-class (class (:err proc))))
-    (let [x (process ["cat"] {:shutdown p/destroy-tree
-                              :inherit true
-                              :in "foo"})]
-      (is (not= null-output-stream-class (class (:in x))))
-      (is (= null-input-stream-class (class (:out x))))
-      (is (= null-input-stream-class (class (:err x)))))
-    (let [x (process ["cat"] {:shutdown p/destroy-tree
-                              :inherit true
-                              :out "foo"})]
-      (is (= null-output-stream-class (class (:in x))))
-      (is (not= null-input-stream-class (class (:out x))))
-      (is (= null-input-stream-class (class (:err x)))))
-    (let [x (process ["cat"] {:shutdown p/destroy-tree
-                              :inherit true
-                              :err "foo"})]
-      (is (= null-output-stream-class (class (:in x))))
-      (is (= null-input-stream-class (class (:out x))))
-      (is (not= null-input-stream-class (class (:err x)))))))
-
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
                   (try (import 'java.lang.ProcessHandle)
@@ -183,6 +158,30 @@
            (is (= [["ls"] ["cat"]] (map :cmd (pipeline (-> (process ["ls"]) (process ["cat"])))))))))
     '(do
        (require '[babashka.process :refer [pipeline pb]])
+       (deftest inherit-test
+         (let [proc (process "echo" {:shutdown p/destroy-tree
+                                     :inherit true})
+               null-input-stream-class (class (:out proc))
+               null-output-stream-class (class (:in proc))]
+           (is (= null-input-stream-class (class (:err proc))))
+           (let [x (process ["cat"] {:shutdown p/destroy-tree
+                                     :inherit true
+                                     :in "foo"})]
+             (is (not= null-output-stream-class (class (:in x))))
+             (is (= null-input-stream-class (class (:out x))))
+             (is (= null-input-stream-class (class (:err x)))))
+           (let [x (process ["cat"] {:shutdown p/destroy-tree
+                                     :inherit true
+                                     :out "foo"})]
+             (is (= null-output-stream-class (class (:in x))))
+             (is (not= null-input-stream-class (class (:out x))))
+             (is (= null-input-stream-class (class (:err x)))))
+           (let [x (process ["cat"] {:shutdown p/destroy-tree
+                                     :inherit true
+                                     :err "foo"})]
+             (is (= null-output-stream-class (class (:in x))))
+             (is (= null-input-stream-class (class (:out x))))
+             (is (not= null-input-stream-class (class (:err x)))))))
        (deftest pipeline-test
          (testing "pipeline returns processes nested with ->"
            (is (= [["ls"] ["cat"]] (map :cmd (pipeline (-> (process ["ls"]) (process ["cat"])))))))
