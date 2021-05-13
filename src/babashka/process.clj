@@ -337,5 +337,11 @@
 (defn sh
   ([cmd] (sh cmd nil))
   ([cmd opts]
-   @(process cmd (merge {:out :string
-                         :err :string} opts))))
+   (let [[prev cmd opts] (if (:proc cmd)
+                           [cmd opts nil]
+                           [nil cmd opts])]
+     @(process prev cmd (merge {:out :string
+                                :err :string} opts))))
+  ([prev cmd opts]
+   @(process prev cmd (merge {:out :string
+                              :err :string} opts))))
