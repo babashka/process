@@ -118,7 +118,7 @@ need it.
 ## Usage
 
 ``` clojure
-user=> (require '[babashka.process :refer [process $ check]])
+user=> (require '[babashka.process :refer [process $ check sh pipeline pb]])
 ```
 
 Invoke `ls`:
@@ -138,7 +138,7 @@ user=> (-> (process '[ls] {:dir "test/babashka"}) :out slurp)
 Set the process environment.
 
 ``` clojure
-user=> (-> (process '[sh -c "echo $FOO"] {:env {:FOO "BAR" }}) :out slurp)
+user=> (-> (process '[sh -c "echo $FOO"] {:env {:FOO "BAR"}}) :out slurp)
 "BAR\n"
 ```
 
@@ -147,8 +147,7 @@ dereferenced, it will wait for the process to finish and will add the `:exit` va
 
 ``` clojure
 user=> (-> @(process '[ls foo]) :exit)
-Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
-ls: foo: No such file or directory
+1
 ```
 
 The function `check` takes a process, waits for it to finish and returns it. When
@@ -163,7 +162,7 @@ ls: foo: No such file or directory
 Redirect output to stdout:
 
 ``` clojure
-user=> (do (process '[ls] {:out :inherit}) nil)
+user=> (do @(process '[ls] {:out :inherit}) nil)
 LICENSE		README.md	deps.edn	src		test
 nil
 ```
@@ -189,10 +188,10 @@ user=> (-> @(process '[ls] {:out :string}) :out)
 Redirect output stream from one process to input stream of the next process:
 
 ``` clojure
-(let [is (-> (process '[ls]) :out)]
-  (process ["cat"] {:in is
-                    :out :inherit})
-    nil)
+user=> (let [is (-> (process '[ls]) :out)]
+         @(process ["cat"] {:in is
+                            :out :inherit})
+         nil)
 LICENSE
 README.md
 deps.edn
@@ -204,8 +203,8 @@ nil
 Forwarding the output of a process as the input of another process can also be done with thread-first:
 
 ``` clojure
-(-> (process '[ls])
-    (process '[grep "README"]) :out slurp)
+user=> (-> (process '[ls])
+           (process '[grep "README"]) :out slurp)
 "README.md\n"
 ```
 
@@ -240,8 +239,9 @@ then close stdin and read the output of cat afterwards:
 `$` is a convenience macro around `process`:
 
 ``` clojure
-(def config {:output {:format :edn}})
-(-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string)
+user=> (def config {:output {:format :edn}})
+#'user/config
+user=> (-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string)
 {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
 ```
 
@@ -249,8 +249,9 @@ then close stdin and read the output of cat afterwards:
 `:string` and blocks automatically, similar to `clojure.java.shell/sh` and unlike `$`:
 
 ``` clojure
-(def config {:output {:format :edn}})
-(-> (sh ["clj-kondo" "--lint" "src"]) :out slurp edn/read-string)
+user=> (def config {:output {:format :edn}})
+#'user/config
+user=> (-> (sh ["clj-kondo" "--lint" "src"]) :out slurp edn/read-string)
 {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
 ```
 
@@ -259,12 +260,12 @@ then close stdin and read the output of cat afterwards:
 Both `process`, `$` and `sh` support tokenization when passed a single string argument:
 
 ``` clojure
-(-> (sh "echo hello there") :out)
+user=> (-> (sh "echo hello there") :out)
 "hello there\n"
 ```
 
 ``` clojure
-(-> (sh "clj-kondo --lint -" {:in "(inc)"}) :out print)
+user=> (-> (sh "clj-kondo --lint -" {:in "(inc)"}) :out print)
 <stdin>:1:1: error: clojure.core/inc is called with 0 args but expects 1
 linting took 11ms, errors: 1, warnings: 0
 ```
@@ -305,33 +306,32 @@ of processes from a process that was created with `->` or by passing multiple
 objects created with `pb`:
 
 ``` clojure
-(mapv :cmd (pipeline (-> (process '[ls]) (process '[cat]))))
+user=> (mapv :cmd (pipeline (-> (process '[ls]) (process '[cat]))))
 [["ls"] ["cat"]]
-
-(mapv :cmd (pipeline (pb '[ls]) (pb '[cat])))
+user=> (mapv :cmd (pipeline (pb '[ls]) (pb '[cat])))
 [["ls"] ["cat"]]
 ```
 
 To obtain the right-most process from the pipeline, use `last` (or `peek`):
 
 ``` clojure
-(-> (pipeline (pb ["ls"]) (pb ["cat"])) last :out slurp)
+user=> (-> (pipeline (pb ["ls"]) (pb ["cat"])) last :out slurp)
 "LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
 ```
 
 Calling `pipeline` on the right-most process returns the pipeline:
 
 ``` clojure
-(def p (pipeline (pb ["ls"]) (pb ["cat"])))
+user=> (def p (pipeline (pb ["ls"]) (pb ["cat"])))
 #'user/p
-(= p (pipeline (last p)))
+user=> (= p (pipeline (last p)))
 true
 ```
 
 To check an entire pipeline for non-zero exit codes, you can use:
 
 ``` clojure
-(run! check (pipeline (-> (process '[ls "foo"]) (process '[cat]))))
+user=> (run! check (pipeline (-> (process '[ls "foo"]) (process '[cat]))))
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:37).
 ls: foo: No such file or directory
 ```
