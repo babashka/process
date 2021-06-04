@@ -208,8 +208,10 @@ user=> (-> (process '[ls])
 "README.md\n"
 ```
 
-Demo of a `cat` process to which we send input while the process is running,
-then close stdin and read the output of cat afterwards:
+## Feeding input
+
+Here is an example of a `cat` process to which we send input while the process
+is running, then close stdin and read the output of cat afterwards:
 
 ``` clojure
 (ns cat-demo
@@ -232,6 +234,25 @@ then close stdin and read the output of cat afterwards:
 (def exit (:exit @catp)) ;; 0
 
 (.isAlive (:proc catp)) ;; false
+```
+
+## Processing output
+
+Here is an example where we read the output of `yes` line by line and print it ourselves:
+
+``` clojure
+(require '[babashka.process :as p :refer [process]]
+         '[clojure.java.io :as io])
+
+(def yes (process ["yes"] {:err :inherit
+                           :shutdown p/destroy}))
+
+(with-open [rdr (io/reader (:out yes))]
+  (binding [*in* rdr]
+    (loop []
+      (let [line (read-line)]
+        (println :line line))
+      (recur))))
 ```
 
 ## $ and sh
