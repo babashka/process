@@ -195,8 +195,8 @@
 
 (defn- copy [in out encoding]
   (let [[out post-fn] (if (keyword? out)
-                        (case :string
-                          [(java.io.StringWriter.) str])
+                        (case out
+                          :string [(java.io.StringWriter.) str])
                         [out identity])]
     (io/copy in out :encoding encoding)
     (post-fn out)))
