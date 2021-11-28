@@ -156,7 +156,9 @@
 (defn default-windows-executable-resolver [program]
   (if (and (fs/relative? program)
            (not (fs/extension program)))
-    (fs/which program)
+    (if-let [f (fs/which program)]
+      (str f)
+      program)
     program))
 
 (def ^:dynamic *defaults*
