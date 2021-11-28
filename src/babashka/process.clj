@@ -162,7 +162,8 @@
 (def ^:dynamic *defaults*
   {:shutdown nil
    :escape (if windows? #(str/replace % "\"" "\\\"") identity)
-   :windows-executable-resolver default-windows-executable-resolver})
+   :program-resolver (if windows? default-windows-executable-resolver
+                         identity)})
 
 (defn- ^java.lang.ProcessBuilder build
   ([cmd] (build cmd nil))
@@ -230,10 +231,9 @@
                       (not (.exists (io/file cmd))))
                (tokenize cmd)
                cmd)
-         cmd (if (and windows?
-                      (:windows-executable-resolver *defaults*))
+         cmd (if-let [program-resolver (:program-resolver *defaults*)]
                (let [[program & args] cmd]
-                 (into [((:windows-executable-resolver *defaults*) program)] args))
+                 (into [(program-resolver program)] args))
                cmd)
          ^java.lang.ProcessBuilder pb
          (if (instance? java.lang.ProcessBuilder cmd)

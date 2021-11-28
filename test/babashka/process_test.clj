@@ -202,7 +202,7 @@
 (jdk9+)
 
 (deftest ^:windows windows-executable-resolver-test
-  (when #'p/windows?
+  (when (some-> (resolve 'p/windows?) deref)
     (prn (-> @(p/process "java --version" {:out :string})
              :out))
     (prn (-> @(p/process ["java" "--version"] {:out :string})
