@@ -1,5 +1,6 @@
 (ns babashka.process
-  (:require [clojure.java.io :as io]
+  (:require [babashka.fs :as fs]
+            [clojure.java.io :as io]
             [clojure.string :as str]))
 
 (ns-unmap *ns* 'Process)
@@ -152,9 +153,16 @@
       (str/lower-case)
       (str/includes? "windows")))
 
+(defn default-windows-executable-resolver [program]
+  (if (and (fs/relative? program)
+           (not (fs/extension program)))
+    (fs/which program)
+    program))
+
 (def ^:dynamic *defaults*
   {:shutdown nil
-   :escape (if windows? #(str/replace % "\"" "\\\"") identity)})
+   :escape (if windows? #(str/replace % "\"" "\\\"") identity)
+   :windows-executable-resolver default-windows-executable-resolver})
 
 (defn- ^java.lang.ProcessBuilder build
   ([cmd] (build cmd nil))
@@ -221,6 +229,11 @@
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
                (tokenize cmd)
+               cmd)
+         cmd (if (and windows?
+                      (:windows-executable-resolver *defaults*))
+               (let [[program & args] cmd]
+                 (into [((:windows-executable-resolver *defaults*) program)] args))
                cmd)
          ^java.lang.ProcessBuilder pb
          (if (instance? java.lang.ProcessBuilder cmd)

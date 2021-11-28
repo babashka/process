@@ -5,7 +5,8 @@
         :url "https://github.com/babashka/process"}
   :license {:name "EPL-1.0"
             :url "https://www.eclipse.org/legal/epl-1.0/"}
-  :dependencies [[org.clojure/clojure "1.9.0"]]
+  :dependencies [[org.clojure/clojure "1.9.0"]
+                 [babashka/fs "0.1.2"]]
   :deploy-repositories [["clojars" {:url "https://clojars.org/repo"
                                     :username :env/clojars_user
                                     :password :env/clojars_pass

@@ -200,3 +200,10 @@
              (is (= [["ls"] ["cat"]] (map :cmd (pipeline chain))))))))))
 
 (jdk9+)
+
+(deftest windows-executable-resolver-test
+  (when #'p/windows?
+    (prn (-> (p/process "java --version" {:out :string})
+             :out))
+    (prn (-> (p/process ["java" "--version"] {:out :string})
+             :out))))
