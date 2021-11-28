@@ -12,7 +12,11 @@
   (is (= ["foo \"  bar" "a" "b" "c" "the d"] (tokenize "\"foo \\\"  bar\"    a b c \"the d\"")))
   (is (= ["echo" "foo bar"] (tokenize "echo 'foo bar'")))
   (is (= ["echo" "{\"AccessKeyId\":\"****\",\"SecretAccessKey\":\"***\",\"Version\":1}"]
-         (tokenize "echo '{\"AccessKeyId\":\"****\",\"SecretAccessKey\":\"***\",\"Version\":1}'"))))
+         (tokenize "echo '{\"AccessKeyId\":\"****\",\"SecretAccessKey\":\"***\",\"Version\":1}'")))
+  (is (= ["c:\\Users\\borkdude\\bin\\graal.bat" "1" "2" "3"]
+         (tokenize "c:\\Users\\borkdude\\bin\\graal.bat 1 2 3")))
+  (is (= ["\\foo"]
+         (tokenize "\"\\foo\""))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit

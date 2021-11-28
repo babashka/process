@@ -28,9 +28,14 @@
         ;; enter single-quoted string
           (recur s in-double-quotes? true buf parsed))
 
-        (= 92 c) ;; assume escaped quote
+        (= 92 c)
         (let [escaped (.read s)
-              buf (doto buf (.write escaped))]
+              buf (if (and in-double-quotes?
+                           (= 34 escaped))
+                    (doto buf (.write escaped))
+                    (doto buf
+                      (.write c)
+                      (.write escaped)))]
           (recur s in-double-quotes? in-single-quotes? buf parsed))
 
         (and (not in-single-quotes?) (= 34 c)) ;; double quote
