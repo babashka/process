@@ -153,9 +153,8 @@
       (str/lower-case)
       (str/includes? "windows")))
 
-(defn default-windows-executable-resolver [program]
-  (if (and (fs/relative? program)
-           (not (fs/extension program)))
+(defn default-program-resolver [program]
+  (if (and windows? (fs/relative? program))
     (if-let [f (fs/which program)]
       (str f)
       program)
@@ -164,8 +163,7 @@
 (def ^:dynamic *defaults*
   {:shutdown nil
    :escape (if windows? #(str/replace % "\"" "\\\"") identity)
-   :program-resolver (if windows? default-windows-executable-resolver
-                         identity)})
+   :program-resolver default-program-resolver})
 
 (defn- ^java.lang.ProcessBuilder build
   ([cmd] (build cmd nil))
