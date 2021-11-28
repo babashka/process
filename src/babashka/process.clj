@@ -179,6 +179,10 @@
                  :escape]} opts
          str-fn (comp escape str)
          cmd (mapv str-fn cmd)
+         cmd (if-let [program-resolver (:program-resolver opts)]
+               (let [[program & args] cmd]
+                 (into [(program-resolver program)] args))
+               cmd)
          pb (cond-> (java.lang.ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
@@ -230,10 +234,6 @@
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
                (tokenize cmd)
-               cmd)
-         cmd (if-let [program-resolver (:program-resolver *defaults*)]
-               (let [[program & args] cmd]
-                 (into [(program-resolver program)] args))
                cmd)
          ^java.lang.ProcessBuilder pb
          (if (instance? java.lang.ProcessBuilder cmd)
