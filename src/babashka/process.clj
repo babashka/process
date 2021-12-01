@@ -111,7 +111,12 @@
       (assoc this
              :exit exit-code
              :out out
-             :err err))))
+             :err err)))
+  clojure.lang.IBlockingDeref
+  (deref [this timeout-ms timeout-value]
+    (if (.waitFor proc timeout-ms java.util.concurrent.TimeUnit/MILLISECONDS)
+      @this
+      timeout-value)))
 
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
