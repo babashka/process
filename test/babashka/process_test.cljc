@@ -153,9 +153,11 @@
                      :out)))
     (is (string? (-> (sh "ls -la")
                      :out))))
-  (testing "deref timeout"
-    (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
-    (is (= 0 (:exit (deref (process ["ls"]) 250 nil))))))
+  #?(:bb nil
+     :clj
+     (testing "deref timeout"
+       (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
+       (is (= 0 (:exit (deref (process ["ls"]) 250 nil)))))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
