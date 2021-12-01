@@ -1,1 +1,2 @@
-{:hooks {:analyze-call {babashka.process/$ hooks.dollar/$}}}
+{:cljc {:features [:clj]}
+ :hooks {:analyze-call {babashka.process/$ hooks.dollar/$}}}
