@@ -327,7 +327,7 @@
     (seq? arg) (process-unquote arg)
     :else (list 'quote arg)))
 
-(defmacro $
+(defmacro ^:deprecated $
   [& args]
   (let [opts (meta &form)
         farg (first args)
