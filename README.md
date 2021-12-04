@@ -88,9 +88,9 @@ need it.
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
 
-- `$`: convenience macro around `process`. Takes command as varargs. Options can
-  be passed via metadata on the form or as a first map arg. Supports
-  interpolation via `~`.
+<!-- - `$`: convenience macro around `process`. Takes command as varargs. Options can -->
+<!--   be passed via metadata on the form or as a first map arg. Supports -->
+<!--   interpolation via `~`. -->
 
 - `sh`: convenience function similar to `clojure.java.shell/sh` that sets `:out`
   and `:err` to `:string` by default and blocks. Similar to `cjs/sh` it does not
@@ -118,7 +118,7 @@ need it.
 ## Usage
 
 ``` clojure
-user=> (require '[babashka.process :refer [process $ check sh pipeline pb]])
+user=> (require '[babashka.process :refer [process check sh pipeline pb]])
 ```
 
 Invoke `ls`:
@@ -255,19 +255,19 @@ Here is an example where we read the output of `yes` line by line and print it o
       (recur))))
 ```
 
-## $ and sh
+## sh
 
-`$` is a convenience macro around `process`:
+<!-- `$` is a convenience macro around `process`: -->
 
-``` clojure
-user=> (def config {:output {:format :edn}})
-#'user/config
-user=> (-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string)
-{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
-```
+<!-- ``` clojure -->
+<!-- user=> (def config {:output {:format :edn}}) -->
+<!-- #'user/config -->
+<!-- user=> (-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string) -->
+<!-- {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}} -->
+<!-- ``` -->
 
 `sh` is a convenience function around `process` which sets `:out` and `:err` to
-`:string` and blocks automatically, similar to `clojure.java.shell/sh` and unlike `$`:
+`:string` and blocks automatically, similar to `clojure.java.shell/sh`:
 
 ``` clojure
 user=> (def config {:output {:format :edn}})
@@ -278,7 +278,7 @@ user=> (-> (sh ["clj-kondo" "--lint" "src"]) :out slurp edn/read-string)
 
 ## Tokenization
 
-Both `process`, `$` and `sh` support tokenization when passed a single string argument:
+Both `process` and `sh` support tokenization when passed a single string argument:
 
 ``` clojure
 user=> (-> (sh "echo hello there") :out)
