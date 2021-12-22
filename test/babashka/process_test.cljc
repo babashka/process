@@ -206,9 +206,17 @@
 
 (jdk9+)
 
+;;;; Windows tests
+;;;; Run with clojure -M:test -i windows
+
 (deftest ^:windows windows-executable-resolver-test
   (when (some-> (resolve 'p/windows?) deref)
     (prn (-> @(p/process "java --version" {:out :string})
              :out))
     (prn (-> @(p/process ["java" "--version"] {:out :string})
              :out))))
+
+(deftest ^:windows windows-invoke-git-with-space-test
+  (let [proc @(p/process ["git " "status"] {:out :string})]
+    (is (string? (:out proc)))
+    (is (zero? (:exit proc)))))

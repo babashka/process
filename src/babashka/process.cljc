@@ -160,11 +160,16 @@
       (str/includes? "windows")))
 
 (defn default-program-resolver [program]
-  (if (and windows? (fs/relative? program))
-    (if-let [f (fs/which program)]
-      (str f)
+  (try
+    ;; this should make life easier and not cause any bugs that weren't there previously
+    ;; on exception we just return the program as is
+    (if (and windows? (fs/relative? program))
+      (if-let [f (fs/which program)]
+        (str f)
+        program)
       program)
-    program))
+    (catch Throwable _
+      program)))
 
 (def ^:dynamic *defaults*
   {:shutdown nil
