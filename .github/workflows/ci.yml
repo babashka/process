@@ -3,18 +3,23 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
+    strategy:
+      matrix:
+        java-version: ["8", "11", "17"]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
 
-    runs-on: "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: "Checkout code"
       uses: "actions/checkout@v2"
 
-    - name: "Prepare Java"
-      uses: "actions/setup-java@v1"
+    - name: Prepare java
+      uses: actions/setup-java@v2
       with:
-        java-version: "8"
+        distribution: "adopt"
+        java-version: ${{ matrix.java-version }}
 
     - name: "Restore Cache"
       uses: "actions/cache@v1"
@@ -23,10 +28,17 @@ jobs:
         key: "${{ runner.os }}-deps-${{ hashFiles('deps.edn') }}"
         restore-keys: "${{ runner.os }}-deps-"
 
-    - name: "Setup Clojure"
-      uses: DeLaGuardo/setup-clojure@master
-      with:
-        tools-deps: '1.10.1.727'
+    - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@3.6
+        with:
+          cli: 1.10.3.1040
 
-    - name: "Run tests"
-      run: "clojure -M:test"
+    - name: Run tests not Windows
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: clojure -M:test -e windows
+        shell: bash
+
+    - name: Run tests on Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: clojure -M:test -i windows
+        shell: powershell
