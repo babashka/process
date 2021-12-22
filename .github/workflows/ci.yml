@@ -29,16 +29,16 @@ jobs:
         restore-keys: "${{ runner.os }}-deps-"
 
     - name: Setup Clojure
-        uses: DeLaGuardo/setup-clojure@3.6
-        with:
-          cli: 1.10.3.1040
+      uses: DeLaGuardo/setup-clojure@3.6
+      with:
+        cli: 1.10.3.1040
 
     - name: Run tests not Windows
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: clojure -M:test -e windows
-        shell: bash
+      if: ${{ matrix.os != 'windows-latest' }}
+      run: clojure -M:test -e windows
+      shell: bash
 
     - name: Run tests on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: clojure -M:test -i windows
-        shell: powershell
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: clojure -M:test -i windows
+      shell: powershell
