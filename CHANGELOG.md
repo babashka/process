@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.1.0
 
 - Resolve binaries on Windows using `fs/which`
 - String with backslash is tokenized incorrectly [#47](https://github.com/babashka/process/issues/47)
 - Support `deref` with timeout [#50](https://github.com/babashka/process/issues/50) ([@SevereOverfl0w](https://github.com/SevereOverfl0w))
+- Fix piping with dollar macro [#52](https://github.com/babashka/process/issues/52)
 
 ## 0.0.2
 
