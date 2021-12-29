@@ -332,7 +332,7 @@
     (seq? arg) (process-unquote arg)
     :else (list 'quote arg)))
 
-(defmacro ^:deprecated $
+(defmacro $
   [& args]
   (let [opts (meta &form)
         farg (first args)
@@ -349,18 +349,15 @@
     `(let [cmd# ~cmd
            opts# ~opts
            fcmd# (first cmd#)
+           [prev# cmd#]
+           (if (:proc fcmd#)
+             [fcmd# (rest cmd#)]
+             [nil cmd#])
+           fcmd# (first cmd#)
            [opts# cmd#]
            (if (map? fcmd#)
              [(merge opts# fcmd#) (rest cmd#)]
-             [opts# cmd#])
-           fcmd# (first cmd#)
-           [prev# cmd#]
-           (if fcmd#
-             (if (:proc fcmd#)
-               [fcmd# (rest cmd#)]
-               [nil cmd#])
-             [nil cmd#])]
-       ;; (prn (list 'process prev# cmd# opts#))
+             [opts# cmd#])]
        (process prev# cmd# opts#))))
 
 (defn sh

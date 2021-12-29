@@ -4,8 +4,6 @@
 
 A Clojure wrapper around `java.lang.ProcessBuilder`.
 
-Status: alpha.
-
 This library is included in
 [babashka](https://github.com/babashka/babashka) since [0.2.3](https://github.com/babashka/babashka/blob/master/CHANGELOG.md#v023-2020-10-21) but is also intended as a JVM
 library:
@@ -88,9 +86,9 @@ need it.
 - `check`: takes a process, waits until is finished and
   throws if exit code is non-zero.
 
-<!-- - `$`: convenience macro around `process`. Takes command as varargs. Options can -->
-<!--   be passed via metadata on the form or as a first map arg. Supports -->
-<!--   interpolation via `~`. -->
+- `$`: convenience macro around `process`. Takes command as varargs. Options can
+  be passed via metadata on the form or as a first map arg. Supports
+  interpolation via `~`.
 
 - `sh`: convenience function similar to `clojure.java.shell/sh` that sets `:out`
   and `:err` to `:string` by default and blocks. Similar to `cjs/sh` it does not
@@ -257,14 +255,14 @@ Here is an example where we read the output of `yes` line by line and print it o
 
 ## sh
 
-<!-- `$` is a convenience macro around `process`: -->
+`$` is a convenience macro around `process`:
 
-<!-- ``` clojure -->
-<!-- user=> (def config {:output {:format :edn}}) -->
-<!-- #'user/config -->
-<!-- user=> (-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string) -->
-<!-- {:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}} -->
-<!-- ``` -->
+``` clojure
+user=> (def config {:output {:format :edn}})
+#'user/config
+user=> (-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string)
+{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
+```
 
 `sh` is a convenience function around `process` which sets `:out` and `:err` to
 `:string` and blocks automatically, similar to `clojure.java.shell/sh`:
@@ -434,6 +432,6 @@ using:
 
 ## License
 
-Copyright © 2020 Michiel Borkent
+Copyright © 2020-2021 Michiel Borkent
 
 Distributed under the EPL License. See LICENSE.

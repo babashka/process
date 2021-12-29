@@ -159,6 +159,18 @@
        (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
        (is (= 0 (:exit (deref (process ["ls"]) 250 nil)))))))
 
+(deftest dollar-pipe-test
+  (is (str/includes?
+       (-> ($ ls -la)
+           ($ {:out :string} cat) deref :out)
+       "total"))
+  (is (str/includes?
+       (-> ($ ls -la)
+           ^{:out :string} ($ cat) deref :out)
+       "total"))
+  (is (= "hello\nhello\n"
+         (-> ($ echo hello) ($ sed p) deref :out slurp))))
+
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
                   (try (import 'java.lang.ProcessHandle)
