@@ -177,6 +177,15 @@
    :escape (if windows? #(str/replace % "\"" "\\\"") identity)
    :program-resolver default-program-resolver})
 
+(defn- normalize-opts [{:keys [:out :err] :as opts}]
+  (cond-> opts
+    (instance? java.io.File out)
+    (-> (assoc :out-file out)
+        (assoc :out :append))
+    (instance? java.io.File err)
+    (-> (assoc :err-file out)
+        (assoc :err :append))))
+
 (defn- ^java.lang.ProcessBuilder build
   ([cmd] (build cmd nil))
   ([^java.util.List cmd opts]
@@ -249,7 +258,8 @@
                 (process cmd opts nil)
                 (process nil cmd opts)))
   ([prev cmd opts]
-   (let [opts (merge *defaults* opts)
+   (let [opts (normalize-opts opts)
+         opts (merge *defaults* opts)
          {:keys [:in :in-enc
                  :out :out-enc
                  :err :err-enc
@@ -268,14 +278,10 @@
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
          stderr (.getErrorStream proc)
-         ;; TODO: handle writing to file via redirect
-         ;; by setting `:out-file` to the file of `:out`
          out (if (and out (or (identical? :string out)
                               (not (keyword? out))))
                (future (copy stdout out out-enc))
                stdout)
-         ;; TODO: handle writing to file via redirect
-         ;; by setting `:err-file` to the file of `:err`
          err (if (and err (or (identical? :string err)
                               (not (keyword? err))))
                (future (copy stderr err err-enc))
