@@ -1,5 +1,6 @@
 (ns babashka.process-test
-  (:require [babashka.process :refer [tokenize process check sh $ pb start] :as p]
+  (:require [babashka.fs :as fs]
+            [babashka.process :refer [tokenize process check sh $ pb start] :as p]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
@@ -170,6 +171,26 @@
        "total"))
   (is (= "hello\nhello\n"
          (-> ($ echo hello) ($ sed p) deref :out slurp))))
+
+(deftest redirect-file-test
+  (fs/with-temp-dir [tmp {}]
+    (let [out (fs/file tmp "out.txt")]
+      @(p/process "echo hello" {:out :write
+                                :out-file out})
+      (is (str/starts-with? (slurp out) "hello"))
+      @(p/process "echo hello" {:out :append
+                                :out-file out})
+      (is (= 2 (count (re-seq #"hello" (slurp out)))))))
+  (fs/with-temp-dir [tmp {}]
+    (let [out (fs/file tmp "err.txt")]
+      @(p/process "bash -c '>&2 echo \"error\"'"
+                  {:err :write
+                   :err-file out})
+      (is (str/starts-with? (slurp out) "error"))
+      @(p/process "bash -c '>&2 echo \"error\"'"
+                  {:err :append
+                   :err-file out})
+      (is (= 2 (count (re-seq #"error" (slurp out))))))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex

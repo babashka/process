@@ -1,7 +1,8 @@
 (ns babashka.process
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import [java.lang ProcessBuilder$Redirect]))
 
 (ns-unmap *ns* 'Process)
 (ns-unmap *ns* 'ProcessBuilder)
@@ -182,7 +183,9 @@
    (let [opts (merge *defaults* opts)
          {:keys [:in
                  :out
+                 :out-file
                  :err
+                 :err-file
                  :dir
                  :env
                  :extra-env
@@ -198,15 +201,24 @@
               dir (.directory (io/file dir))
               env (set-env env)
               extra-env (add-env extra-env)
-              (or (and (not err) inherit)
-                  (identical? err :inherit))
+              (and (not err) inherit)
               (.redirectError java.lang.ProcessBuilder$Redirect/INHERIT)
-              (or (and (not out) inherit)
-                  (identical? out :inherit))
+              (and (not out) inherit)
               (.redirectOutput java.lang.ProcessBuilder$Redirect/INHERIT)
-              (or (and (not in) inherit)
-                  (identical? in  :inherit))
+              (and (not in) inherit)
               (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
+     (case out
+       :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
+       :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file out-file)))
+       :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file out-file)))
+       nil)
+     (case err
+       :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
+       :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file err-file)))
+       :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file err-file)))
+       nil)
+     (case in
+       :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT))
      pb)))
 
 (defrecord ProcessBuilder [pb opts prev])
@@ -255,10 +267,16 @@
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
          stderr (.getErrorStream proc)
-         out (if (and out (not (identical? :inherit out)))
+         ;; TODO: handle writing to file via redirect
+         ;; by setting `:out-file` to the file of `:out`
+         out (if (and out (or (identical? :string out)
+                              (not (keyword? out))))
                (future (copy stdout out out-enc))
                stdout)
-         err (if (and err (not (identical? :inherit err)))
+         ;; TODO: handle writing to file via redirect
+         ;; by setting `:err-file` to the file of `:err`
+         err (if (and err (or (identical? :string err)
+                              (not (keyword? err))))
                (future (copy stderr err err-enc))
                stderr)]
      ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
