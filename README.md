@@ -59,12 +59,16 @@ need it.
     - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
       will be copied to or from the process's corresponding stream. May be set
       to `:inherit` for redirecting to the parent process's corresponding
-      stream.Optional `:in-enc`, `:out-enc` and `:err-enc` values will
+      stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
       be passed along to `clojure.java.io/copy`.
 
       The `:out` and `:err` options support `:string` for writing to a string
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
+
+      For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or:
+      - Specify `:write` + an additional `:out-file`/`:err-file` to write to that file.
+      - Specify `:append` + an additional `:out-file`/`:err-file` to append to that file.
 
     - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.
@@ -204,6 +208,28 @@ Forwarding the output of a process as the input of another process can also be d
 user=> (-> (process '[ls])
            (process '[grep "README"]) :out slurp)
 "README.md\n"
+```
+
+## Redirecting output to a file
+
+To write to a file use `:out :write` and set `:out-file` to a file:
+
+``` clojure
+user=> (require '[clojure.java.io :as io])
+nil
+user=> (do @(p/process ["ls"] {:out :write :out-file (io/file "/tmp/out.txt")}) nil)
+nil
+user=> (slurp "/tmp/out.txt")
+"CHANGELOG.md\nLICENSE\nREADME.md\ndeps.edn\nproject.clj\nscript\nsrc\ntest\n"
+```
+
+To append to a file, use `:out :append`:
+
+``` clojure
+user=> (do @(p/process ["ls"] {:out :append :out-file (io/file "/tmp/out.txt")}) nil)
+nil
+user=> (slurp "/tmp/out.txt")
+"CHANGELOG.md\nLICENSE\nREADME.md\ndeps.edn\nproject.clj\nscript\nsrc\ntest\nCHANGELOG.md\nLICENSE\nREADME.md\ndeps.edn\nproject.clj\nscript\nsrc\ntest\n"
 ```
 
 ## Feeding input
