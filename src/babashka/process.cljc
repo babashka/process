@@ -1,7 +1,8 @@
 (ns babashka.process
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import [java.lang ProcessBuilder$Redirect]))
 
 (ns-unmap *ns* 'Process)
 (ns-unmap *ns* 'ProcessBuilder)
@@ -176,17 +177,34 @@
    :escape (if windows? #(str/replace % "\"" "\\\"") identity)
    :program-resolver default-program-resolver})
 
+(defn- normalize-opts [{:keys [:out :err :in :inherit] :as opts}]
+  (cond-> opts
+    (and inherit (not out))
+    (-> (assoc :out :inherit))
+    (and inherit (not err))
+    (-> (assoc :err :inherit))
+    (and inherit (not in))
+    (-> (assoc :in :inherit))
+    (instance? java.io.File out)
+    (-> (assoc :out-file out)
+        (assoc :out :append))
+    (instance? java.io.File err)
+    (-> (assoc :err-file out)
+        (assoc :err :append))))
+
 (defn- ^java.lang.ProcessBuilder build
   ([cmd] (build cmd nil))
   ([^java.util.List cmd opts]
-   (let [opts (merge *defaults* opts)
+   (let [;; we assume here that opts are already normalized and merged with
+         ;; defaults
          {:keys [:in
                  :out
+                 :out-file
                  :err
+                 :err-file
                  :dir
                  :env
                  :extra-env
-                 :inherit
                  :escape]} opts
          str-fn (comp escape str)
          cmd (mapv str-fn cmd)
@@ -197,16 +215,20 @@
          pb (cond-> (java.lang.ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
               env (set-env env)
-              extra-env (add-env extra-env)
-              (or (and (not err) inherit)
-                  (identical? err :inherit))
-              (.redirectError java.lang.ProcessBuilder$Redirect/INHERIT)
-              (or (and (not out) inherit)
-                  (identical? out :inherit))
-              (.redirectOutput java.lang.ProcessBuilder$Redirect/INHERIT)
-              (or (and (not in) inherit)
-                  (identical? in  :inherit))
-              (.redirectInput java.lang.ProcessBuilder$Redirect/INHERIT))]
+              extra-env (add-env extra-env))]
+     (case out
+       :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
+       :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file out-file)))
+       :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file out-file)))
+       nil)
+     (case err
+       :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
+       :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file err-file)))
+       :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file err-file)))
+       nil)
+     (case in
+       :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)
+       nil)
      pb)))
 
 (defrecord ProcessBuilder [pb opts prev])
@@ -217,7 +239,7 @@
                 (pb cmd opts nil)
                 (pb nil cmd opts)))
   ([prev cmd opts]
-   (let [opts (merge *defaults* opts)]
+   (let [opts (merge *defaults* (normalize-opts opts))]
      (->ProcessBuilder (build cmd opts)
                        opts
                        prev))))
@@ -236,7 +258,7 @@
                 (process cmd opts nil)
                 (process nil cmd opts)))
   ([prev cmd opts]
-   (let [opts (merge *defaults* opts)
+   (let [opts (merge *defaults* (normalize-opts opts))
          {:keys [:in :in-enc
                  :out :out-enc
                  :err :err-enc
@@ -255,10 +277,12 @@
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
          stderr (.getErrorStream proc)
-         out (if (and out (not (identical? :inherit out)))
+         out (if (and out (or (identical? :string out)
+                              (not (keyword? out))))
                (future (copy stdout out out-enc))
                stdout)
-         err (if (and err (not (identical? :inherit err)))
+         err (if (and err (or (identical? :string err)
+                              (not (keyword? err))))
                (future (copy stderr err err-enc))
                stderr)]
      ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
