@@ -218,7 +218,8 @@
        :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file err-file)))
        nil)
      (case in
-       :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT))
+       :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)
+       nil)
      pb)))
 
 (defrecord ProcessBuilder [pb opts prev])
