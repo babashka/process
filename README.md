@@ -66,9 +66,9 @@ need it.
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
 
-      For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or:
-      - Specify `:write` + an additional `:out-file`/`:err-file` to write to that file.
-      - Specify `:append` + an additional `:out-file`/`:err-file` to append to that file.
+      For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
+      - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
+      - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
 
     - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
     - `:dir`: working directory.

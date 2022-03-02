@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- feat [#44](https://github.com/babashka/process/issues/44): Support `:out` + `:write` or `:append` + `:out-file` + file
+- feat [#44](https://github.com/babashka/process/issues/44): Support `:err` + `:write` or `:append` + `:err-file` + file
+
 ## 0.1.0
 
 - Resolve binaries on Windows using `fs/which`
