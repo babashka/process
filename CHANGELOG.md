@@ -2,6 +2,10 @@
 
 ## 0.1.1
 
+Similar to `tools.build.api/process`, `process` now supports appending output to
+files. To reduce cognitive overhead between libraries, process adopted the same
+convention:
+
 - feat [#44](https://github.com/babashka/process/issues/44):
   - Support `:out` + (`:write` / `:append`) and `:out-file` + file
   - Support `:err` + (`:write` / `:append`) and `:err-file` + file
