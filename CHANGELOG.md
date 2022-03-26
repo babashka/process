@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Issue [#53](https://github.com/babashka/process/issues/53):
+  - Using `pprint` on a `Process` now prints the process as a map instead of `pprint` not having a preference between `IPersistentMap` and `IDeref`.
+
 ## 0.1.1
 
 Similar to `tools.build.api/process`, `process` now supports appending output to

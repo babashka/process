@@ -192,6 +192,10 @@
                    :err-file out})
       (is (= 2 (count (re-seq #"error" (slurp out))))))))
 
+(deftest pprint-test
+  (testing "pprint prints process as a map (not ambiguous on pprint/simple-dispatch multimethod)"
+    (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") clojure.pprint/pprint)) ":proc"))))
+
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
                   (try (import 'java.lang.ProcessHandle)
@@ -259,3 +263,7 @@
       (let [proc @(p/process ["git " "status"] {:out :string})]
         (is (string? (:out proc)))
         (is (zero? (:exit proc))))))
+
+(when-windows
+  (deftest ^:windows windows-pprint-test
+    (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") clojure.pprint/pprint)) ":proc"))))

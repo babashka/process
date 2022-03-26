@@ -437,25 +437,6 @@ Because `process` spawns threads for non-blocking I/O, you might have to run
 `(shutdown-agents)` at the end of your Clojure JVM scripts to force
 termination. Babashka does this automatically.
 
-### Clojure.pprint
-
-When pretty-printing a process, you will get an exception:
-
-``` clojure
-(require '[clojure.pprint :as pprint])
-(pprint/pprint (process ["ls"]))
-Execution error (IllegalArgumentException) at user/eval257 (REPL:1).
-Multiple methods in multimethod 'simple-dispatch' match dispatch value: class babashka.process.Process -> interface clojure.lang.IDeref and interface clojure.lang.IPersistentMap, and neither is preferred
-```
-
-The reason is that a process is both a record and a `clojure.lang.IDeref` and
-pprint does not have a preference for how to print this. This can be resolved
-using:
-
-``` clojure
-(prefer-method pprint/simple-dispatch clojure.lang.IPersistentMap clojure.lang.IDeref)
-```
-
 ## License
 
 Copyright © 2020-2021 Michiel Borkent
