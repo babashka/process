@@ -1,7 +1,6 @@
 (ns babashka.process
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
-            [clojure.pprint :as pprint :only [pprint simple-dispatch]]
             [clojure.string :as str])
   (:import [java.lang ProcessBuilder$Redirect]))
 
@@ -123,9 +122,6 @@
 
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
-
-(defmethod pprint/simple-dispatch Process [proc]
-  (pprint/pprint (into {} proc)))
 
 #_{:clj-kondo/ignore [:unused-private-var]}
 (defn- proc->Process [^java.lang.Process proc cmd prev]

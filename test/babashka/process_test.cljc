@@ -194,8 +194,13 @@
       (is (= 2 (count (re-seq #"error" (slurp out))))))))
 
 (deftest pprint-test
-  (testing "pprint prints process as a map (not ambiguous on pprint/simple-dispatch multimethod)"
-    (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc"))))
+  (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
+    (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
+          (-> (process "cat missing-file.txt") pprint))))
+  (testing "after requiring pprint namespace, process gets pprinted as a map"
+    (do
+      (require '[babashka.process.pprint])
+      (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc")))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
@@ -267,4 +272,10 @@
 
 (when-windows
   (deftest ^:windows windows-pprint-test
-    (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") pprint)) ":proc"))))
+    (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
+      (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
+            (-> (process "cmd /c type missing-file.txt") pprint))))
+    (testing "after requiring pprint namespace, process gets pprinted as a map"
+      (do
+        (require '[babashka.process.pprint])
+        (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") pprint)) ":proc"))))))
