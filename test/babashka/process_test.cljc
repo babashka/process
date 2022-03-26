@@ -2,6 +2,7 @@
   (:require [babashka.fs :as fs]
             [babashka.process :refer [tokenize process check sh $ pb start] :as p]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
 
@@ -194,7 +195,7 @@
 
 (deftest pprint-test
   (testing "pprint prints process as a map (not ambiguous on pprint/simple-dispatch multimethod)"
-    (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") clojure.pprint/pprint)) ":proc"))))
+    (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc"))))
 
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
@@ -266,4 +267,4 @@
 
 (when-windows
   (deftest ^:windows windows-pprint-test
-    (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") clojure.pprint/pprint)) ":proc"))))
+    (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") pprint)) ":proc"))))
