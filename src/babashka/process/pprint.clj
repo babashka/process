@@ -1,5 +1,6 @@
 (ns babashka.process.pprint
-  (:require [clojure.pprint :as pprint :only [pprint simple-dispatch]]))
+  (:require [babashka.process]
+            [clojure.pprint :as pprint]))
 
 (defmethod pprint/simple-dispatch babashka.process.Process [proc]
   (pprint/pprint (into {} proc)))
