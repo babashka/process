@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Issue [#53](https://github.com/babashka/process/issues/53):
-  - Using `pprint` on a `Process` now prints the process as a map instead of `pprint` not having a preference between `IPersistentMap` and `IDeref`.
+  - Added namespace `babashka.process.pprint` which defines how to `pprint` a `Process` record (if loaded).
 
 ## 0.1.1
 
