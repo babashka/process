@@ -194,7 +194,7 @@
       (is (= 2 (count (re-seq #"error" (slurp out))))))))
 
 (deftest pprint-test
-  #?(:bb ;; in bb we already required the babashka.process.pprint namespace
+  #?(:bb nil ;; in bb we already required the babashka.process.pprint namespace
      :clj
      (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
        (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
