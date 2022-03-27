@@ -439,7 +439,7 @@ termination. Babashka does this automatically.
 
 ### Clojure.pprint
 
-When pretty-printing a process, you will get an exception:
+When pretty-printing a process, by default you will get an exception:
 
 ``` clojure
 (require '[clojure.pprint :as pprint])
@@ -449,8 +449,20 @@ Multiple methods in multimethod 'simple-dispatch' match dispatch value: class ba
 ```
 
 The reason is that a process is both a record and a `clojure.lang.IDeref` and
-pprint does not have a preference for how to print this. This can be resolved
-using:
+pprint does not have a preference for how to print this. Two potential resolutions for this are:
+- require the `babashka.process.pprint` namespace, which will define a `pprint` implementation for a `Process` record:
+```clojure
+(require '[babashka.process.pprint]
+         '[clojure.pprint :as pprint])
+
+(pprint/pprint (process ["ls"]))
+
+=> {:proc
+    #object[java.lang.ProcessImpl...]
+    ...
+    }
+```
+- define a preference for `pprint`'s dispatch mulitmethod:
 
 ``` clojure
 (prefer-method pprint/simple-dispatch clojure.lang.IPersistentMap clojure.lang.IDeref)

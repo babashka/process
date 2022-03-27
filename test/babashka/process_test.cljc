@@ -2,6 +2,7 @@
   (:require [babashka.fs :as fs]
             [babashka.process :refer [tokenize process check sh $ pb start] :as p]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
 
@@ -192,6 +193,15 @@
                    :err-file out})
       (is (= 2 (count (re-seq #"error" (slurp out))))))))
 
+(deftest pprint-test
+  (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
+    (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
+          (-> (process "cat missing-file.txt") pprint))))
+  (testing "after requiring pprint namespace, process gets pprinted as a map"
+    (do
+      (require '[babashka.process.pprint])
+      (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc")))))
+
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
                   (try (import 'java.lang.ProcessHandle)
@@ -259,3 +269,13 @@
       (let [proc @(p/process ["git " "status"] {:out :string})]
         (is (string? (:out proc)))
         (is (zero? (:exit proc))))))
+
+(when-windows
+  (deftest ^:windows windows-pprint-test
+    (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
+      (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
+            (-> (process "cmd /c type missing-file.txt") pprint))))
+    (testing "after requiring pprint namespace, process gets pprinted as a map"
+      (do
+        (require '[babashka.process.pprint])
+        (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") pprint)) ":proc"))))))

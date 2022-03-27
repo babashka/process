@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Issue [#53](https://github.com/babashka/process/issues/53):
+  - Added namespace `babashka.process.pprint` which defines how to `pprint` a `Process` record (if loaded).
+
 ## 0.1.1
 
 Similar to `tools.build.api/process`, `process` now supports appending output to
