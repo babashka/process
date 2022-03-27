@@ -199,7 +199,7 @@
           (-> (process "cat missing-file.txt") pprint))))
   (testing "after requiring pprint namespace, process gets pprinted as a map"
     (do
-      (require '[babashka.process.pprint])
+      (require '[babashka.process] :reload '[babashka.process.pprint] :reload)
       (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc")))))
 
 (defmacro ^:private jdk9+ []
