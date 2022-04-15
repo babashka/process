@@ -192,9 +192,9 @@
     (-> (assoc :err-file out)
         (assoc :err :append))))
 
-(defn- ^java.lang.ProcessBuilder build
-  ([cmd] (build cmd nil))
-  ([^java.util.List cmd opts]
+(defn- build
+  (^java.lang.ProcessBuilder [cmd] (build cmd nil))
+  (^java.lang.ProcessBuilder [^java.util.List cmd opts]
    (let [;; we assume here that opts are already normalized and merged with
          ;; defaults
          {:keys [:in
