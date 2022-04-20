@@ -9,7 +9,7 @@ This library is included in
 library:
 
 ``` clojure
-$ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.0.1"}}}'
+$ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.1.1"}}}'
 
 user=> (require '[clojure.string :as str])
 nil
