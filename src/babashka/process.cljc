@@ -262,7 +262,8 @@
          {:keys [:in :in-enc
                  :out :out-enc
                  :err :err-enc
-                 :shutdown]} opts
+                 :shutdown
+                 :pre-start-fn]} opts
          in (or in (:out prev))
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
@@ -273,6 +274,9 @@
            cmd
            (build cmd opts))
          cmd (vec (.command pb))
+         _ (when pre-start-fn
+             (let [interceptor-map {:cmd cmd}]
+               (pre-start-fn interceptor-map)))
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)

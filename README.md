@@ -76,6 +76,12 @@ need it.
     - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
+    - `:pre-start-fn`: a one-argument function that, if present, gets called with a 
+      map of process info just before the process is started. Can be useful for debugging 
+      or reporting. Any return value from the function is discarded.
+      
+      Map contents:
+      - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
     - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
@@ -277,6 +283,25 @@ Here is an example where we read the output of `yes` line by line and print it o
       (let [line (read-line)]
         (println :line line))
       (recur))))
+```
+
+## Printing command
+
+We can use `:pre-start-fn` to report commands being run:
+
+``` clojure
+(require '[babashka.process :refer [process]])
+
+(doseq [file ["LICENSE" "CHANGELOG.md"]]
+         (-> (process ["head" "-1" file] {:out :string 
+                                           :pre-start-fn #(apply println "Running" (:cmd %))})
+             deref :out println))
+
+Running head -1 LICENSE
+Eclipse Public License - v 1.0
+
+Running head -1 CHANGELOG.md
+# Changelog
 ```
 
 ## sh
