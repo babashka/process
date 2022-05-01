@@ -274,8 +274,9 @@
            cmd
            (build cmd opts))
          cmd (vec (.command pb))
-         interceptor-map {:cmd cmd}
-         _ (when pre-start-fn (pre-start-fn interceptor-map))
+         _ (when pre-start-fn
+             (let [interceptor-map {:cmd cmd}]
+               (pre-start-fn interceptor-map)))
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
