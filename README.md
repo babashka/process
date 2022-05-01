@@ -76,6 +76,9 @@ need it.
     - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
+    - `:cmd-print-fn`: a one-argument function that gets called with a vector of
+      the tokenized command just before the process is started. Can be useful for 
+      debugging or reporting. Any return value from the function is discarded.
     - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
@@ -277,6 +280,25 @@ Here is an example where we read the output of `yes` line by line and print it o
       (let [line (read-line)]
         (println :line line))
       (recur))))
+```
+
+## Printing command
+
+We can use `:cmd-print-fn` to report commands being run:
+
+``` clojure
+(require '[babashka.process :refer [process]])
+
+(doseq [file ["LICENSE" "CHANGELOG.md"]]
+         (-> (process (str "head -1 " file) {:out :string 
+                                             :cmd-print-fn #(apply println "Running" %)})
+             deref :out println))
+
+Running head -1 LICENSE
+Eclipse Public License - v 1.0
+
+Running head -1 CHANGELOG.md
+# Changelog
 ```
 
 ## sh

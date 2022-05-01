@@ -262,7 +262,8 @@
          {:keys [:in :in-enc
                  :out :out-enc
                  :err :err-enc
-                 :shutdown]} opts
+                 :shutdown
+                 :cmd-print-fn]} opts
          in (or in (:out prev))
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
@@ -273,6 +274,7 @@
            cmd
            (build cmd opts))
          cmd (vec (.command pb))
+         _ (when cmd-print-fn (cmd-print-fn cmd))
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)

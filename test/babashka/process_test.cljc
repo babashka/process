@@ -204,6 +204,14 @@
       (require '[babashka.process] :reload '[babashka.process.pprint] :reload)
       (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc")))))
 
+(deftest cmd-print-test
+  (testing "a print fn option gets executed just before process is started"
+    (let [p #(apply println "Running" %)]
+      (is (str/includes? (with-out-str (process "ls" {:cmd-print-fn p}))
+            "Running ls"))
+      (is (str/includes? (with-out-str (sh "cat foo" {:cmd-print-fn p}))
+            "Running cat foo")))))
+
 (defmacro ^:private jdk9+ []
   (if (identical? ::ex
                   (try (import 'java.lang.ProcessHandle)
@@ -281,3 +289,12 @@
       (do
         (require '[babashka.process.pprint])
         (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") pprint)) ":proc"))))))
+
+(when-windows
+  (deftest ^:windows windows-cmd-print-test
+    (testing "a print fn option gets executed just before process is started"
+      (let [p #(apply println "Running" %)]
+        (is (re-find #"Running .*cmd\.exe .* file\.txt"
+              (with-out-str (process "cmd /c type file.txt" {:cmd-print-fn p}))))
+        (is (re-find #"Running .*cmd\.exe .* file\.txt"
+              (with-out-str (-> (pb ["cmd" "/c" "type" "file.txt"] {:cmd-print-fn p}) start))))))))

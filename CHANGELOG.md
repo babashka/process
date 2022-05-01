@@ -4,6 +4,8 @@
 
 - Issue [#53](https://github.com/babashka/process/issues/53):
   - Added namespace `babashka.process.pprint` which defines how to `pprint` a `Process` record (if loaded).
+- Part of feature request [#1249](https://github.com/babashka/babashka/issues/1249):
+  - Added `:cmd-print-fn` option to `process` options to side-effect command tokens
 
 ## 0.1.1
 
