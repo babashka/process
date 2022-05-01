@@ -204,12 +204,12 @@
       (require '[babashka.process] :reload '[babashka.process.pprint] :reload)
       (is (str/includes? (with-out-str (-> (process "cat missing-file.txt") pprint)) ":proc")))))
 
-(deftest cmd-print-test
+(deftest pre-start-fn-test
   (testing "a print fn option gets executed just before process is started"
-    (let [p #(apply println "Running" %)]
-      (is (str/includes? (with-out-str (process "ls" {:cmd-print-fn p}))
+    (let [p {:pre-start-fn #(apply println "Running" (:cmd %))}]
+      (is (str/includes? (with-out-str (process "ls" p))
             "Running ls"))
-      (is (str/includes? (with-out-str (sh "cat foo" {:cmd-print-fn p}))
+      (is (str/includes? (with-out-str (sh "cat foo" p))
             "Running cat foo")))))
 
 (defmacro ^:private jdk9+ []
@@ -291,10 +291,10 @@
         (is (str/includes? (with-out-str (-> (process "cmd /c type missing-file.txt") pprint)) ":proc"))))))
 
 (when-windows
-  (deftest ^:windows windows-cmd-print-test
+  (deftest ^:windows windows-pre-start-fn-test
     (testing "a print fn option gets executed just before process is started"
-      (let [p #(apply println "Running" %)]
+      (let [p {:pre-start-fn #(apply println "Running" (:cmd %))}]
         (is (re-find #"Running .*cmd\.exe .* file\.txt"
-              (with-out-str (process "cmd /c type file.txt" {:cmd-print-fn p}))))
+              (with-out-str (process "cmd /c type file.txt" p))))
         (is (re-find #"Running .*cmd\.exe .* file\.txt"
-              (with-out-str (-> (pb ["cmd" "/c" "type" "file.txt"] {:cmd-print-fn p}) start))))))))
+              (with-out-str (-> (pb ["cmd" "/c" "type" "file.txt"] p) start))))))))

@@ -263,7 +263,7 @@
                  :out :out-enc
                  :err :err-enc
                  :shutdown
-                 :cmd-print-fn]} opts
+                 :pre-start-fn]} opts
          in (or in (:out prev))
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
@@ -274,7 +274,8 @@
            cmd
            (build cmd opts))
          cmd (vec (.command pb))
-         _ (when cmd-print-fn (cmd-print-fn cmd))
+         interceptor-map {:cmd cmd}
+         _ (when pre-start-fn (pre-start-fn interceptor-map))
          proc (.start pb)
          stdin  (.getOutputStream proc)
          stdout (.getInputStream proc)
