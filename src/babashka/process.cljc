@@ -410,7 +410,20 @@
   "Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images."
-  [program & args]
-  (if-graal
-      (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args))
-    (throw (ex-info "exec is not support in non-GraalVM environments" {}))))
+  ([cmd] (exec cmd nil))
+  ([cmd {:keys [escape]
+         :as opts}]
+   (let [cmd (if (and (string? cmd)
+                      (not (.exists (io/file cmd))))
+               (tokenize cmd)
+               cmd)
+         str-fn (comp escape str)
+         cmd (mapv str-fn cmd)
+         cmd (if-let [program-resolver (:program-resolver opts)]
+               (let [[program & args] cmd]
+                 (into [(program-resolver program)] args))
+               cmd)
+         [program & args] cmd]
+     (if-graal
+         (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args))
+       (throw (ex-info "exec is not support in non-GraalVM environments" {}))))))
