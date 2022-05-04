@@ -399,3 +399,18 @@
   ([prev cmd opts]
    @(process prev cmd (merge {:out :string
                               :err :string} opts))))
+
+(def graal? (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
+
+(defmacro if-graal [then else]
+  (if graal?
+    then else))
+
+(defn exec
+  "Replaces the current process image with the process image specified
+  by the given path invoked with the given args. Works only in GraalVM
+  native images."
+  [program & args]
+  (if-graal
+      (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args))
+    (throw (ex-info "exec is not support in non-GraalVM environments" {}))))
