@@ -15,6 +15,8 @@
             :let [_ (println "##" ns)]
             var (sort-by :name ana)]
       (println "###" (format "`%s`" (:name var)))
+      (when-let [arglist-strs (:arglist-strs var)]
+        (println arglist-strs))
       (when-let [doc (:doc var)]
         (println doc)))))
 
