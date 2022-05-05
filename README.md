@@ -496,9 +496,9 @@ pprint does not have a preference for how to print this. Two potential resolutio
 ## babashka.process
 ### `$`
 <code>($ [& args])</code><br>
-Convenience macro around `process`. Takes command as varargs. Options can
+<pre>Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
-  interpolation via `~`
+  interpolation via `~`</pre>
 ### `*defaults*`
 ### `->Process`
 <code>(->Process [proc exit in out err prev cmd])</code><br>
@@ -510,13 +510,13 @@ Convenience macro around `process`. Takes command as varargs. Options can
 ### `ProcessBuilder`
 ### `add-env`
 <code>(add-env [pb env])</code><br>
-Adds environment for a ProcessBuilder instance.
-  Returns instance to participate in the thread-first macro.
+<pre>Adds environment for a ProcessBuilder instance.
+  Returns instance to participate in the thread-first macro.</pre>
 ### `as-string-map`
 <code>(as-string-map [m])</code><br>
-Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
+<pre>Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
 
-  Stringifies keyword keys, but otherwise doesn't try to do anything clever with values
+  Stringifies keyword keys, but otherwise doesn't try to do anything clever with values</pre>
 ### `build`
 <code>(build [cmd])</code><br>
 <code>(build [cmd opts])</code><br>
@@ -536,9 +536,9 @@ Helper to coerce a Clojure map with keyword keys into something coerceable to Ma
 ### `exec`
 <code>(exec [cmd])</code><br>
 <code>(exec [cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}])</code><br>
-Replaces the current process image with the process image specified
+<pre>Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
-  native images.
+  native images.</pre>
 ### `format-arg`
 <code>(format-arg [arg])</code><br>
 ### `graal?`
@@ -558,13 +558,13 @@ Replaces the current process image with the process image specified
 <code>(pb [prev cmd opts])</code><br>
 ### `pipeline`
 <code>(pipeline [proc])</code><br>
-Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders.
+<pre>Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders.</pre>
 ### `pipeline`
 <code>(pipeline [proc])</code><br>
 <code>(pipeline [pb & pbs])</code><br>
-Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders.
+<pre>Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders.</pre>
 ### `proc->Process`
 <code>(proc->Process [proc cmd prev])</code><br>
 ### `process`
@@ -575,8 +575,8 @@ Returns the processes for one pipe created with -> or creates
 <code>(process-unquote [arg])</code><br>
 ### `set-env`
 <code>(set-env [pb env])</code><br>
-Sets environment for a ProcessBuilder instance.
-  Returns instance to participate in the thread-first macro.
+<pre>Sets environment for a ProcessBuilder instance.
+  Returns instance to participate in the thread-first macro.</pre>
 ### `sh`
 <code>(sh [cmd])</code><br>
 <code>(sh [cmd opts])</code><br>
@@ -585,8 +585,8 @@ Sets environment for a ProcessBuilder instance.
 <code>(start [pb])</code><br>
 ### `tokenize`
 <code>(tokenize [s])</code><br>
-Tokenize string to list of individual space separated arguments.
-  If argument contains space you can wrap it with `'` or `"`.
+<pre>Tokenize string to list of individual space separated arguments.
+  If argument contains space you can wrap it with `'` or `"`.</pre>
 ### `windows?`
 
 
