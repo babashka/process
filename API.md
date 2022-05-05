@@ -43,7 +43,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L478-L499)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L482-L503)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -125,7 +125,12 @@ Takes a command (vector of strings or objects that will be turned
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L458-L468)
+Convenience function similar to `clojure.java.shell/sh` that sets
+  `:out` and `:err` to `:string` by default and blocks. Similar to
+  `cjs/sh` it does not check the exit code (this can be done with
+  `check`).
+
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L458-L472)
 ### `start`
 <code>[pb]</code><br>
 

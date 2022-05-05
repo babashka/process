@@ -456,6 +456,10 @@
        (process prev# cmd# opts#))))
 
 (defn sh
+  "Convenience function similar to `clojure.java.shell/sh` that sets
+  `:out` and `:err` to `:string` by default and blocks. Similar to
+  `cjs/sh` it does not check the exit code (this can be done with
+  `check`)."
   ([cmd] (sh cmd nil))
   ([cmd opts]
    (let [[prev cmd opts] (if (:proc cmd)
