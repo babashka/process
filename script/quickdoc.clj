@@ -14,7 +14,8 @@
     (doseq [[ns ana] nss
             :let [_ (println "##" ns)]
             var (sort-by :name ana)
-            :when (not (:no-doc var))]
+            :when (and (not (:no-doc var))
+                       (seq (:arglists-strs var)))]
       (println "###" (format "`%s`" (:name var)))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
