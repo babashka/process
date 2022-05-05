@@ -418,7 +418,8 @@
    @(process prev cmd (merge {:out :string
                               :err :string} opts))))
 
-(def graal? (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
+(def ^:private graal?
+  (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
 
 (defmacro ^:no-doc
   if-graal [then else]
