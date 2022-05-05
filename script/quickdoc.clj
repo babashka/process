@@ -20,7 +20,7 @@
         (doseq [arglist arg-lists]
           (println (format "<code>%s</code><br>"  arglist))))
       (when-let [doc (:doc var)]
-        (println doc)))))
+        (println (format "<p>%s</p>" doc))))))
 
 (spit "README.md"
       (str/replace (slurp "README.template.md")
