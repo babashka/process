@@ -271,7 +271,7 @@
     (post-fn out)))
 
 (defn process
-  "takes a command (vector of strings or objects that will be turned
+  "Takes a command (vector of strings or objects that will be turned
   into strings) and optionally a map of options.
 
   Returns: a record with

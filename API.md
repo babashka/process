@@ -72,7 +72,7 @@ Returns the processes for one pipe created with -> or creates
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
 
-takes a command (vector of strings or objects that will be turned
+Takes a command (vector of strings or objects that will be turned
   into strings) and optionally a map of options.
 
   Returns: a record with
