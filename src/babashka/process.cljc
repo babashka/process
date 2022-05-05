@@ -293,7 +293,6 @@
       to `:inherit` for redirecting to the parent process's corresponding
       stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
       be passed along to `clojure.java.io/copy`.
-
       The `:out` and `:err` options support `:string` for writing to a string
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
