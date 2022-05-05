@@ -31,8 +31,8 @@
       (println)
       (println
        (format
-        "[Source](%s%s)"
-        "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L"
+        "[Source](https://github.com/babashka/process/blob/%s/src/babashka/process.cljc#L%s)"
+        (or (:branch nil) "quickdoc")
         (:row var))))))
 
 (spit "README.md"
