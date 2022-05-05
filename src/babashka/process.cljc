@@ -374,7 +374,14 @@
 (jdk9+-conditional
  (defn pipeline
    "Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders."
+  pipeline from multiple process builders.
+
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more process builders created with `pb`: creates a
+    pipeline as a vector of processes (JDK9+ only).
+
+  Also see [Pipelines](/README.md#pipelines).
+  "
    ([proc]
     (if-let [prev (:prev proc)]
       (conj (pipeline prev) proc)

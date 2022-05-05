@@ -9,7 +9,7 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L437-L466)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L444-L473)
 ### `*defaults*`
 
 Dynamic var containing overridable default options. Use
@@ -44,7 +44,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L492-L513)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L499-L520)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -59,7 +59,14 @@ Returns a process builder (as record).
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L375-L381)
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more process builders created with `pb`: creates a
+    pipeline as a vector of processes (JDK9+ only).
+
+  Also see [Pipelines](/README.md#pipelines).
+  
+
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L375-L388)
 ### `pipeline`
 <code>[proc]</code><br>
 <code>[pb & pbs]</code><br>
@@ -74,7 +81,7 @@ Returns the processes for one pipe created with -> or creates
   Also see [Pipelines](/README.md#pipelines).
   
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L382-L416)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L389-L423)
 ### `process`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -138,13 +145,13 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L468-L482)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L475-L489)
 ### `start`
 <code>[pb]</code><br>
 
 Takes a process builder, calls start and returns a process (as record).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L418-L424)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L425-L431)
 ### `tokenize`
 <code>[s]</code><br>
 
