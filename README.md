@@ -495,132 +495,156 @@ pprint does not have a preference for how to print this. Two potential resolutio
 
 ## babashka.process
 ### `$`
-`($ [& args])`
-
+```
+($ [& args])
+```
+Convenience macro around `process`. Takes command as varargs. Options can
+  be passed via metadata on the form or as a first map arg. Supports
+  interpolation via `~`
 ### `*defaults*`
 ### `->Process`
-`(->Process [proc exit in out err prev cmd])`
-
+```
+(->Process [proc exit in out err prev cmd])
+```
 ### `->ProcessBuilder`
-`(->ProcessBuilder [pb opts prev])`
-
+```
+(->ProcessBuilder [pb opts prev])
+```
 ### `-program-resolver`
-`(-program-resolver [program])`
-
+```
+(-program-resolver [program])
+```
 ### `Process`
 ### `ProcessBuilder`
 ### `add-env`
-`(add-env [pb env])`
-
+```
+(add-env [pb env])
+```
 Adds environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro.
 ### `as-string-map`
-`(as-string-map [m])`
-
+```
+(as-string-map [m])
+```
 Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
 
   Stringifies keyword keys, but otherwise doesn't try to do anything clever with values
 ### `build`
-`(build [cmd])`
-
-`(build [cmd opts])`
-
+```
+(build [cmd])
+(build [cmd opts])
+```
 ### `check`
-`(check [proc])`
-
+```
+(check [proc])
+```
 ### `copy`
-`(copy [in out encoding])`
-
+```
+(copy [in out encoding])
+```
 ### `debug`
-`(debug [& strs])`
-
+```
+(debug [& strs])
+```
 ### `default-escape`
 ### `default-program-resolver`
-`(default-program-resolver [program])`
-
+```
+(default-program-resolver [program])
+```
 ### `destroy`
-`(destroy [proc])`
-
+```
+(destroy [proc])
+```
 ### `destroy-tree`
-`(destroy-tree [proc])`
-
+```
+(destroy-tree [proc])
+```
 ### `exec`
-`(exec [cmd])`
-
-`(exec [cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}])`
-
+```
+(exec [cmd])
+(exec [cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}])
+```
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 ### `format-arg`
-`(format-arg [arg])`
-
+```
+(format-arg [arg])
+```
 ### `graal?`
 ### `if-graal`
-`(if-graal [then else])`
-
+```
+(if-graal [then else])
+```
 ### `jdk9+-conditional`
-`(jdk9+-conditional [pre-9 post-8])`
-
+```
+(jdk9+-conditional [pre-9 post-8])
+```
 ### `map->Process`
-`(map->Process [m])`
-
+```
+(map->Process [m])
+```
 ### `map->ProcessBuilder`
-`(map->ProcessBuilder [m])`
-
+```
+(map->ProcessBuilder [m])
+```
 ### `normalize-opts`
-`(normalize-opts [{:keys [:out :err :in :inherit] :as opts}])`
-
+```
+(normalize-opts [{:keys [:out :err :in :inherit] :as opts}])
+```
 ### `pb`
-`(pb [cmd])`
-
-`(pb [cmd opts])`
-
-`(pb [prev cmd opts])`
-
+```
+(pb [cmd])
+(pb [cmd opts])
+(pb [prev cmd opts])
+```
 ### `pipeline`
-`(pipeline [proc])`
-
+```
+(pipeline [proc])
+```
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 ### `pipeline`
-`(pipeline [proc])`
-
-`(pipeline [pb & pbs])`
-
+```
+(pipeline [proc])
+(pipeline [pb & pbs])
+```
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 ### `proc->Process`
-`(proc->Process [proc cmd prev])`
-
+```
+(proc->Process [proc cmd prev])
+```
 ### `process`
-`(process [cmd])`
-
-`(process [cmd opts])`
-
-`(process [prev cmd opts])`
-
+```
+(process [cmd])
+(process [cmd opts])
+(process [prev cmd opts])
+```
 ### `process-unquote`
-`(process-unquote [arg])`
-
+```
+(process-unquote [arg])
+```
 ### `set-env`
-`(set-env [pb env])`
-
+```
+(set-env [pb env])
+```
 Sets environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro.
 ### `sh`
-`(sh [cmd])`
-
-`(sh [cmd opts])`
-
-`(sh [prev cmd opts])`
-
+```
+(sh [cmd])
+(sh [cmd opts])
+(sh [prev cmd opts])
+```
 ### `start`
-`(start [pb])`
-
+```
+(start [pb])
+```
 ### `tokenize`
-`(tokenize [s])`
-
+```
+(tokenize [s])
+```
 Tokenize string to list of individual space separated arguments.
   If argument contains space you can wrap it with `'` or `"`.
 ### `windows?`

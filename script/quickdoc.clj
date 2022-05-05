@@ -15,9 +15,12 @@
             :let [_ (println "##" ns)]
             var (sort-by :name ana)]
       (println "###" (format "`%s`" (:name var)))
-      (.println System/err (keys var))
-      (doseq [arglist (:arglist-strs var)]
-        (println (format "`(%s %s)`\n" (:name var) arglist)))
+      ;; (.println System/err (keys var))
+      (when-let [arg-lists (seq (:arglist-strs var))]
+        (println "```")
+        (doseq [arglist arg-lists]
+          (println (format "(%s %s)" (:name var) arglist)))
+        (println "```"))
       (when-let [doc (:doc var)]
         (println doc)))))
 

@@ -368,6 +368,9 @@
     :else (list 'quote arg)))
 
 (defmacro $
+  "Convenience macro around `process`. Takes command as varargs. Options can
+  be passed via metadata on the form or as a first map arg. Supports
+  interpolation via `~`"
   [& args]
   (let [opts (meta &form)
         farg (first args)
