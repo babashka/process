@@ -17,10 +17,8 @@
       (println "###" (format "`%s`" (:name var)))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
-        (println "```")
         (doseq [arglist arg-lists]
-          (println (format "(%s %s)" (:name var) arglist)))
-        (println "```"))
+          (println (format "(%s %s)\n" (:name var) arglist))))
       (when-let [doc (:doc var)]
         (println doc)))))
 
