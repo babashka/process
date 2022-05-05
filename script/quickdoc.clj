@@ -28,8 +28,9 @@
                 (println (format "<code>%s</code><br>"  arglist))))
             (when-let [doc (:doc var)]
               (println)
-              (println doc)
-              )
+              (when (:macro var)
+                (println "Macro.\n\n"))
+              (println doc))
             (println)
             (println
              (format

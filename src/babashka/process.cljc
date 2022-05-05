@@ -154,7 +154,9 @@
 
 (jdk9+-conditional
  nil
- (defn destroy-tree [proc]
+ (defn destroy-tree
+   "Same as `destroy` but also destroys all descendants. JDK9+ only."
+   [proc]
    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
      (run! (fn [^java.lang.ProcessHandle handle]
              (.destroy handle))
@@ -187,7 +189,8 @@
   (if windows? #(str/replace % "\"" "\\\"") identity))
 
 (def ^:dynamic *defaults*
-  "Default settings for `process` invocations."
+  "Dynamic var containing overridable default options. Use
+  `alter-var-root` to change permanently or `binding` to change temporarily."
   {:shutdown nil
    :escape default-escape
    :program-resolver default-program-resolver})
@@ -249,6 +252,7 @@
 (defrecord ProcessBuilder [pb opts prev])
 
 (defn pb
+  "Returns a process builder (as record)."
   ([cmd] (pb nil cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
                 (pb cmd opts nil)
@@ -268,6 +272,52 @@
     (post-fn out)))
 
 (defn process
+  "Takes a command (vector of strings or objects that will be turned
+  into strings) and optionally a map of options.
+
+  Returns: a record with
+    - `:proc`: an instance of `java.lang.Process`
+    - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
+      `:out` or `:err` you will typically use `slurp` or use the `:string`
+      option (see below). Slurping those streams will block the current thread
+      until the process is finished.
+    - `:cmd`: the command that was passed to create the process.
+    - `:prev`: previous process record in case of a pipeline.
+
+  The returned record can be passed to `deref`. Doing so will cause the current
+  thread to block until the process is finished and will populate `:exit` with
+  the exit code.
+
+  Supported options:
+   - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
+      will be copied to or from the process's corresponding stream. May be set
+      to `:inherit` for redirecting to the parent process's corresponding
+      stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
+      be passed along to `clojure.java.io/copy`.
+      The `:out` and `:err` options support `:string` for writing to a string
+      output. You will need to `deref` the process before accessing the string
+      via the process's `:out`.
+
+
+      For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
+      - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
+      - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
+
+   - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
+   - `:dir`: working directory.
+   - `:env`, `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).
+   - `:escape`: function that will applied to each stringified argument. On
+      Windows this defaults to prepending a backslash before a double quote. On
+      other operating systems it defaults to `identity`.
+   - `:pre-start-fn`: a one-argument function that, if present, gets called with a 
+      map of process info just before the process is started. Can be useful for debugging 
+      or reporting. Any return value from the function is discarded.
+
+      Map contents:
+   - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
+   - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
+      map. Typically used with `destroy` or `destroy-tree` to ensure long
+      running processes are cleaned up on shutdown."
   ([cmd] (process nil cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
                 (process cmd opts nil)
@@ -324,14 +374,28 @@
 (jdk9+-conditional
  (defn pipeline
    "Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders."
+  pipeline from multiple process builders.
+
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more process builders created with `pb`: creates a
+    pipeline as a vector of processes (JDK9+ only).
+
+  Also see [Pipelines](/README.md#pipelines).
+  "
    ([proc]
     (if-let [prev (:prev proc)]
       (conj (pipeline prev) proc)
       [proc])))
  (defn pipeline
     "Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders."
+  pipeline from multiple process builders.
+
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more process builders created with `pb`: creates a
+    pipeline as a vector of processes (JDK9+ only).
+
+  Also see [Pipelines](/README.md#pipelines).
+  "
     ([proc]
      (if-let [prev (:prev proc)]
        (conj (pipeline prev) proc)
@@ -358,7 +422,9 @@
                    pbs+opts+procs)
            :procs)))))
 
-(defn start [pb]
+(defn start
+  "Takes a process builder, calls start and returns a process (as record)."
+  [pb]
   (let [pipe (pipeline pb)]
     (if (= 1 (count pipe))
       (process (:pb pb) (:opts pb))
@@ -407,6 +473,10 @@
        (process prev# cmd# opts#))))
 
 (defn sh
+  "Convenience function similar to `clojure.java.shell/sh` that sets
+  `:out` and `:err` to `:string` by default and blocks. Similar to
+  `cjs/sh` it does not check the exit code (this can be done with
+  `check`)."
   ([cmd] (sh cmd nil))
   ([cmd opts]
    (let [[prev cmd opts] (if (:proc cmd)
