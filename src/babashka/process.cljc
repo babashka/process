@@ -89,7 +89,9 @@
   (binding [*out* *err*]
     (println (str/join " " strs))))
 
-(defn check [proc]
+(defn check
+  "Takes a process, waits until is finished and throws if exit code is non-zero."
+  [proc]
   (let [proc @proc
         exit-code (:exit proc)
         err (:err proc)]

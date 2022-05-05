@@ -505,6 +505,8 @@ Convenience macro around `process`. Takes command as varargs. Options can
 Default settings for `process` invocations.
 ### `check`
 <code>[proc]</code><br>
+
+Takes a process, waits until is finished and throws if exit code is non-zero.
 ### `default-program-resolver`
 <code>[program]</code><br>
 ### `destroy`
