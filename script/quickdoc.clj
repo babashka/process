@@ -19,7 +19,8 @@
                        (not (:private var))
                        (not (= 'clojure.core/defrecord (:defined-by var))))]
       ;; (.println System/err (:defined-by var))
-      (println "###" (format "`%s`" (:name var)))
+      (println "###" (format "`%s` - [src](%s)" (:name var)
+                             "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12"))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
         (doseq [arglist arg-lists]

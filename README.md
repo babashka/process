@@ -494,63 +494,63 @@ pprint does not have a preference for how to print this. Two potential resolutio
 ```
 
 ## babashka.process
-### `$`
+### `$` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[& args]</code><br>
 
 Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
-### `*defaults*`
+### `*defaults*` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 
 Default settings for `process` invocations.
-### `check`
+### `check` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[proc]</code><br>
 
 Takes a process, waits until is finished and throws if exit code is non-zero.
-### `destroy`
+### `destroy` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[proc]</code><br>
 
 Takes process or map
   with :proc (`java.lang.ProcessBuilder`). Destroys the process and
   returns the input arg.
-### `destroy-tree`
+### `destroy-tree` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[proc]</code><br>
-### `exec`
+### `exec` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[cmd]</code><br>
 <code>[cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}]</code><br>
 
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
-### `graal?`
-### `if-graal`
+### `graal?` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `if-graal` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[then else]</code><br>
-### `pb`
+### `pb` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
-### `pipeline`
+### `pipeline` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[proc]</code><br>
 
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
-### `pipeline`
+### `pipeline` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[proc]</code><br>
 <code>[pb & pbs]</code><br>
 
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
-### `process`
+### `process` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
-### `sh`
+### `sh` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
-### `start`
+### `start` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[pb]</code><br>
-### `tokenize`
+### `tokenize` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 <code>[s]</code><br>
 
 Tokenize string to list of individual space separated arguments.
