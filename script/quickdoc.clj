@@ -5,7 +5,7 @@
 (def var-defs
   (-> (clj-kondo/run! {:lint ["src"]
                        :config {:output {:analysis {:arglists true
-                                                    :meta [:no-doc]}}}})
+                                                    :var-definitions {:meta [:no-doc]}}}}})
       :analysis :var-definitions))
 
 (def nss (group-by :ns var-defs))

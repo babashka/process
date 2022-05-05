@@ -507,8 +507,6 @@ Default settings for `process` invocations.
 <code>[proc]</code><br>
 
 Takes a process, waits until is finished and throws if exit code is non-zero.
-### `default-program-resolver`
-<code>[program]</code><br>
 ### `destroy`
 <code>[proc]</code><br>
 ### `destroy-tree`
