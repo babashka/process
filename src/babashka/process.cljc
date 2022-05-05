@@ -173,7 +173,8 @@
       program)
     (catch Throwable _ program)))
 
-(defn default-program-resolver [program]
+(defn ^:no-doc default-program-resolver
+  [program]
   (if windows?
     (-program-resolver program)
     program))
