@@ -13,7 +13,8 @@
   (with-out-str
     (doseq [[ns ana] nss
             :let [_ (println "##" ns)]
-            var (sort-by :name ana)]
+            var (sort-by :name ana)
+            :when (not (:no-doc var))]
       (println "###" (format "`%s`" (:name var)))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
