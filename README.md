@@ -494,58 +494,58 @@ pprint does not have a preference for how to print this. Two potential resolutio
 ```
 
 ## babashka.process
-### $
-### *defaults*
-### ->Process
-### ->ProcessBuilder
-### -program-resolver
-### Process
-### ProcessBuilder
-### add-env
+### `$`
+### `*defaults*`
+### `->Process`
+### `->ProcessBuilder`
+### `-program-resolver`
+### `Process`
+### `ProcessBuilder`
+### `add-env`
 Adds environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro.
-### as-string-map
+### `as-string-map`
 Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
 
   Stringifies keyword keys, but otherwise doesn't try to do anything clever with values
-### build
-### check
-### copy
-### debug
-### default-escape
-### default-program-resolver
-### destroy
-### destroy-tree
-### exec
+### `build`
+### `check`
+### `copy`
+### `debug`
+### `default-escape`
+### `default-program-resolver`
+### `destroy`
+### `destroy-tree`
+### `exec`
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
-### format-arg
-### graal?
-### if-graal
-### jdk9+-conditional
-### map->Process
-### map->ProcessBuilder
-### normalize-opts
-### pb
-### pipeline
+### `format-arg`
+### `graal?`
+### `if-graal`
+### `jdk9+-conditional`
+### `map->Process`
+### `map->ProcessBuilder`
+### `normalize-opts`
+### `pb`
+### `pipeline`
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
-### pipeline
+### `pipeline`
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
-### proc->Process
-### process
-### process-unquote
-### set-env
+### `proc->Process`
+### `process`
+### `process-unquote`
+### `set-env`
 Sets environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro.
-### sh
-### start
-### tokenize
+### `sh`
+### `start`
+### `tokenize`
 Tokenize string to list of individual space separated arguments.
   If argument contains space you can wrap it with `'` or `"`.
-### windows?
+### `windows?`
 
 
 ## License

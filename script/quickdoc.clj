@@ -14,7 +14,7 @@
     (doseq [[ns ana] nss
             :let [_ (println "##" ns)]
             var (sort-by :name ana)]
-      (println "###" (:name var))
+      (println "###" (format "`%s`" (:name var)))
       (when-let [doc (:doc var)]
         (println doc)))))
 
