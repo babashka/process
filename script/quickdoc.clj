@@ -13,7 +13,7 @@
   (with-out-str
     (doseq [[ns ana] nss
             :let [_ (println "##" ns)]
-            var ana]
+            var (sort-by :name ana)]
       (println "###" (:name var))
       (when-let [doc (:doc var)]
         (println doc)))))
