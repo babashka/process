@@ -1,1 +1,8 @@
-{:pods {clj-kondo/clj-kondo {:version "2022.02.09"}}}
+{:pods {clj-kondo/clj-kondo {:version "2022.02.09"}}
+ :deps {io.github.borkdude/quickdoc {:git/sha "f384873f73ec426157bdfa9171fe18218aed4677"}}
+
+ :tasks
+ {quickdoc {:doc "Invoke quickdoc"
+            :requires ([quickdoc.api :as api])
+            :task (api/quickdoc {:git/branch "master"
+                                 :github/repo "https://github.com/babashka/process"})}}}
