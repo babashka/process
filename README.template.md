@@ -8,10 +8,6 @@ This library is included in
 [babashka](https://github.com/babashka/babashka) since [0.2.3](https://github.com/babashka/babashka/blob/master/CHANGELOG.md#v023-2020-10-21) but is also intended as a JVM
 library:
 
-<code>(+ 1 2 3)</code>
-<br>
-<code>(+ 4 5 6)</code>
-
 ``` clojure
 $ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.1.1"}}}'
 
