@@ -494,6 +494,146 @@ pprint does not have a preference for how to print this. Two potential resolutio
 ```
 
 ## babashka.process
+clojure.core/defmacro
+### `$`
+<code>[& args]</code><br>
+
+Convenience macro around `process`. Takes command as varargs. Options can
+  be passed via metadata on the form or as a first map arg. Supports
+  interpolation via `~`
+clojure.core/def
+### `*defaults*`
+
+Default settings for `process` invocations.
+clojure.core/defrecord
+### `->Process`
+<code>[proc exit in out err prev cmd]</code><br>
+clojure.core/defrecord
+### `->ProcessBuilder`
+<code>[pb opts prev]</code><br>
+clojure.core/defn-
+### `-program-resolver`
+<code>[program]</code><br>
+clojure.core/defrecord
+### `Process`
+clojure.core/defrecord
+### `ProcessBuilder`
+clojure.core/defn-
+### `add-env`
+<code>[pb env]</code><br>
+
+Adds environment for a ProcessBuilder instance.
+  Returns instance to participate in the thread-first macro.
+clojure.core/defn-
+### `as-string-map`
+<code>[m]</code><br>
+
+Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
+
+  Stringifies keyword keys, but otherwise doesn't try to do anything clever with values
+clojure.core/defn-
+### `build`
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+clojure.core/defn
+### `check`
+<code>[proc]</code><br>
+clojure.core/defn-
+### `copy`
+<code>[in out encoding]</code><br>
+clojure.core/defn-
+### `debug`
+<code>[& strs]</code><br>
+clojure.core/def
+### `default-escape`
+clojure.core/defn
+### `default-program-resolver`
+<code>[program]</code><br>
+clojure.core/defn
+### `destroy`
+<code>[proc]</code><br>
+clojure.core/defn
+### `destroy-tree`
+<code>[proc]</code><br>
+clojure.core/defn
+### `exec`
+<code>[cmd]</code><br>
+<code>[cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}]</code><br>
+
+Replaces the current process image with the process image specified
+  by the given path invoked with the given args. Works only in GraalVM
+  native images.
+clojure.core/defn-
+### `format-arg`
+<code>[arg]</code><br>
+clojure.core/def
+### `graal?`
+clojure.core/defmacro
+### `if-graal`
+<code>[then else]</code><br>
+clojure.core/defmacro
+### `jdk9+-conditional`
+<code>[pre-9 post-8]</code><br>
+clojure.core/defrecord
+### `map->Process`
+<code>[m]</code><br>
+clojure.core/defrecord
+### `map->ProcessBuilder`
+<code>[m]</code><br>
+clojure.core/defn-
+### `normalize-opts`
+<code>[{:keys [:out :err :in :inherit] :as opts}]</code><br>
+clojure.core/defn
+### `pb`
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+<code>[prev cmd opts]</code><br>
+clojure.core/defn
+### `pipeline`
+<code>[proc]</code><br>
+
+Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders.
+clojure.core/defn
+### `pipeline`
+<code>[proc]</code><br>
+<code>[pb & pbs]</code><br>
+
+Returns the processes for one pipe created with -> or creates
+  pipeline from multiple process builders.
+clojure.core/defn-
+### `proc->Process`
+<code>[proc cmd prev]</code><br>
+clojure.core/defn
+### `process`
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+<code>[prev cmd opts]</code><br>
+clojure.core/defn-
+### `process-unquote`
+<code>[arg]</code><br>
+clojure.core/defn-
+### `set-env`
+<code>[pb env]</code><br>
+
+Sets environment for a ProcessBuilder instance.
+  Returns instance to participate in the thread-first macro.
+clojure.core/defn
+### `sh`
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+<code>[prev cmd opts]</code><br>
+clojure.core/defn
+### `start`
+<code>[pb]</code><br>
+clojure.core/defn
+### `tokenize`
+<code>[s]</code><br>
+
+Tokenize string to list of individual space separated arguments.
+  If argument contains space you can wrap it with `'` or `"`.
+clojure.core/def
+### `windows?`
 
 
 ## License
