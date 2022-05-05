@@ -46,5 +46,4 @@
                        "{{ quickdoc }}" docs))))
 
 (quickdoc {:branch "master"
-           :github/repo "https://github.com/babashka/process"
-           })
+           :github/repo "https://github.com/babashka/process"})
