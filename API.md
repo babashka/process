@@ -9,7 +9,7 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L426-L455)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L425-L454)
 ### `*defaults*`
 
 Default settings for `process` invocations.
@@ -43,7 +43,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L477-L498)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L476-L497)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -58,7 +58,7 @@ Returns a process builder (as record).
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L373-L379)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L372-L378)
 ### `pipeline`
 <code>[proc]</code><br>
 <code>[pb & pbs]</code><br>
@@ -66,7 +66,7 @@ Returns the processes for one pipe created with -> or creates
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L380-L407)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L379-L406)
 ### `process`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -97,8 +97,7 @@ takes a command (vector of strings or objects that will be turned
       The `:out` and `:err` options support `:string` for writing to a string
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
-
-      For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
+     For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
       - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
       - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
 
@@ -118,17 +117,17 @@ takes a command (vector of strings or objects that will be turned
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L273-L370)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L273-L369)
 ### `sh`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L457-L467)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L456-L466)
 ### `start`
 <code>[pb]</code><br>
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L409-L413)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L408-L412)
 ### `tokenize`
 <code>[s]</code><br>
 
