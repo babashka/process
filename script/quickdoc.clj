@@ -1,12 +1,10 @@
 (ns quickdoc
-  (:require [clojure.string :as str]
-            [pod.borkdude.clj-kondo :as clj-kondo]))
+  (:require [pod.borkdude.clj-kondo :as clj-kondo]))
 
-(defn quickdoc [{:keys [branch template outfile
+(defn quickdoc [{:keys [branch outfile
                         github/repo]
                  :or {branch "main"
-                      template "README.template.md"
-                      outfile "README.md"}}]
+                      outfile "API.md"}}]
   (let [var-defs
         (-> (clj-kondo/run! {:lint ["src"]
                              :config {:output {:analysis {:arglists true
@@ -41,9 +39,7 @@
               (:filename var)
               (:row var)
               (:end-row var)))))]
-    (spit outfile
-          (str/replace (slurp template)
-                       "{{ quickdoc }}" docs))))
+    (spit outfile docs)))
 
 (quickdoc {:branch "master"
            :github/repo "https://github.com/babashka/process"})
