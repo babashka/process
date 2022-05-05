@@ -9,6 +9,7 @@ This library is included in
 library:
 
 <code>(+ 1 2 3)</code>
+<br>
 <code>(+ 4 5 6)</code>
 
 ``` clojure
