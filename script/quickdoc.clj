@@ -4,7 +4,8 @@
 
 (def var-defs
   (-> (clj-kondo/run! {:lint ["src"]
-                       :config {:output {:analysis {:arglists true}}}})
+                       :config {:output {:analysis {:arglists true
+                                                    :meta [:no-doc]}}}})
       :analysis :var-definitions))
 
 (def nss (group-by :ns var-defs))
@@ -14,7 +15,7 @@
     (doseq [[ns ana] nss
             :let [_ (println "##" ns)]
             var (sort-by :name ana)
-            :when (and (not (:no-doc var))
+            :when (and (not (:no-doc (:meta var)))
                        (not (:private var))
                        (not (= 'clojure.core/defrecord (:defined-by var))))]
       ;; (.println System/err (:defined-by var))
