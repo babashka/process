@@ -304,7 +304,7 @@
 
    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
    - `:dir`: working directory.
-   - `:env`, `:extra-env`: a map of environment variables. See [Add environment](#add-environment).
+   - `:env`, `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).
    - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
