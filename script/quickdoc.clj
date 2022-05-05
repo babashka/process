@@ -31,8 +31,9 @@
       (println)
       (println
        (format
-        "[Source](%s)"
-        "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12")))))
+        "[Source](%s%s)"
+        "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#"
+        (:row var))))))
 
 (spit "README.md"
       (str/replace (slurp "README.template.md")
