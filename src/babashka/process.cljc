@@ -408,7 +408,9 @@
                    pbs+opts+procs)
            :procs)))))
 
-(defn start [pb]
+(defn start
+  "Takes a process builder, calls start and returns a process (as record)."
+  [pb]
   (let [pipe (pipeline pb)]
     (if (= 1 (count pipe))
       (process (:pb pb) (:opts pb))

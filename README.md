@@ -39,13 +39,6 @@ You will probably mostly need `process` and `check` so it would be good
 to start reading the docs for these. Skim over the rest and come back when you
 need it.
 
-- `destroy`: function of process or map with `:proc`
-  (`java.lang.ProcessBuilder`). Destroys the process and returns the input arg.
-
-- `destroy-tree`: same as `destroy` but also destroys all descendants. JDK9+ only.
-
-- `pb`: returns a process builder (as record).
-
 - `start`: takes a process builder, calls start and returns a process (as record).
 
 - `pipeline`:

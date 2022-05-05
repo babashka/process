@@ -9,7 +9,7 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L428-L457)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L430-L459)
 ### `*defaults*`
 
 Dynamic var containing overridable default options. Use
@@ -44,7 +44,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L483-L504)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L485-L506)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -131,11 +131,13 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L459-L473)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L461-L475)
 ### `start`
 <code>[pb]</code><br>
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L411-L415)
+Takes a process builder, calls start and returns a process (as record).
+
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L411-L417)
 ### `tokenize`
 <code>[s]</code><br>
 
