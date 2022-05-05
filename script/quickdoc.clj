@@ -19,8 +19,7 @@
                        (not (:private var))
                        (not (= 'clojure.core/defrecord (:defined-by var))))]
       ;; (.println System/err (:defined-by var))
-      (println "###" (format "`%s` - [src](%s)" (:name var)
-                             "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12"))
+      (println "###" (format "`%s`" (:name var)))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
         (doseq [arglist arg-lists]
@@ -28,7 +27,11 @@
       (when-let [doc (:doc var)]
         (println)
         (println doc)
-        ))))
+        )
+      (println
+       (format
+        "[Source](%s)"
+        "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12")))))
 
 (spit "README.md"
       (str/replace (slurp "README.template.md")

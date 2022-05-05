@@ -494,67 +494,82 @@ pprint does not have a preference for how to print this. Two potential resolutio
 ```
 
 ## babashka.process
-### `$` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `$`
 <code>[& args]</code><br>
 
 Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
-### `*defaults*` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `*defaults*`
 
 Default settings for `process` invocations.
-### `check` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `check`
 <code>[proc]</code><br>
 
 Takes a process, waits until is finished and throws if exit code is non-zero.
-### `destroy` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `destroy`
 <code>[proc]</code><br>
 
 Takes process or map
   with :proc (`java.lang.ProcessBuilder`). Destroys the process and
   returns the input arg.
-### `destroy-tree` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `destroy-tree`
 <code>[proc]</code><br>
-### `exec` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `exec`
 <code>[cmd]</code><br>
 <code>[cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}]</code><br>
 
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
-### `graal?` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
-### `if-graal` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `graal?`
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `if-graal`
 <code>[then else]</code><br>
-### `pb` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
-### `pipeline` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `pipeline`
 <code>[proc]</code><br>
 
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
-### `pipeline` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `pipeline`
 <code>[proc]</code><br>
 <code>[pb & pbs]</code><br>
 
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
-### `process` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `process`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
-### `sh` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `sh`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
 <code>[prev cmd opts]</code><br>
-### `start` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `start`
 <code>[pb]</code><br>
-### `tokenize` - [src](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
+### `tokenize`
 <code>[s]</code><br>
 
 Tokenize string to list of individual space separated arguments.
   If argument contains space you can wrap it with `'` or `"`.
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 
 
 ## License
