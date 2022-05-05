@@ -537,10 +537,6 @@ Replaces the current process image with the process image specified
 ### `graal?`
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
-### `if-graal`
-<code>[then else]</code><br>
-
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L12)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>

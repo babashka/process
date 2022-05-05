@@ -420,7 +420,8 @@
 
 (def graal? (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
 
-(defmacro if-graal [then else]
+(defmacro ^:no-doc
+  if-graal [then else]
   (if graal?
     then else))
 
