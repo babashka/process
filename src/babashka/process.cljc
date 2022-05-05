@@ -89,7 +89,9 @@
   (binding [*out* *err*]
     (println (str/join " " strs))))
 
-(defn check [proc]
+(defn check
+  "Takes a process, waits until is finished and throws if exit code is non-zero."
+  [proc]
   (let [proc @proc
         exit-code (:exit proc)
         err (:err proc)]
@@ -142,7 +144,11 @@
     pre-9
     post-8))
 
-(defn destroy [proc]
+(defn destroy
+  "Takes process or map
+  with :proc (`java.lang.ProcessBuilder`). Destroys the process and
+  returns the input arg."
+  [proc]
   (.destroy ^java.lang.Process (:proc proc))
   proc)
 
@@ -171,7 +177,8 @@
       program)
     (catch Throwable _ program)))
 
-(defn default-program-resolver [program]
+(defn ^:no-doc default-program-resolver
+  [program]
   (if windows?
     (-program-resolver program)
     program))
@@ -180,6 +187,7 @@
   (if windows? #(str/replace % "\"" "\\\"") identity))
 
 (def ^:dynamic *defaults*
+  "Default settings for `process` invocations."
   {:shutdown nil
    :escape default-escape
    :program-resolver default-program-resolver})
@@ -368,6 +376,9 @@
     :else (list 'quote arg)))
 
 (defmacro $
+  "Convenience macro around `process`. Takes command as varargs. Options can
+  be passed via metadata on the form or as a first map arg. Supports
+  interpolation via `~`"
   [& args]
   (let [opts (meta &form)
         farg (first args)
@@ -407,9 +418,11 @@
    @(process prev cmd (merge {:out :string
                               :err :string} opts))))
 
-(def graal? (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
+(def ^:private graal?
+  (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
 
-(defmacro if-graal [then else]
+(defmacro ^:no-doc
+  if-graal [then else]
   (if graal?
     then else))
 
