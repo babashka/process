@@ -32,7 +32,7 @@
       (println
        (format
         "[Source](%s%s)"
-        "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#"
+        "https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L"
         (:row var))))))
 
 (spit "README.md"
