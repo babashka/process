@@ -103,19 +103,19 @@ takes a command (vector of strings or objects that will be turned
       - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
       - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
 
-    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
-    - `:dir`: working directory.
-    - `:env`, `:extra-env`: a map of environment variables. See [Add environment](#add-environment).
-    - `:escape`: function that will applied to each stringified argument. On
+   - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
+   - `:dir`: working directory.
+   - `:env`, `:extra-env`: a map of environment variables. See [Add environment](#add-environment).
+   - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
-    - `:pre-start-fn`: a one-argument function that, if present, gets called with a 
+   - `:pre-start-fn`: a one-argument function that, if present, gets called with a 
       map of process info just before the process is started. Can be useful for debugging 
       or reporting. Any return value from the function is discarded.
 
       Map contents:
-      - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
-    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
+   - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
+   - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
 
