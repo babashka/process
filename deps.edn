@@ -1,4 +1,4 @@
-{:deps {babashka/fs {:mvn/version "0.1.2"}}
+{:deps {babashka/fs {:mvn/version "0.1.6"}}
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps {cognitect/test-runner
                                {:git/url "https://github.com/cognitect-labs/test-runner"

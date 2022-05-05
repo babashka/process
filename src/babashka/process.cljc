@@ -160,21 +160,28 @@
       (str/lower-case)
       (str/includes? "windows")))
 
-(defn default-program-resolver [program]
+(defn- -program-resolver [program]
+  ;; this should make life easier and not cause any bugs that weren't there previously
+  ;; on exception we just return the program as is
   (try
-    ;; this should make life easier and not cause any bugs that weren't there previously
-    ;; on exception we just return the program as is
-    (if (and windows? (fs/relative? program))
+    (if (fs/relative? program)
       (if-let [f (fs/which program)]
         (str f)
         program)
       program)
-    (catch Throwable _
-      program)))
+    (catch Throwable _ program)))
+
+(defn default-program-resolver [program]
+  (if windows?
+    (-program-resolver program)
+    program))
+
+(def ^:private default-escape
+  (if windows? #(str/replace % "\"" "\\\"") identity))
 
 (def ^:dynamic *defaults*
   {:shutdown nil
-   :escape (if windows? #(str/replace % "\"" "\\\"") identity)
+   :escape default-escape
    :program-resolver default-program-resolver})
 
 (defn- normalize-opts [{:keys [:out :err :in :inherit] :as opts}]
@@ -411,7 +418,8 @@
   by the given path invoked with the given args. Works only in GraalVM
   native images."
   ([cmd] (exec cmd nil))
-  ([cmd {:keys [escape]
+  ([cmd {:keys [escape env extra-env]
+         :or {escape default-escape}
          :as opts}]
    (let [cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
@@ -419,11 +427,11 @@
                cmd)
          str-fn (comp escape str)
          cmd (mapv str-fn cmd)
-         cmd (if-let [program-resolver (:program-resolver opts)]
-               (let [[program & args] cmd]
-                 (into [(program-resolver program)] args))
-               cmd)
-         [program & args] cmd]
+         cmd (let [program-resolver (:program-resolver opts -program-resolver)
+                   [program & args] cmd]
+               (into [(program-resolver program)] args))
+         [program & args] cmd
+         ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
      (if-graal
-         (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args))
-       (throw (ex-info "exec is not support in non-GraalVM environments" {}))))))
+         (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args) env)
+       (throw (ex-info "exec is not support in non-GraalVM environments" {:cmd cmd}))))))
