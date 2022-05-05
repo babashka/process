@@ -31,9 +31,10 @@
       (println)
       (println
        (format
-        "[Source](https://github.com/babashka/process/blob/%s/src/babashka/process.cljc#L%s)"
+        "[Source](https://github.com/babashka/process/blob/%s/src/babashka/process.cljc#L%s-L%s)"
         (or (:branch nil) "quickdoc")
-        (:row var))))))
+        (:row var)
+        (:end-row var))))))
 
 (spit "README.md"
       (str/replace (slurp "README.template.md")
