@@ -144,7 +144,11 @@
     pre-9
     post-8))
 
-(defn destroy [proc]
+(defn destroy
+  "Takes process or map
+  with :proc (`java.lang.ProcessBuilder`). Destroys the process and
+  returns the input arg."
+  [proc]
   (.destroy ^java.lang.Process (:proc proc))
   proc)
 

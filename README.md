@@ -509,6 +509,10 @@ Default settings for `process` invocations.
 Takes a process, waits until is finished and throws if exit code is non-zero.
 ### `destroy`
 <code>[proc]</code><br>
+
+Takes process or map
+  with :proc (`java.lang.ProcessBuilder`). Destroys the process and
+  returns the input arg.
 ### `destroy-tree`
 <code>[proc]</code><br>
 ### `exec`
