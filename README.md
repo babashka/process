@@ -503,12 +503,6 @@ Convenience macro around `process`. Takes command as varargs. Options can
 ### `*defaults*`
 
 Default settings for `process` invocations.
-### `->Process`
-<code>[proc exit in out err prev cmd]</code><br>
-### `->ProcessBuilder`
-<code>[pb opts prev]</code><br>
-### `Process`
-### `ProcessBuilder`
 ### `check`
 <code>[proc]</code><br>
 ### `default-program-resolver`
@@ -527,10 +521,6 @@ Replaces the current process image with the process image specified
 ### `graal?`
 ### `if-graal`
 <code>[then else]</code><br>
-### `map->Process`
-<code>[m]</code><br>
-### `map->ProcessBuilder`
-<code>[m]</code><br>
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>

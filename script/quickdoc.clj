@@ -16,8 +16,8 @@
             var (sort-by :name ana)
             :when (and (not (:no-doc var))
                        (not (:private var))
-                       (not (= 'clojure.core/defmethod (:defined-by var))))]
-      (.println System/err (:defined-by var))
+                       (not (= 'clojure.core/defrecord (:defined-by var))))]
+      ;; (.println System/err (:defined-by var))
       (println "###" (format "`%s`" (:name var)))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
