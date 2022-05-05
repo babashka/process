@@ -9,7 +9,7 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L430-L459)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L437-L466)
 ### `*defaults*`
 
 Dynamic var containing overridable default options. Use
@@ -44,7 +44,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L485-L506)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L492-L513)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -67,7 +67,14 @@ Returns the processes for one pipe created with -> or creates
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L382-L409)
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing two or more process builders created with `pb`: creates a
+    pipeline as a vector of processes (JDK9+ only).
+
+  Also see [Pipelines](/README.md#pipelines).
+  
+
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L382-L416)
 ### `process`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -131,13 +138,13 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L461-L475)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L468-L482)
 ### `start`
 <code>[pb]</code><br>
 
 Takes a process builder, calls start and returns a process (as record).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L411-L417)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L418-L424)
 ### `tokenize`
 <code>[s]</code><br>
 
