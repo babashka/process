@@ -501,6 +501,8 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 ### `*defaults*`
+
+Default settings for `process` invocations.
 ### `->Process`
 <code>[proc exit in out err prev cmd]</code><br>
 ### `->ProcessBuilder`

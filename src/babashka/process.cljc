@@ -180,6 +180,7 @@
   (if windows? #(str/replace % "\"" "\\\"") identity))
 
 (def ^:dynamic *defaults*
+  "Default settings for `process` invocations."
   {:shutdown nil
    :escape default-escape
    :program-resolver default-program-resolver})
