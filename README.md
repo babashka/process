@@ -495,96 +495,96 @@ pprint does not have a preference for how to print this. Two potential resolutio
 
 ## babashka.process
 ### `$`
-<code>($ [& args])</code><br>
+<code>[& args]</code><br>
 Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 ### `*defaults*`
 ### `->Process`
-<code>(->Process [proc exit in out err prev cmd])</code><br>
+<code>[proc exit in out err prev cmd]</code><br>
 ### `->ProcessBuilder`
-<code>(->ProcessBuilder [pb opts prev])</code><br>
+<code>[pb opts prev]</code><br>
 ### `-program-resolver`
-<code>(-program-resolver [program])</code><br>
+<code>[program]</code><br>
 ### `Process`
 ### `ProcessBuilder`
 ### `add-env`
-<code>(add-env [pb env])</code><br>
+<code>[pb env]</code><br>
 Adds environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro.
 ### `as-string-map`
-<code>(as-string-map [m])</code><br>
+<code>[m]</code><br>
 Helper to coerce a Clojure map with keyword keys into something coerceable to Map<String,String>
 
   Stringifies keyword keys, but otherwise doesn't try to do anything clever with values
 ### `build`
-<code>(build [cmd])</code><br>
-<code>(build [cmd opts])</code><br>
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
 ### `check`
-<code>(check [proc])</code><br>
+<code>[proc]</code><br>
 ### `copy`
-<code>(copy [in out encoding])</code><br>
+<code>[in out encoding]</code><br>
 ### `debug`
-<code>(debug [& strs])</code><br>
+<code>[& strs]</code><br>
 ### `default-escape`
 ### `default-program-resolver`
-<code>(default-program-resolver [program])</code><br>
+<code>[program]</code><br>
 ### `destroy`
-<code>(destroy [proc])</code><br>
+<code>[proc]</code><br>
 ### `destroy-tree`
-<code>(destroy-tree [proc])</code><br>
+<code>[proc]</code><br>
 ### `exec`
-<code>(exec [cmd])</code><br>
-<code>(exec [cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}])</code><br>
+<code>[cmd]</code><br>
+<code>[cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}]</code><br>
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 ### `format-arg`
-<code>(format-arg [arg])</code><br>
+<code>[arg]</code><br>
 ### `graal?`
 ### `if-graal`
-<code>(if-graal [then else])</code><br>
+<code>[then else]</code><br>
 ### `jdk9+-conditional`
-<code>(jdk9+-conditional [pre-9 post-8])</code><br>
+<code>[pre-9 post-8]</code><br>
 ### `map->Process`
-<code>(map->Process [m])</code><br>
+<code>[m]</code><br>
 ### `map->ProcessBuilder`
-<code>(map->ProcessBuilder [m])</code><br>
+<code>[m]</code><br>
 ### `normalize-opts`
-<code>(normalize-opts [{:keys [:out :err :in :inherit] :as opts}])</code><br>
+<code>[{:keys [:out :err :in :inherit] :as opts}]</code><br>
 ### `pb`
-<code>(pb [cmd])</code><br>
-<code>(pb [cmd opts])</code><br>
-<code>(pb [prev cmd opts])</code><br>
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+<code>[prev cmd opts]</code><br>
 ### `pipeline`
-<code>(pipeline [proc])</code><br>
+<code>[proc]</code><br>
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 ### `pipeline`
-<code>(pipeline [proc])</code><br>
-<code>(pipeline [pb & pbs])</code><br>
+<code>[proc]</code><br>
+<code>[pb & pbs]</code><br>
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 ### `proc->Process`
-<code>(proc->Process [proc cmd prev])</code><br>
+<code>[proc cmd prev]</code><br>
 ### `process`
-<code>(process [cmd])</code><br>
-<code>(process [cmd opts])</code><br>
-<code>(process [prev cmd opts])</code><br>
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+<code>[prev cmd opts]</code><br>
 ### `process-unquote`
-<code>(process-unquote [arg])</code><br>
+<code>[arg]</code><br>
 ### `set-env`
-<code>(set-env [pb env])</code><br>
+<code>[pb env]</code><br>
 Sets environment for a ProcessBuilder instance.
   Returns instance to participate in the thread-first macro.
 ### `sh`
-<code>(sh [cmd])</code><br>
-<code>(sh [cmd opts])</code><br>
-<code>(sh [prev cmd opts])</code><br>
+<code>[cmd]</code><br>
+<code>[cmd opts]</code><br>
+<code>[prev cmd opts]</code><br>
 ### `start`
-<code>(start [pb])</code><br>
+<code>[pb]</code><br>
 ### `tokenize`
-<code>(tokenize [s])</code><br>
+<code>[s]</code><br>
 Tokenize string to list of individual space separated arguments.
   If argument contains space you can wrap it with `'` or `"`.
 ### `windows?`

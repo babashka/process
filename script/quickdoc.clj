@@ -18,7 +18,7 @@
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
         (doseq [arglist arg-lists]
-          (println (format "<code>(%s %s)</code><br>" (:name var) arglist))))
+          (println (format "<code>%s</code><br>"  arglist))))
       (when-let [doc (:doc var)]
         (println doc)))))
 
