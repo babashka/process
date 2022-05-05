@@ -15,7 +15,7 @@
             :let [_ (println "##" ns)]
             var (sort-by :name ana)
             :when (and (not (:no-doc var))
-                       (seq (:arglists-strs var)))]
+                       (seq (:arglist-strs var)))]
       (println "###" (format "`%s`" (:name var)))
       ;; (.println System/err (keys var))
       (when-let [arg-lists (seq (:arglist-strs var))]
