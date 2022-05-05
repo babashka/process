@@ -38,7 +38,7 @@
               "[Source](%s/blob/%s/%s#L%s-L%s)"
               repo
               branch
-              (:file var)
+              (:filename var)
               (:row var)
               (:end-row var)))))]
     (spit outfile
