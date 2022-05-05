@@ -9,12 +9,13 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L427-L456)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L428-L457)
 ### `*defaults*`
 
-Default settings for `process` invocations.
+Dynamic var containing overridable default options. Use
+  `alter-var-root` to change permanently or `binding` to change temporarily.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L191-L195)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L191-L196)
 ### `check`
 <code>[proc]</code><br>
 
@@ -43,7 +44,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L482-L503)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L483-L504)
 ### `pb`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -51,14 +52,14 @@ Replaces the current process image with the process image specified
 
 Returns a process builder (as record).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L253-L263)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L254-L264)
 ### `pipeline`
 <code>[proc]</code><br>
 
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L374-L380)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L375-L381)
 ### `pipeline`
 <code>[proc]</code><br>
 <code>[pb & pbs]</code><br>
@@ -66,7 +67,7 @@ Returns the processes for one pipe created with -> or creates
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L381-L408)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L382-L409)
 ### `process`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -119,7 +120,7 @@ Takes a command (vector of strings or objects that will be turned
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L273-L371)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L274-L372)
 ### `sh`
 <code>[cmd]</code><br>
 <code>[cmd opts]</code><br>
@@ -130,11 +131,11 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L458-L472)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L459-L473)
 ### `start`
 <code>[pb]</code><br>
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L410-L414)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L411-L415)
 ### `tokenize`
 <code>[s]</code><br>
 

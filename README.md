@@ -39,11 +39,6 @@ You will probably mostly need `process` and `check` so it would be good
 to start reading the docs for these. Skim over the rest and come back when you
 need it.
 
-- `sh`: 
-
-- `*defaults*`: dynamic var containing overridable default options. Use
-  `alter-var-root` to change permanently or `binding` to change temporarily.
-
 - `destroy`: function of process or map with `:proc`
   (`java.lang.ProcessBuilder`). Destroys the process and returns the input arg.
 

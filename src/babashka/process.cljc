@@ -189,7 +189,8 @@
   (if windows? #(str/replace % "\"" "\\\"") identity))
 
 (def ^:dynamic *defaults*
-  "Default settings for `process` invocations."
+  "Dynamic var containing overridable default options. Use
+  `alter-var-root` to change permanently or `binding` to change temporarily."
   {:shutdown nil
    :escape default-escape
    :program-resolver default-program-resolver})
