@@ -71,10 +71,10 @@
   (testing "chaining"
     (is (= "README.md\n"
            (-> (process ["ls"])
-               (process ["grep" "README"]) :out slurp)))
+               (process ["grep" "README.md"]) :out slurp)))
     (is (= "README.md\n"
            (-> (sh ["ls"])
-               (sh ["grep" "README"]) :out))))
+               (sh ["grep" "README.md"]) :out))))
   (testing "use of :dir options"
     (is (= (-> (process ["ls"]) :out slurp)
            (-> (process ["ls"] {:dir "."}) :out slurp)))

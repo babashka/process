@@ -22,5 +22,5 @@
         (println doc)))))
 
 (spit "README.md"
-      (str/replace (slurp "README.md.template")
+      (str/replace (slurp "README.template.md")
                    "{{ quickdoc }}" docs))
