@@ -4,7 +4,7 @@
 
 (def var-defs
   (-> (clj-kondo/run! {:lint ["src"]
-                       :config {:output {:analysis true}}})
+                       :config {:output {:analysis {:arglists true}}}})
       :analysis :var-definitions))
 
 (def nss (group-by :ns var-defs))
@@ -15,8 +15,9 @@
             :let [_ (println "##" ns)]
             var (sort-by :name ana)]
       (println "###" (format "`%s`" (:name var)))
-      (when-let [arglist-strs (:arglist-strs var)]
-        (println arglist-strs))
+      (.println System/err (keys var))
+      (doseq [arglist (:arglist-strs var)]
+        (println (format "`(%s %s)`\n" (:name var) arglist)))
       (when-let [doc (:doc var)]
         (println doc)))))
 
