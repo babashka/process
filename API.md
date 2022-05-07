@@ -54,9 +54,7 @@ Same as `destroy` but also destroys all descendants. JDK9+ only.
 ```
 
 ``` clojure
-(exec [cmd {:keys [escape env extra-env] 
-        :or {escape default-escape} 
-        :as opts}])
+(exec [cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}])
 ```
 
 
