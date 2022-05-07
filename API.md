@@ -3,7 +3,6 @@
 ``` clojure
 
 ($ [& args])
-
 ```
 
 
@@ -25,7 +24,6 @@ Dynamic var containing overridable default options. Use
 ``` clojure
 
 (check [proc])
-
 ```
 
 
@@ -36,7 +34,6 @@ Takes a process, waits until is finished and throws if exit code is non-zero.
 ``` clojure
 
 (destroy [proc])
-
 ```
 
 
@@ -49,7 +46,6 @@ Takes process or map
 ``` clojure
 
 (destroy-tree [proc])
-
 ```
 
 
@@ -60,9 +56,7 @@ Same as `destroy` but also destroys all descendants. JDK9+ only.
 ``` clojure
 
 (exec [cmd])
-
 (exec [cmd {:keys [escape env extra-env], :or {escape default-escape}, :as opts}])
-
 ```
 
 
@@ -75,11 +69,8 @@ Replaces the current process image with the process image specified
 ``` clojure
 
 (pb [cmd])
-
 (pb [cmd opts])
-
 (pb [prev cmd opts])
-
 ```
 
 
@@ -90,7 +81,6 @@ Returns a process builder (as record).
 ``` clojure
 
 (pipeline [proc])
-
 ```
 
 
@@ -109,11 +99,8 @@ Returns the processes for one pipe created with -> or creates
 ``` clojure
 
 (process [cmd])
-
 (process [cmd opts])
-
 (process [prev cmd opts])
-
 ```
 
 
@@ -169,11 +156,8 @@ Takes a command (vector of strings or objects that will be turned
 ``` clojure
 
 (sh [cmd])
-
 (sh [cmd opts])
-
 (sh [prev cmd opts])
-
 ```
 
 
@@ -187,7 +171,6 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 ``` clojure
 
 (start [pb])
-
 ```
 
 
@@ -198,7 +181,6 @@ Takes a process builder, calls start and returns a process (as record).
 ``` clojure
 
 (tokenize [s])
-
 ```
 
 
