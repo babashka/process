@@ -4,7 +4,7 @@
 
 ($ [& args])
 ```
-`
+
 
 Macro.
 
@@ -25,7 +25,7 @@ Dynamic var containing overridable default options. Use
 
 (check [proc])
 ```
-`
+
 
 Takes a process, waits until is finished and throws if exit code is non-zero.
 
@@ -35,7 +35,7 @@ Takes a process, waits until is finished and throws if exit code is non-zero.
 
 (destroy [proc])
 ```
-`
+
 
 Takes process or map
   with :proc (`java.lang.ProcessBuilder`). Destroys the process and
@@ -47,7 +47,7 @@ Takes process or map
 
 (destroy-tree [proc])
 ```
-`
+
 
 Same as `destroy` but also destroys all descendants. JDK9+ only.
 
@@ -58,7 +58,7 @@ Same as `destroy` but also destroys all descendants. JDK9+ only.
 (exec [cmd])
 (exec [cmd {:keys [escape env extra-env] :or {escape default-escape} :as opts}])
 ```
-`
+
 
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
@@ -72,7 +72,7 @@ Replaces the current process image with the process image specified
 (pb [cmd opts])
 (pb [prev cmd opts])
 ```
-`
+
 
 Returns a process builder (as record).
 
@@ -82,7 +82,7 @@ Returns a process builder (as record).
 
 (pipeline [proc])
 ```
-`
+
 
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
@@ -102,7 +102,7 @@ Returns the processes for one pipe created with -> or creates
 (process [cmd opts])
 (process [prev cmd opts])
 ```
-`
+
 
 Takes a command (vector of strings or objects that will be turned
   into strings) and optionally a map of options.
@@ -159,7 +159,7 @@ Takes a command (vector of strings or objects that will be turned
 (sh [cmd opts])
 (sh [prev cmd opts])
 ```
-`
+
 
 Convenience function similar to `clojure.java.shell/sh` that sets
   `:out` and `:err` to `:string` by default and blocks. Similar to
@@ -172,7 +172,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 
 (start [pb])
 ```
-`
+
 
 Takes a process builder, calls start and returns a process (as record).
 
@@ -182,7 +182,7 @@ Takes a process builder, calls start and returns a process (as record).
 
 (tokenize [s])
 ```
-`
+
 
 Tokenize string to list of individual space separated arguments.
   If argument contains space you can wrap it with `'` or `"`.
