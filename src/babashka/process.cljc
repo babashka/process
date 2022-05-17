@@ -30,7 +30,7 @@
         ;; enter single-quoted string
           (recur s in-double-quotes? true buf parsed))
 
-        (= 92 c)
+        (= 92 c) ;; the \\ escape character
         (let [escaped (.read s)
               buf (if (and in-double-quotes?
                            (= 34 escaped))
@@ -42,10 +42,14 @@
 
         (and (not in-single-quotes?) (= 34 c)) ;; double quote
         (if in-double-quotes?
-        ;; exit double-quoted string
+          ;; exit double-quoted string
           (recur s false in-single-quotes? (java.io.StringWriter.) (conj parsed (str buf)))
-        ;; enter double-quoted string
-          (recur s true in-single-quotes? buf parsed))
+          ;; enter double-quoted string
+          (recur s true in-single-quotes? (java.io.StringWriter.)
+                 (let [s (str buf)]
+                   (if (str/blank? s)
+                     parsed
+                     (conj parsed (str buf))))))
 
         (and (not in-double-quotes?)
              (not in-single-quotes?)

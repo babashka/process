@@ -18,7 +18,11 @@
   (is (= ["c:\\Users\\borkdude\\bin\\graal.bat" "1" "2" "3"]
          (tokenize "c:\\Users\\borkdude\\bin\\graal.bat 1 2 3")))
   (is (= ["\\foo"]
-         (tokenize "\"\\foo\""))))
+         (tokenize "\"\\foo\"")))
+  (is (= ["\\foo"]
+         (tokenize "\"\\foo\"")))
+  (is (= ["xxx[" "dude" "]xxx"]
+         (tokenize "xxx[\"dude\"]xxx"))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit
