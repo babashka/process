@@ -2,7 +2,7 @@
 
 [![Clojars Project](https://img.shields.io/clojars/v/babashka/process.svg)](https://clojars.org/babashka/process)
 
-Shelling out in Clojure made simple and easy.
+Shell out in Clojure with simplicity and ease.
 
 ## API
 
