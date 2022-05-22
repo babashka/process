@@ -4,8 +4,7 @@
 
 - Issue [#53](https://github.com/babashka/process/issues/53):
   - Added namespace `babashka.process.pprint` which defines how to `pprint` a `Process` record (if loaded).
-- Part of feature request [#1249](https://github.com/babashka/babashka/issues/1249):
-  - Added `:pre-start-fn` option to `process` options to side-effect command tokens
+- Added `:pre-start-fn`to `process` options, e.g. for printing the command before execution
 - Support `exec` but only in GraalVM binaries
 
 ## 0.1.1
