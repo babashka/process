@@ -29,7 +29,7 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L448-L477)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L443-L472)
 ## `*defaults*`
 
 Dynamic var containing overridable default options. Use
@@ -80,7 +80,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L503-L524)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L498-L519)
 ## `pb`
 ``` clojure
 
@@ -111,7 +111,7 @@ Returns the processes for one pipe created with -> or creates
   Also see [Pipelines](/README.md#pipelines).
   
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L393-L427)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L388-L422)
 ## `process`
 ``` clojure
 
@@ -146,29 +146,24 @@ Takes a command (vector of strings or objects that will be turned
       The `:out` and `:err` options support `:string` for writing to a string
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
-
-
       For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
-      - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
-      - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
-
+       - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
+       - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
    - `:dir`: working directory.
    - `:env`, `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).
    - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
-   - `:pre-start-fn`: a one-argument function that, if present, gets called with a 
-      map of process info just before the process is started. Can be useful for debugging 
-      or reporting. Any return value from the function is discarded.
-
-      Map contents:
-   - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
+   - `:pre-start-fn`: a one-argument function that, if present, gets called with a
+      map of process info just before the process is started. Can be useful for debugging
+      or reporting. Any return value from the function is discarded. Map contents:
+      - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L278-L376)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L278-L371)
 ## `sh`
 ``` clojure
 
@@ -183,7 +178,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L479-L493)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L474-L488)
 ## `start`
 ``` clojure
 
@@ -193,7 +188,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 
 Takes a process builder, calls start and returns a process (as record).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L429-L435)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L424-L430)
 ## `tokenize`
 ``` clojure
 

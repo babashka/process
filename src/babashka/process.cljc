@@ -25,9 +25,9 @@
                    parsed)
         (= 39 c) ;; single-quotes
         (if in-single-quotes?
-        ;; exit single-quoted string
+          ;; exit single-quoted string
           (recur s in-double-quotes? false (java.io.StringWriter.) (conj parsed (str buf)))
-        ;; enter single-quoted string
+          ;; enter single-quoted string
           (recur s in-double-quotes? true buf parsed))
 
         (= 92 c) ;; the \\ escape character
@@ -301,24 +301,19 @@
       The `:out` and `:err` options support `:string` for writing to a string
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
-
-
       For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
-      - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
-      - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
-
+       - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
+       - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
    - `:dir`: working directory.
    - `:env`, `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).
    - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
       other operating systems it defaults to `identity`.
-   - `:pre-start-fn`: a one-argument function that, if present, gets called with a 
-      map of process info just before the process is started. Can be useful for debugging 
-      or reporting. Any return value from the function is discarded.
-
-      Map contents:
-   - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
+   - `:pre-start-fn`: a one-argument function that, if present, gets called with a
+      map of process info just before the process is started. Can be useful for debugging
+      or reporting. Any return value from the function is discarded. Map contents:
+      - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown."
@@ -391,7 +386,7 @@
       (conj (pipeline prev) proc)
       [proc])))
  (defn pipeline
-    "Returns the processes for one pipe created with -> or creates
+   "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
@@ -400,31 +395,31 @@
 
   Also see [Pipelines](/README.md#pipelines).
   "
-    ([proc]
-     (if-let [prev (:prev proc)]
-       (conj (pipeline prev) proc)
-       [proc]))
-    ([pb & pbs]
-     (let [pbs (cons pb pbs)
-           opts (map :opts pbs)
-           pbs (map :pb pbs)
-           procs (java.lang.ProcessBuilder/startPipeline pbs)
-           pbs+opts+procs (map vector pbs opts procs)]
-       (-> (reduce (fn [{:keys [:prev :procs]}
-                        [pb opts proc]]
-                     (let [shutdown (:shutdown opts)
-                           cmd (.command ^java.lang.ProcessBuilder pb)
-                           new-proc (proc->Process proc cmd prev)
-                           new-procs (conj procs new-proc)]
-                       (when shutdown
-                         (-> (Runtime/getRuntime)
-                             (.addShutdownHook (Thread.
-                                                (fn []
-                                                  (shutdown new-proc))))))
-                       {:prev new-proc :procs new-procs}))
-                   {:prev nil :procs []}
-                   pbs+opts+procs)
-           :procs)))))
+   ([proc]
+    (if-let [prev (:prev proc)]
+      (conj (pipeline prev) proc)
+      [proc]))
+   ([pb & pbs]
+    (let [pbs (cons pb pbs)
+          opts (map :opts pbs)
+          pbs (map :pb pbs)
+          procs (java.lang.ProcessBuilder/startPipeline pbs)
+          pbs+opts+procs (map vector pbs opts procs)]
+      (-> (reduce (fn [{:keys [:prev :procs]}
+                       [pb opts proc]]
+                    (let [shutdown (:shutdown opts)
+                          cmd (.command ^java.lang.ProcessBuilder pb)
+                          new-proc (proc->Process proc cmd prev)
+                          new-procs (conj procs new-proc)]
+                      (when shutdown
+                        (-> (Runtime/getRuntime)
+                            (.addShutdownHook (Thread.
+                                               (fn []
+                                                 (shutdown new-proc))))))
+                      {:prev new-proc :procs new-procs}))
+                  {:prev nil :procs []}
+                  pbs+opts+procs)
+          :procs)))))
 
 (defn start
   "Takes a process builder, calls start and returns a process (as record)."
