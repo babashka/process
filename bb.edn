@@ -1,13 +1,14 @@
 {:pods {clj-kondo/clj-kondo {:version "2022.02.09"}}
  :deps {io.github.borkdude/quickdoc
         #_{:local/root "../../quickdoc"}
-        {:git/sha "a9492689e60acb2d1afe8af9dcf22c062fbc7c20"}}
+        {:git/sha "ca5893c0d81f26443dd178a747d0851e75d39eca"}}
 
  :tasks
  {quickdoc {:doc "Invoke quickdoc"
             :requires ([quickdoc.api :as api])
             :task (api/quickdoc {:git/branch "master"
                                  :github/repo "https://github.com/babashka/process"
-                                 :toc true})}
+                                 :toc true
+                                 :var-links true})}
   test {:doc "Run tests"
         :task (shell "script/test")}}}
