@@ -32,7 +32,7 @@ Shell out in Clojure with simplicity and ease.
 Macro.
 
 
-Convenience macro around [`process`](#process) Takes command as varargs. Options can
+Convenience macro around [`process`](#process). Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
@@ -40,7 +40,7 @@ Convenience macro around [`process`](#process) Takes command as varargs. Options
 ## `*defaults*`
 
 Dynamic var containing overridable default options. Use
-  [`destroy`](#destroy)to change permanently or [`destroy`](#destroy)to change temporarily.
+  `alter-var-root` to change permanently or `binding` to change temporarily.
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L199-L204)
 ## `check`
@@ -72,8 +72,8 @@ Takes process or map
 ```
 
 
-Same as [`destroy`](#destroy)but also destroys all descendants. JDK9+
-  only. Falls back to [`destroy`](#destroy)on older JVM versions.
+Same as [`destroy`](#destroy) but also destroys all descendants. JDK9+
+  only. Falls back to [`destroy`](#destroy) on older JVM versions.
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L164-L172)
 ## `exec`
@@ -112,7 +112,7 @@ Returns a process builder (as record).
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-  - When passing a process, returns a vector of processes of a pipeline created with [`destroy-tree`](#destroy-tree)or [`process`](#process)
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or [`pipeline`](#pipeline).
   - When passing two or more process builders created with `pb`: creates a
     pipeline as a vector of processes (JDK9+ only).
 
@@ -134,41 +134,41 @@ Takes a command (vector of strings or objects that will be turned
 
   Returns: a record with:
    - `:proc`: an instance of `java.lang.Process`
-   - [`null`](#) [`null`](#) `:out`: the process's streams. To obtain a string from
-        [`null`](#)or [`null`](#)you will typically use [`null`](#)or use the `:string`
+   - `:in`, `:err`, `:out`: the process's streams. To obtain a string from
+        `:out` or `:err` you will typically use `slurp` or use the `:string`
          option (see below). Slurping those streams will block the current thread
          until the process is finished.
    - `:cmd`: the command that was passed to create the process.
    - `:prev`: previous process record in case of a pipeline.
 
-  The returned record can be passed to [`null`](#) Doing so will cause the current
-  thread to block until the process is finished and will populate [`null`](#)with
+  The returned record can be passed to `deref`. Doing so will cause the current
+  thread to block until the process is finished and will populate `:exit` with
   the exit code.
 
   Supported options:
-   - [`null`](#) [`null`](#) [`null`](#)that
+   - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
       will be copied to or from the process's corresponding stream. May be set
-      to [`null`](#)for redirecting to the parent process's corresponding
-      stream. Optional [`null`](#) [`null`](#)and [`null`](#)values will
-      be passed along to [`null`](#)
-      The [`null`](#)and [`null`](#)options support [`null`](#)for writing to a string
-      output. You will need to [`null`](#)the process before accessing the string
-      via the process's [`null`](#)
-      For writing output to a file, you can set [`null`](#)and [`null`](#)to a [`null`](#)object, or a keyword:
-       - [`null`](#)+ an additional [`null`](#)+ file to write to the file.
-       - [`null`](#)+ an additional [`null`](#)+ file to append to the file.
-   - `:inherit`: if true, sets [`null`](#) [`null`](#)and [`null`](#)to [`null`](#)
+      to `:inherit` for redirecting to the parent process's corresponding
+      stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
+      be passed along to `clojure.java.io/copy`.
+      The `:out` and `:err` options support `:string` for writing to a string
+      output. You will need to `deref` the process before accessing the string
+      via the process's `:out`.
+      For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
+       - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
+       - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
+   - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
    - `:dir`: working directory.
-   - [`null`](#) `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).
+   - `:env`, `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).
    - `:escape`: function that will applied to each stringified argument. On
       Windows this defaults to prepending a backslash before a double quote. On
-      other operating systems it defaults to [`null`](#)
+      other operating systems it defaults to `identity`.
    - `:pre-start-fn`: a one-argument function that, if present, gets called with a
       map of process info just before the process is started. Can be useful for debugging
       or reporting. Any return value from the function is discarded. Map contents:
-      - [`null`](#)- a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
-   - [`null`](#) Takes process
-      map. Typically used with [`destroy`](#destroy)or [`null`](#)to ensure long
+      - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
+   - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
+      map. Typically used with [`destroy`](#destroy) or [`destroy-tree`](#destroy-tree) to ensure long
       running processes are cleaned up on shutdown.
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L284-L377)
@@ -181,9 +181,9 @@ Takes a command (vector of strings or objects that will be turned
 ```
 
 
-Convenience function similar to [`null`](#)that sets
-  [`null`](#)and [`null`](#)to [`null`](#)by default and blocks. Similar to
-  [`null`](#)it does not check the exit code (this can be done with
+Convenience function similar to `clojure.java.shell/sh` that sets
+  `:out` and `:err` to `:string` by default and blocks. Similar to
+  `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L480-L494)
@@ -194,7 +194,7 @@ Convenience function similar to [`null`](#)that sets
 ```
 
 
-Convenience function around [`null`](#)that defaults to inheriting
+Convenience function around [`process`](#process) that defaults to inheriting
   I/O: input is read and output is printed while the process
   runs. Throws on non-zero exit codes. Kills all subprocesses on
   shutdown. Optional options map can be passed as the first argument,
@@ -223,6 +223,6 @@ Takes a process builder, calls start and returns a process (as record).
 
 
 Tokenize string to list of individual space separated arguments.
-  If argument contains space you can wrap it with [`null`](#)or [`null`](#)
+  If argument contains space you can wrap it with `'` or `"`.
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L15-L66)
