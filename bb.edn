@@ -8,7 +8,7 @@
             :requires ([quickdoc.api :as api])
             :task (api/quickdoc {:git/branch "master"
                                  :github/repo "https://github.com/babashka/process"
-                                 :toc false
-                                 :autolink-vars true})}
+                                 :toc true
+                                 :var-links true})}
   test {:doc "Run tests"
         :task (shell "script/test")}}}

@@ -1,3 +1,18 @@
+# Table of contents
+-  [`babashka.process`](#babashkaprocess)  - Shell out in Clojure with simplicity and ease.
+    -  [`$`](#$) - Convenience macro around <code>process</code>
+    -  [`*defaults*`](#defaults) - Dynamic var containing overridable default options
+    -  [`check`](#check) - Takes a process, waits until is finished and throws if exit code is non-zero.
+    -  [`destroy`](#destroy) - Takes process or map
+    -  [`destroy-tree`](#destroy-tree) - Same as <code>destroy</code> but also destroys all descendants
+    -  [`exec`](#exec) - Replaces the current process image with the process image specified
+    -  [`pb`](#pb) - Returns a process builder (as record).
+    -  [`pipeline`](#pipeline) - Returns the processes for one pipe created with -> or creates
+    -  [`process`](#process) - Takes a command (vector of strings or objects that will be turned
+    -  [`sh`](#sh) - Convenience function similar to <code>clojure.java.shell/sh</code> that sets
+    -  [`shell`](#shell) - Convenience function around <code>process</code> that defaults to inheriting
+    -  [`start`](#start) - Takes a process builder, calls start and returns a process (as record).
+    -  [`tokenize`](#tokenize) - Tokenize string to list of individual space separated arguments.
 # babashka.process 
 
 
