@@ -8,6 +8,6 @@
             :requires ([quickdoc.api :as api])
             :task (api/quickdoc {:git/branch "master"
                                  :github/repo "https://github.com/babashka/process"
-                                 :toc true})}
+                                 :toc false})}
   test {:doc "Run tests"
         :task (shell "script/test")}}}
