@@ -1,4 +1,7 @@
 (ns babashka.process
+  "Shell out in Clojure with simplicity and ease.
+  If you are not yet familiar with the API, start reading the
+  docstrings for [`shell`](#shell) and [`process`](#process)."
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
             [clojure.string :as str])
@@ -159,7 +162,8 @@
 (jdk9+-conditional
  (def destroy-tree destroy)
  (defn destroy-tree
-   "Same as `destroy` but also destroys all descendants. JDK9+ only."
+   "Same as `destroy` but also destroys all descendants. JDK9+
+  only. Falls back to `destroy` on older JVM versions."
    [proc]
    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
      (run! (fn [^java.lang.ProcessHandle handle]
