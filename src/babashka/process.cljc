@@ -1,4 +1,7 @@
 (ns babashka.process
+  "Shell out in Clojure with simplicity and ease.
+  If you are not yet familiar with the API, start reading the
+  docstrings for `shell` and `process`."
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
             [clojure.string :as str])
