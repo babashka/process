@@ -3,7 +3,7 @@
 
 Shell out in Clojure with simplicity and ease.
   If you are not yet familiar with the API, start reading the
-  docstrings for `process` and `shell`.
+  docstrings for [`process`](#process) and [`shell`](#shell).
 
 
 
@@ -17,7 +17,7 @@ Shell out in Clojure with simplicity and ease.
 Macro.
 
 
-Convenience macro around `process`. Takes command as varargs. Options can
+Convenience macro around [`process`](#process). Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
@@ -57,8 +57,8 @@ Takes process or map
 ```
 
 
-Same as `destroy` but also destroys all descendants. JDK9+
-  only. Falls back to `destroy` on older JVM versions.
+Same as [`destroy`](#destroy) but also destroys all descendants. JDK9+
+  only. Falls back to [`destroy`](#destroy) on older JVM versions.
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L164-L172)
 ## `exec`
@@ -97,7 +97,7 @@ Returns a process builder (as record).
 Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
-  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
+  - When passing a process, returns a vector of processes of a pipeline created with `->` or [`pipeline`](#pipeline).
   - When passing two or more process builders created with `pb`: creates a
     pipeline as a vector of processes (JDK9+ only).
 
@@ -153,7 +153,7 @@ Takes a command (vector of strings or objects that will be turned
       or reporting. Any return value from the function is discarded. Map contents:
       - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
-      map. Typically used with `destroy` or `destroy-tree` to ensure long
+      map. Typically used with [`destroy`](#destroy) or [`destroy-tree`](#destroy-tree) to ensure long
       running processes are cleaned up on shutdown.
 
 [Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L284-L377)
@@ -179,7 +179,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 ```
 
 
-Convenience function around `process` that defaults to inheriting
+Convenience function around [`process`](#process) that defaults to inheriting
   I/O: input is read and output is printed while the process
   runs. Throws on non-zero exit codes. Kills all subprocesses on
   shutdown. Optional options map can be passed as the first argument,
