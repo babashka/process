@@ -207,11 +207,13 @@
     (-> (assoc :err :inherit))
     (and inherit (not in))
     (-> (assoc :in :inherit))
-    (instance? java.io.File out)
-    (-> (assoc :out-file out)
+    (or (instance? java.io.File out)
+        (string? out))
+    (-> (assoc :out-file (io/file out))
         (assoc :out :append))
-    (instance? java.io.File err)
-    (-> (assoc :err-file out)
+    (or (instance? java.io.File err)
+        (string? err))
+    (-> (assoc :err-file (io/file err))
         (assoc :err :append))))
 
 (defn- build
@@ -517,3 +519,39 @@
      (if-graal
          (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args) env)
        (throw (ex-info "exec is not support in non-GraalVM environments" {:cmd cmd}))))))
+
+(def ^:private default-shell-opts
+  {:in :inherit
+   :out :inherit
+   :err :inherit
+   :shutdown destroy-tree})
+
+(defn shell
+  "Convenience function around `process` that defaults to inheriting
+  I/O: input is read and output is printed while the process
+  runs. Throws on non-zero exit codes. Kills all subprocesses on
+  shutdown. Optional options map can be passed as the first argument,
+  followed by multiple command line arguments. The first command line
+  argument is automatically tokenized. Examples:
+
+  - `(shell \"ls -la\")`
+  - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`"
+  [cmd & args]
+  (let [[prev cmd args]
+        (if (and (map? cmd)
+                 (:proc cmd))
+          [cmd (first args) (rest args)]
+          [nil cmd args])
+        [opts cmd args]
+        (if (map? cmd)
+          [cmd (first args) (rest args)]
+          [nil cmd args])
+        opts (if prev
+               (assoc opts :in nil)
+               opts)
+        _ (assert (string? cmd))
+        cmd (if (.exists (io/file cmd))
+              [cmd]
+              (tokenize cmd))
+        cmd (into cmd args)]
+    (check (process prev cmd (merge default-shell-opts opts)))))

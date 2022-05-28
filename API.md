@@ -10,6 +10,7 @@
     -  [`pipeline`](#pipeline) - Returns the processes for one pipe created with -> or creates
     -  [`process`](#process) - Takes a command (vector of strings or objects that will be turned
     -  [`sh`](#sh) - Convenience function similar to <code>clojure.java.shell/sh</code> that sets
+    -  [`shell`](#shell) - Convenience function around <code>process</code> that defaults to inheriting
     -  [`start`](#start) - Takes a process builder, calls start and returns a process (as record).
     -  [`tokenize`](#tokenize) - Tokenize string to list of individual space separated arguments.
 # babashka.process 
@@ -29,7 +30,7 @@ Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L443-L472)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L445-L474)
 ## `*defaults*`
 
 Dynamic var containing overridable default options. Use
@@ -80,7 +81,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L498-L519)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L500-L521)
 ## `pb`
 ``` clojure
 
@@ -92,7 +93,7 @@ Replaces the current process image with the process image specified
 
 Returns a process builder (as record).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L258-L268)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L260-L270)
 ## `pipeline`
 ``` clojure
 
@@ -111,7 +112,7 @@ Returns the processes for one pipe created with -> or creates
   Also see [Pipelines](/README.md#pipelines).
   
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L388-L422)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L390-L424)
 ## `process`
 ``` clojure
 
@@ -163,7 +164,7 @@ Takes a command (vector of strings or objects that will be turned
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L278-L371)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L280-L373)
 ## `sh`
 ``` clojure
 
@@ -178,7 +179,25 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   `check`).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L474-L488)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L476-L490)
+## `shell`
+``` clojure
+
+(shell [cmd & args])
+```
+
+
+Convenience function around `process` that defaults to inheriting
+  I/O: input is read and output is printed while the process
+  runs. Throws on non-zero exit codes. Kills all subprocesses on
+  shutdown. Optional options map can be passed as the first argument,
+  followed by multiple command line arguments. The first command line
+  argument is automatically tokenized. Examples:
+
+  - `(shell "ls -la")`
+  - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")`
+
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L529-L557)
 ## `start`
 ``` clojure
 
@@ -188,7 +207,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 
 Takes a process builder, calls start and returns a process (as record).
 
-[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L424-L430)
+[Source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L426-L432)
 ## `tokenize`
 ``` clojure
 

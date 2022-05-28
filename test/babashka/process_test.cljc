@@ -165,6 +165,9 @@
        (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
        (is (= 0 (:exit (deref (process ["ls"]) 250 nil)))))))
 
+(deftest shell-test
+  (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello")))
+
 (deftest dollar-pipe-test
   (is (str/includes?
        (-> ($ ls -la)
@@ -241,13 +244,13 @@
              (is (= null-input-stream-class (class (:err x)))))
            (let [x (process ["cat"] {:shutdown p/destroy-tree
                                      :inherit true
-                                     :out "foo"})]
+                                     :out :string})]
              (is (= null-output-stream-class (class (:in x))))
              (is (not= null-input-stream-class (class (:out x))))
              (is (= null-input-stream-class (class (:err x)))))
            (let [x (process ["cat"] {:shutdown p/destroy-tree
                                      :inherit true
-                                     :err "foo"})]
+                                     :err :string})]
              (is (= null-output-stream-class (class (:in x))))
              (is (= null-input-stream-class (class (:out x))))
              (is (not= null-input-stream-class (class (:err x)))))))
