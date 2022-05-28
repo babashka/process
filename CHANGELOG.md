@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Add `shell` function that behaves similar to `babashka.tasks/shell`
+- Support string as value for `:out` and `:err` for writing to file
+
 ## 0.1.2
 
 - [#53](https://github.com/babashka/process/issues/53): Added namespace
