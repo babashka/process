@@ -162,7 +162,8 @@
 (jdk9+-conditional
  (def destroy-tree destroy)
  (defn destroy-tree
-   "Same as `destroy` but also destroys all descendants. JDK9+ only."
+   "Same as `destroy` but also destroys all descendants. JDK9+
+  only. Falls back to `destroy` on older JVM versions."
    [proc]
    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
      (run! (fn [^java.lang.ProcessHandle handle]
