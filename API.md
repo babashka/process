@@ -18,7 +18,7 @@
 
 Shell out in Clojure with simplicity and ease.
   If you are not yet familiar with the API, start reading the
-  docstrings for [`shell`](#shell) and [`process`](#process).
+  docstrings for [`process`](#process) and [`shell`](#shell).
 
 
 
