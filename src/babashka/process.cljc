@@ -504,7 +504,7 @@
 (defn exec
   "Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
-  native images."
+  native images. Override the first argument using `:args0`."
   ([cmd] (exec cmd nil))
   ([cmd {:keys [escape env extra-env]
          :or {escape default-escape}
@@ -515,13 +515,18 @@
                cmd)
          str-fn (comp escape str)
          cmd (mapv str-fn cmd)
+         arg0 (or (:arg0 opts)
+                  (first cmd))
          cmd (let [program-resolver (:program-resolver opts -program-resolver)
                    [program & args] cmd]
                (into [(program-resolver program)] args))
          [program & args] cmd
+         args (cons arg0 args)
          ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
      (if-graal
-         (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program) (into-array String args) env)
+         (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
+                                                         (into-array String args)
+                                                         env)
        (throw (ex-info "exec is not support in non-GraalVM environments" {:cmd cmd}))))))
 
 (def ^:private default-shell-opts

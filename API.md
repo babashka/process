@@ -81,8 +81,8 @@ Same as [`destroy`](#destroy) but also destroys all descendants. JDK9+
 
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
-  native images.
-<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L504-L525)</sub>
+  native images. Override the first argument using `:args0`.
+<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L504-L530)</sub>
 ## `pb`
 ``` clojure
 
@@ -193,7 +193,7 @@ Convenience function around [`process`](#process) that defaults to inheriting
 
   - `(shell "ls -la")`
   - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")`
-<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L533-L561)</sub>
+<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L538-L566)</sub>
 ## `start`
 ``` clojure
 
