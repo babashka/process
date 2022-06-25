@@ -3,7 +3,7 @@
 ## 0.1.4
 
 - [#72](https://github.com/babashka/process/issues/72): exec `arg0` should be the program name by default
-- [#93](https://github.com/babashka/process/issues/93): support for Clojure 1.9
+- [#73](https://github.com/babashka/process/issues/73): support for Clojure 1.9
 
 ## 0.1.3
 
