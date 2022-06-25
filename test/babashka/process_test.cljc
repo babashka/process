@@ -6,6 +6,8 @@
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing]]))
 
+(println "Testing clojure version:" (clojure-version))
+
 (deftest tokenize-test
   (is (= [] (tokenize "")))
   (is (= ["hello"] (tokenize "hello")))

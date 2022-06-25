@@ -3,4 +3,7 @@
                   :extra-deps {cognitect/test-runner
                                {:git/url "https://github.com/cognitect-labs/test-runner"
                                 :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
-                  :main-opts ["-m" "cognitect.test-runner"]}}}
+                  :main-opts ["-m" "cognitect.test-runner"]}
+           :clj-1.9 {:extra-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
+           :clj-1.10 {:extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}}}
+           :clj-1.11 {:extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}}}}}

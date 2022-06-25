@@ -35,10 +35,16 @@ jobs:
 
     - name: Run tests not Windows
       if: ${{ matrix.os != 'windows-latest' }}
-      run: clojure -M:test -e windows
+      run: |
+        clojure -M:clj-1.9:test -e windows
+        clojure -M:clj-1.10:test -e windows
+        clojure -M:clj-1.11:test -e windows
       shell: bash
 
     - name: Run tests on Windows
       if: ${{ matrix.os == 'windows-latest' }}
-      run: clojure -M:test -i windows
+      run: |
+        clojure -M:clj-1.9:test -i windows
+        clojure -M:clj-1.10:test -i windows
+        clojure -M:clj-1.11:test -i windows
       shell: powershell
