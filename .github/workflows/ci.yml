@@ -7,7 +7,6 @@ jobs:
     strategy:
       matrix:
         java-version: ["8", "11", "17"]
-        clojure-version: ["clj-1.9","clj-1.10", "clj-1.11"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -36,10 +35,16 @@ jobs:
 
     - name: Run tests not Windows
       if: ${{ matrix.os != 'windows-latest' }}
-      run: clojure "-M:${{ matrix.clojure-version }}:test" -e windows
+      run: |
+        clojure -M:clj-1.9:test -e windows
+        clojure -M:clj-1.10:test -e windows
+        clojure -M:clj-1.11:test -e windows
       shell: bash
 
     - name: Run tests on Windows
       if: ${{ matrix.os == 'windows-latest' }}
-      run: clojure "-M:${{ matrix.clojure-version }}:test" -i windows
+      run: |
+        clojure -M:clj-1.9:test -i windows
+        clojure -M:clj-1.10:test -i windows
+        clojure -M:clj-1.11:test -i windows
       shell: powershell
