@@ -494,7 +494,8 @@
                               :err :string} opts))))
 
 (def ^:private graal?
-  (boolean (resolve 'org.graalvm.nativeimage.ProcessProperties)))
+  (boolean (try (resolve 'org.graalvm.nativeimage.ProcessProperties)
+                (catch Exception _ false))))
 
 (defmacro ^:no-doc
   if-graal [then else]
