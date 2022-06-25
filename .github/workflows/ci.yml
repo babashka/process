@@ -36,10 +36,10 @@ jobs:
 
     - name: Run tests not Windows
       if: ${{ matrix.os != 'windows-latest' }}
-      run: clojure -M:test:${{ matrix.clojure-version }} -M:test -e windows
+      run: clojure -M:test:"${{ matrix.clojure-version }}" -M:test -e windows
       shell: bash
 
     - name: Run tests on Windows
       if: ${{ matrix.os == 'windows-latest' }}
-      run: clojure -M:test:${{ matrix.clojure-version }} -i windows
+      run: clojure -M:test:"${{ matrix.clojure-version }}" -i windows
       shell: powershell
