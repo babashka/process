@@ -2,7 +2,7 @@
 
 ## 0.1.7
 
-- #76: error while loading `babashka.process` with older GraalVM libraries
+- [#76](https://github.com/babashka/process/issues/76): error while loading `babashka.process` with older GraalVM libraries
 
 ## 0.1.4
 
