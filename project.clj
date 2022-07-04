@@ -1,4 +1,4 @@
-(defproject babashka/process "0.1.4"
+(defproject babashka/process "0.1.7"
   :description "Clojure wrapper for java.lang.ProcessBuilder"
   :url "https://github.com/babashka/process"
   :scm {:name "git"

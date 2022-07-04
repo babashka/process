@@ -538,12 +538,21 @@
    :shutdown destroy-tree})
 
 (defn shell
-  "Convenience function around `process` that defaults to inheriting
-  I/O: input is read and output is printed while the process
-  runs. Throws on non-zero exit codes. Kills all subprocesses on
-  shutdown. Optional options map can be passed as the first argument,
-  followed by multiple command line arguments. The first command line
-  argument is automatically tokenized. Examples:
+  "Convenience function around `process` that was originally in `babashka.tasks`.
+  Defaults to inheriting I/O: input is read and output is printed
+  while the process runs. Throws on non-zero exit codes. Kills all
+  subprocesses on shutdown. Optional options map can be passed as the
+  first argument, followed by multiple command line arguments. The
+  first command line argument is automatically tokenized.
+
+  Differences with process:
+
+  - Does not work with threading for piping output from another
+  process.
+  - It does not take a vector of strings, but varargs strings.
+  - Option map goes first, not last.
+
+  Examples:
 
   - `(shell \"ls -la\")`
   - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`"

@@ -10,7 +10,7 @@
     -  [`pipeline`](#pipeline) - Returns the processes for one pipe created with -> or creates
     -  [`process`](#process) - Takes a command (vector of strings or objects that will be turned
     -  [`sh`](#sh) - Convenience function similar to <code>clojure.java.shell/sh</code> that sets
-    -  [`shell`](#shell) - Convenience function around <code>process</code> that defaults to inheriting
+    -  [`shell`](#shell) - Convenience function around <code>process</code> that was originally in <code>babashka.tasks</code>.
     -  [`start`](#start) - Takes a process builder, calls start and returns a process (as record).
     -  [`tokenize`](#tokenize) - Tokenize string to list of individual space separated arguments.
 # babashka.process 
@@ -82,7 +82,7 @@ Same as [`destroy`](#destroy) but also destroys all descendants. JDK9+
 Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images. Override the first argument using `:args0`.
-<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L504-L530)</sub>
+<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L506-L532)</sub>
 ## `pb`
 ``` clojure
 
@@ -184,16 +184,25 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 ```
 
 
-Convenience function around [`process`](#process) that defaults to inheriting
-  I/O: input is read and output is printed while the process
-  runs. Throws on non-zero exit codes. Kills all subprocesses on
-  shutdown. Optional options map can be passed as the first argument,
-  followed by multiple command line arguments. The first command line
-  argument is automatically tokenized. Examples:
+Convenience function around [`process`](#process) that was originally in `babashka.tasks`.
+  Defaults to inheriting I/O: input is read and output is printed
+  while the process runs. Throws on non-zero exit codes. Kills all
+  subprocesses on shutdown. Optional options map can be passed as the
+  first argument, followed by multiple command line arguments. The
+  first command line argument is automatically tokenized.
+
+  Differences with process:
+
+  - Does not work with threading for piping output from another
+  process.
+  - It does not take a vector of strings, but varargs strings.
+  - Option map goes first, not last.
+
+  Examples:
 
   - `(shell "ls -la")`
   - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")`
-<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L538-L566)</sub>
+<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L540-L577)</sub>
 ## `start`
 ``` clojure
 

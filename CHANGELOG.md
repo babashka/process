@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- #76: error while loading `babashka.process` with older GraalVM libraries
+
 ## 0.1.4
 
 - [#72](https://github.com/babashka/process/issues/72): exec `arg0` should be the program name by default
