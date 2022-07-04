@@ -202,7 +202,9 @@ Convenience function around [`process`](#process) that was originally in `babash
 
   - `(shell "ls -la")`
   - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")`
-<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L540-L577)</sub>
+
+  Also see the [`shell`](#shell) entry in the babashka book [here](https://book.babashka.org/#_shell).
+<br><sub>[source](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L540-L579)</sub>
 ## `start`
 ``` clojure
 

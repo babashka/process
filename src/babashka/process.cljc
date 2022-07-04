@@ -555,7 +555,9 @@
   Examples:
 
   - `(shell \"ls -la\")`
-  - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`"
+  - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`
+
+  Also see the `shell` entry in the babashka book [here](https://book.babashka.org/#_shell)."
   [cmd & args]
   (let [[prev cmd args]
         (if (and (map? cmd)
