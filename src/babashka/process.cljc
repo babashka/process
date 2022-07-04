@@ -493,13 +493,17 @@
    @(process prev cmd (merge {:out :string
                               :err :string} opts))))
 
-(def ^:private graal?
-  (boolean (try (resolve 'org.graalvm.nativeimage.ProcessProperties)
+(def ^:private has-exec?
+  (boolean (try (or
+                 ;; in bb exec is available
+                 (System/getProperty "babashka.version")
+                 (.getMethod (Class/forName "org.graalvm.nativeimage.ProcessProperties") "exec"
+                             (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map])))
                 (catch Exception _ false))))
 
 (defmacro ^:no-doc
-  if-graal [then else]
-  (if graal?
+  if-has-exec [then else]
+  (if has-exec?
     then else))
 
 (defn exec
@@ -524,7 +528,7 @@
          [program & args] cmd
          args (cons arg0 args)
          ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
-     (if-graal
+     (if-has-exec
          (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
                                                          (into-array String args)
                                                          env)
