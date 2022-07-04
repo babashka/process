@@ -494,11 +494,8 @@
                               :err :string} opts))))
 
 (def ^:private has-exec?
-  (boolean (try (or
-                 ;; in bb exec is available
-                 (System/getProperty "babashka.version")
-                 (.getMethod (Class/forName "org.graalvm.nativeimage.ProcessProperties") "exec"
-                             (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map])))
+  (boolean (try (.getMethod (Class/forName "org.graalvm.nativeimage.ProcessProperties") "exec"
+                            (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map]))
                 (catch Exception _ false))))
 
 (defmacro ^:no-doc
