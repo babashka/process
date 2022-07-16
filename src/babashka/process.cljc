@@ -36,7 +36,7 @@
         (= 92 c) ;; the \\ escape character
         (let [escaped (.read s)
               buf (if (and in-double-quotes?
-                           (= 34 escaped))
+                           (= 34 escaped)) ;; double quote
                     (doto buf (.write escaped))
                     (doto buf
                       (.write c)
@@ -45,14 +45,10 @@
 
         (and (not in-single-quotes?) (= 34 c)) ;; double quote
         (if in-double-quotes?
-          ;; exit double-quoted string
-          (recur s false in-single-quotes? (java.io.StringWriter.) (conj parsed (str buf)))
-          ;; enter double-quoted string
-          (recur s true in-single-quotes? (java.io.StringWriter.)
-                 (let [s (str buf)]
-                   (if (str/blank? s)
-                     parsed
-                     (conj parsed (str buf))))))
+        ;; exit double-quoted string
+          (recur s false in-single-quotes? buf parsed)
+        ;; enter double-quoted string
+          (recur s true in-single-quotes? buf parsed))
 
         (and (not in-double-quotes?)
              (not in-single-quotes?)

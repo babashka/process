@@ -23,8 +23,13 @@
          (tokenize "\"\\foo\"")))
   (is (= ["\\foo"]
          (tokenize "\"\\foo\"")))
-  (is (= ["xxx[" "dude" "]xxx"]
-         (tokenize "xxx[\"dude\"]xxx"))))
+  (is (= ["\\foo"]
+         (tokenize "\"\\foo\"")))
+  (is (= ["xxx[dude]xxx"]
+         (tokenize "xxx[\"dude\"]xxx")))
+  (is (= ["some=something else"]
+         (tokenize "some=\"something else\"")))
+)
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit
