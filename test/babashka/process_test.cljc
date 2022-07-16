@@ -23,8 +23,6 @@
          (tokenize "\"\\foo\"")))
   (is (= ["\\foo"]
          (tokenize "\"\\foo\"")))
-  (is (= ["xxx[dude]xxx"]
-         (tokenize "xxx[\"dude\"]xxx")))
   (is (= ["\\foo"]
          (tokenize "\"\\foo\"")))
   (is (= ["xxx[dude]xxx"]
