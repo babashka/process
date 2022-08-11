@@ -287,6 +287,10 @@ The `:env` option replaces your entire environment with the provided map. To add
 :extra-env {"FOO" "BAR"}
 ```
 
+> **Windows TIP**: Unlike in the CMD and Powershell shells, environment variable names are case sensitive for `:extra-env`.
+For example, `"PATH"` will not update the value of `"Path"` on Windows.
+Here's an [example of a babashka task](https://github.com/babashka/fs/blob/3b8010d1a0db166771ac7f47573ea09ed45abe33/bb.edn#L10-L11) that understands this nuance.
+
 ## Pipelines
 
 The `pipeline` function returns a
