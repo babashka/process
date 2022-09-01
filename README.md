@@ -2,7 +2,7 @@
 
 [![Clojars Project](https://img.shields.io/clojars/v/babashka/process.svg)](https://clojars.org/babashka/process)
 
-Shell out in Clojure with simplicity and ease.
+Clojure library for shelling out / spawning subprocesses.
 
 ## API
 
