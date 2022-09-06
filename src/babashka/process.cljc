@@ -490,7 +490,7 @@
                               :err :string} opts))))
 
 (def ^:private has-exec?
-  (boolean (try (.getMethod (Class/forName "org.graalvm.nativeimage.ProcessProperties") "exec"
+  (boolean (try (.getMethod (resolve 'org.graalvm.nativeimage.ProcessProperties/exec) "exec"
                             (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map]))
                 (catch Exception _ false))))
 
