@@ -491,7 +491,7 @@
 
 (def ^:private has-exec?
   (boolean (try (.getMethod ^Class
-                            (resolve 'org.graalvm.nativeimage.ProcessProperties/exec) "exec"
+                            (resolve 'org.graalvm.nativeimage.ProcessProperties) "exec"
                             (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map]))
                 (catch Exception _ false))))
 
@@ -526,7 +526,7 @@
          (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
                                                          (into-array String args)
                                                          env)
-       (throw (ex-info "exec is not support in non-GraalVM environments" {:cmd cmd}))))))
+       (throw (ex-info "exec is not supported in non-GraalVM environments" {:cmd cmd}))))))
 
 (def ^:private default-shell-opts
   {:in :inherit
