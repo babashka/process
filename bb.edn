@@ -1,7 +1,7 @@
 {:pods {clj-kondo/clj-kondo {:version "2022.02.09"}}
  :deps {io.github.borkdude/quickdoc
         #_{:local/root "../../quickdoc"}
-        {:git/sha "ca5893c0d81f26443dd178a747d0851e75d39eca"}}
+        {:git/sha "2e1999ee20a24a5a923b306fad2f8e243f551168"}}
 
  :tasks
  {quickdoc {:doc "Invoke quickdoc"
