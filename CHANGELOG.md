@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
+- #78: fix `tokenize` with single-quoted strings inside double-quoted string
+
 ## 0.1.7
 
 - [#76](https://github.com/babashka/process/issues/76): error while loading `babashka.process` with older GraalVM libraries
