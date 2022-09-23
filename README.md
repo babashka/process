@@ -416,6 +416,29 @@ pprint does not have a preference for how to print this. Two potential resolutio
 (prefer-method pprint/simple-dispatch clojure.lang.IPersistentMap clojure.lang.IDeref)
 ```
 
+### Promesa
+
+You can combine this library with [promesa](https://github.com/funcool/promesa)
+in the following way. This requires `:exit-fn` which was released in version
+`0.2.9`.
+
+``` clojure
+(require '[babashka.process :as proc]
+         '[promesa.core :as prom])
+
+(defn process
+  "Returns promise that will be resolved upon process termination. The promise is rejected when the exit code is non-zero."
+  [cmd opts]
+  (prom/create
+   (fn [resolve reject]
+     (let [exit-fn (fn [response]
+                     (let [{:keys [exit] :as r} response]
+                       (if (zero? exit)
+                         (resolve r)
+                         (reject r))))]
+       (proc/process cmd (assoc opts :exit-fn exit-fn))))))
+```
+
 ## License
 
 Copyright © 2020-2021 Michiel Borkent
