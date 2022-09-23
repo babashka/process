@@ -275,7 +275,7 @@
        (deftest exit-fn-test
          (let [exit-code (promise)]
            (process ["ls"] {:exit-fn (fn [proc]
-                                       (deliver exit-code (:exit @proc)))})
+                                       (deliver exit-code (:exit proc)))})
            (is (int? @exit-code)))))))
 
 (jdk9+)
