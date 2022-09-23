@@ -374,12 +374,12 @@
        (when shutdown
          (-> (Runtime/getRuntime)
              (.addShutdownHook (Thread. (fn [] (shutdown res))))))
-       (if-before-jdk8
-           nil
-         (when exit-fn
-           (-> (.onExit proc)
-               (.thenRun (fn []
-                           (exit-fn res))))))
+       (when exit-fn
+         (if-before-jdk8
+             (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
+             (-> (.onExit proc)
+                 (.thenRun (fn []
+                             (exit-fn res))))))
        res))))
 
 (if-before-jdk8

@@ -271,7 +271,12 @@
          (testing "pbs can be chained with ->"
            (let [chain (-> (pb ["ls"]) (pb ["cat"] {:out :string}) start deref)]
              (is (string? (slurp (:out chain))))
-             (is (= [["ls"] ["cat"]] (map :cmd (pipeline chain))))))))))
+             (is (= [["ls"] ["cat"]] (map :cmd (pipeline chain)))))))
+       (deftest exit-fn-test
+         (let [exit-code (promise)]
+           (process ["ls"] {:exit-fn (fn [proc]
+                                       (deliver exit-code (:exit @proc)))})
+           (is (int? @exit-code)))))))
 
 (jdk9+)
 
