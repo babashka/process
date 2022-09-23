@@ -320,18 +320,20 @@
       - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
-      running processes are cleaned up on shutdown."
+      running processes are cleaned up on shutdown.
+   - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
   ([cmd] (process nil cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
                 (process cmd opts nil)
                 (process nil cmd opts)))
   ([prev cmd opts]
    (let [opts (merge *defaults* (normalize-opts opts))
-         {:keys [:in :in-enc
-                 :out :out-enc
-                 :err :err-enc
-                 :shutdown
-                 :pre-start-fn]} opts
+         {:keys [in in-enc
+                 out out-enc
+                 err err-enc
+                 shutdown
+                 pre-start-fn
+                 exit-fn]} opts
          in (or in (:out prev))
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
@@ -372,6 +374,10 @@
        (when shutdown
          (-> (Runtime/getRuntime)
              (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+       (when exit-fn
+           (-> (.onExit proc)
+               (.thenRun (fn []
+                           (exit-fn res)))))
        res))))
 
 (jdk9+-conditional
