@@ -420,7 +420,7 @@ pprint does not have a preference for how to print this. Two potential resolutio
 
 You can combine this library with [promesa](https://github.com/funcool/promesa)
 in the following way. This requires `:exit-fn` which was released in version
-`0.2.9`.
+`0.2.10`.
 
 ``` clojure
 (require '[babashka.process :as proc]
