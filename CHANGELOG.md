@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.9
+
+- Add `:exit-fn` to `process`: a one-argument function which will be called upon the termination of the process.
+
 ## 0.1.8
 
 - [#84](https://github.com/babashka/process/issues/84): fix `tokenize` with single-quoted strings inside double-quoted string

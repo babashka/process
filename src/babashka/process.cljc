@@ -47,9 +47,9 @@
 
         (and (not in-single-quotes?) (= 34 c)) ;; double quote
         (if in-double-quotes?
-        ;; exit double-quoted string
+          ;; exit double-quoted string
           (recur s false in-single-quotes? buf parsed)
-        ;; enter double-quoted string
+          ;; enter double-quoted string
           (recur s true in-single-quotes? buf parsed))
 
         (and (not in-double-quotes?)
@@ -143,7 +143,7 @@
                prev
                cmd)))
 
-(defmacro ^:private jdk9+-conditional [pre-9 post-8]
+(defmacro ^:private if-before-jdk8 [pre-9 post-8]
   (if (identical? ::ex (try (import 'java.lang.ProcessHandle)
                             (catch Exception _ ::ex)))
     pre-9
@@ -157,17 +157,17 @@
   (.destroy ^java.lang.Process (:proc proc))
   proc)
 
-(jdk9+-conditional
- (def destroy-tree destroy)
- (defn destroy-tree
-   "Same as `destroy` but also destroys all descendants. JDK9+
+(if-before-jdk8
+    (def destroy-tree destroy)
+  (defn destroy-tree
+    "Same as `destroy` but also destroys all descendants. JDK9+
   only. Falls back to `destroy` on older JVM versions."
-   [proc]
-   (let [handle (.toHandle ^java.lang.Process (:proc proc))]
-     (run! (fn [^java.lang.ProcessHandle handle]
-             (.destroy handle))
-           (cons handle (iterator-seq (.iterator (.descendants handle))))))
-   proc))
+    [proc]
+    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
+      (run! (fn [^java.lang.ProcessHandle handle]
+              (.destroy handle))
+            (cons handle (iterator-seq (.iterator (.descendants handle))))))
+    proc))
 
 (def ^:private windows?
   (-> (System/getProperty "os.name")
@@ -320,18 +320,20 @@
       - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
-      running processes are cleaned up on shutdown."
+      running processes are cleaned up on shutdown.
+   - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
   ([cmd] (process nil cmd nil))
   ([cmd opts] (if (map? cmd) ;; prev
                 (process cmd opts nil)
                 (process nil cmd opts)))
   ([prev cmd opts]
    (let [opts (merge *defaults* (normalize-opts opts))
-         {:keys [:in :in-enc
-                 :out :out-enc
-                 :err :err-enc
-                 :shutdown
-                 :pre-start-fn]} opts
+         {:keys [in in-enc
+                 out out-enc
+                 err err-enc
+                 shutdown
+                 pre-start-fn
+                 exit-fn]} opts
          in (or in (:out prev))
          cmd (if (and (string? cmd)
                       (not (.exists (io/file cmd))))
@@ -372,11 +374,17 @@
        (when shutdown
          (-> (Runtime/getRuntime)
              (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+       (when exit-fn
+         (if-before-jdk8
+             (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
+             (-> (.onExit proc)
+                 (.thenRun (fn []
+                             (exit-fn res))))))
        res))))
 
-(jdk9+-conditional
- (defn pipeline
-   "Returns the processes for one pipe created with -> or creates
+(if-before-jdk8
+    (defn pipeline
+      "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
@@ -385,12 +393,12 @@
 
   Also see [Pipelines](/README.md#pipelines).
   "
-   ([proc]
-    (if-let [prev (:prev proc)]
-      (conj (pipeline prev) proc)
-      [proc])))
- (defn pipeline
-   "Returns the processes for one pipe created with -> or creates
+      ([proc]
+       (if-let [prev (:prev proc)]
+         (conj (pipeline prev) proc)
+         [proc])))
+  (defn pipeline
+    "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
@@ -399,31 +407,31 @@
 
   Also see [Pipelines](/README.md#pipelines).
   "
-   ([proc]
-    (if-let [prev (:prev proc)]
-      (conj (pipeline prev) proc)
-      [proc]))
-   ([pb & pbs]
-    (let [pbs (cons pb pbs)
-          opts (map :opts pbs)
-          pbs (map :pb pbs)
-          procs (java.lang.ProcessBuilder/startPipeline pbs)
-          pbs+opts+procs (map vector pbs opts procs)]
-      (-> (reduce (fn [{:keys [:prev :procs]}
-                       [pb opts proc]]
-                    (let [shutdown (:shutdown opts)
-                          cmd (.command ^java.lang.ProcessBuilder pb)
-                          new-proc (proc->Process proc cmd prev)
-                          new-procs (conj procs new-proc)]
-                      (when shutdown
-                        (-> (Runtime/getRuntime)
-                            (.addShutdownHook (Thread.
-                                               (fn []
-                                                 (shutdown new-proc))))))
-                      {:prev new-proc :procs new-procs}))
-                  {:prev nil :procs []}
-                  pbs+opts+procs)
-          :procs)))))
+    ([proc]
+     (if-let [prev (:prev proc)]
+       (conj (pipeline prev) proc)
+       [proc]))
+    ([pb & pbs]
+     (let [pbs (cons pb pbs)
+           opts (map :opts pbs)
+           pbs (map :pb pbs)
+           procs (java.lang.ProcessBuilder/startPipeline pbs)
+           pbs+opts+procs (map vector pbs opts procs)]
+       (-> (reduce (fn [{:keys [:prev :procs]}
+                        [pb opts proc]]
+                     (let [shutdown (:shutdown opts)
+                           cmd (.command ^java.lang.ProcessBuilder pb)
+                           new-proc (proc->Process proc cmd prev)
+                           new-procs (conj procs new-proc)]
+                       (when shutdown
+                         (-> (Runtime/getRuntime)
+                             (.addShutdownHook (Thread.
+                                                (fn []
+                                                  (shutdown new-proc))))))
+                       {:prev new-proc :procs new-procs}))
+                   {:prev nil :procs []}
+                   pbs+opts+procs)
+           :procs)))))
 
 (defn start
   "Takes a process builder, calls start and returns a process (as record)."
