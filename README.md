@@ -437,6 +437,11 @@ in the following way. This requires `:exit-fn` which was released in version
                          (resolve r)
                          (reject r))))]
        (proc/process cmd (assoc opts :exit-fn exit-fn))))))
+
+(prom/let [ls (process "ls" {:out :string
+                             :err :inherit})
+           ls-out (:out ls)]
+  (prn ls-out))
 ```
 
 ## License
