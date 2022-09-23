@@ -379,7 +379,7 @@
              (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
              (-> (.onExit proc)
                  (.thenRun (fn []
-                             (exit-fn res))))))
+                             (exit-fn @res))))))
        res))))
 
 (if-before-jdk8
