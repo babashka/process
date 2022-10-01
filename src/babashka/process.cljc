@@ -148,9 +148,8 @@
     post-8))
 
 (defn destroy
-  "Takes process or map
-  with :proc (`java.lang.ProcessBuilder`). Destroys the process and
-  returns the input arg."
+  "Destroys the process and returns the input arg. Takes process or map
+  with :proc (`java.lang.ProcessBuilder`). "
   [proc]
   (.destroy ^java.lang.Process (:proc proc))
   proc)
@@ -278,8 +277,9 @@
     (post-fn out)))
 
 (defn process
-  "Takes a command (vector of strings or objects that will be turned
-  into strings) and optionally a map of options.
+  "Creates a child process. Takes a command (vector of strings or
+  objects that will be turned into strings) and optionally a map of
+  options.
 
   Returns: a record with:
    - `:proc`: an instance of `java.lang.Process`
@@ -300,6 +300,8 @@
       to `:inherit` for redirecting to the parent process's corresponding
       stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
       be passed along to `clojure.java.io/copy`.
+      For redirecting to Clojure's `*in*`, `*out*` or `*err*` stream, set
+      the corresponding option accordingly.
       The `:out` and `:err` options support `:string` for writing to a string
       output. You will need to `deref` the process before accessing the string
       via the process's `:out`.
