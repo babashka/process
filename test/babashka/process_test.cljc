@@ -125,6 +125,11 @@
          (-> (process ["clojure" "-e" (str '(System/exit 1))])
              (check)))
         "With no :err string")
+    (is (thrown?
+         clojure.lang.ExceptionInfo #"failed"
+         (-> (process ["clojure" "-e" (str '(System/exit 1))] {:err *err*})
+             (check)))
+        "With :err set to *err*")
     (testing "and the exception"
       (let [command ["clojure" "-e" (str '(System/exit 1))]]
         (try
