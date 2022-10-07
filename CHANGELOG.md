@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.11
+
+- Add `alive?` to check if process is still alive ([@grzm](https://github.com/grzm))
+
 ## 0.2.10
 
 - Return `deref-ed` result to `:exit-fn`
