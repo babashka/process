@@ -593,5 +593,7 @@
         cmd (into cmd args)]
     (check (process prev cmd (merge default-shell-opts opts)))))
 
-(defn alive? [p]
+(defn alive?
+  "Returns `true` if the process is still running and false otherwise."
+  [p]
   (.isAlive ^java.lang.Process (:proc p)))
