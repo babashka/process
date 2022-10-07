@@ -1,6 +1,7 @@
 # process
 
 [![Clojars Project](https://img.shields.io/clojars/v/babashka/process.svg)](https://clojars.org/babashka/process)
+[![bb built-in](https://raw.githubusercontent.com/babashka/babashka/master/logo/built-in-badge.svg)](https://babashka.org)
 
 Clojure library for shelling out / spawning subprocesses.
 
