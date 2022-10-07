@@ -2,6 +2,7 @@
 -  [`babashka.process`](#babashka.process)  - Shell out in Clojure with simplicity and ease.
     -  [`$`](#babashka.process/$) - Convenience macro around <code>process</code>.
     -  [`*defaults*`](#babashka.process/*defaults*) - Dynamic var containing overridable default options.
+    -  [`alive?`](#babashka.process/alive?) - Returns <code>true</code> if the process is still running and false otherwise.
     -  [`check`](#babashka.process/check) - Takes a process, waits until is finished and throws if exit code is non-zero.
     -  [`destroy`](#babashka.process/destroy) - Destroys the process and returns the input arg.
     -  [`destroy-tree`](#babashka.process/destroy-tree) - Same as <code>destroy</code> but also destroys all descendants.
@@ -25,7 +26,7 @@ Shell out in Clojure with simplicity and ease.
 
 
 
-## <a name="babashka.process/$">`$`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L457-L486)
+## <a name="babashka.process/$">`$`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L463-L492)
 <a name="babashka.process/$"></a>
 ``` clojure
 
@@ -40,13 +41,23 @@ Convenience macro around [`process`](#babashka.process/process). Takes command a
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
 
-## <a name="babashka.process/*defaults*">`*defaults*`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L196-L201)
+## <a name="babashka.process/*defaults*">`*defaults*`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L202-L207)
 <a name="babashka.process/*defaults*"></a>
 
 Dynamic var containing overridable default options. Use
   `alter-var-root` to change permanently or `binding` to change temporarily.
 
-## <a name="babashka.process/check">`check`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L97-L111)
+## <a name="babashka.process/alive?">`alive?`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L596-L599)
+<a name="babashka.process/alive?"></a>
+``` clojure
+
+(alive? p)
+```
+
+
+Returns `true` if the process is still running and false otherwise.
+
+## <a name="babashka.process/check">`check`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L97-L117)
 <a name="babashka.process/check"></a>
 ``` clojure
 
@@ -56,7 +67,7 @@ Dynamic var containing overridable default options. Use
 
 Takes a process, waits until is finished and throws if exit code is non-zero.
 
-## <a name="babashka.process/destroy">`destroy`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L152-L157)
+## <a name="babashka.process/destroy">`destroy`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L158-L163)
 <a name="babashka.process/destroy"></a>
 ``` clojure
 
@@ -67,7 +78,7 @@ Takes a process, waits until is finished and throws if exit code is non-zero.
 Destroys the process and returns the input arg. Takes process or map
   with :proc (`java.lang.ProcessBuilder`). 
 
-## <a name="babashka.process/destroy-tree">`destroy-tree`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L161-L169)
+## <a name="babashka.process/destroy-tree">`destroy-tree`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L167-L175)
 <a name="babashka.process/destroy-tree"></a>
 ``` clojure
 
@@ -78,7 +89,7 @@ Destroys the process and returns the input arg. Takes process or map
 Same as [[`destroy`](#babashka.process/destroy)](#babashka.process/destroy) but also destroys all descendants. JDK9+
   only. Falls back to [[`destroy`](#babashka.process/destroy)](#babashka.process/destroy) on older JVM versions.
 
-## <a name="babashka.process/exec">`exec`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L515-L541)
+## <a name="babashka.process/exec">`exec`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L521-L547)
 <a name="babashka.process/exec"></a>
 ``` clojure
 
@@ -91,7 +102,7 @@ Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
   native images. Override the first argument using `:args0`.
 
-## <a name="babashka.process/pb">`pb`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L261-L271)
+## <a name="babashka.process/pb">`pb`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L267-L277)
 <a name="babashka.process/pb"></a>
 ``` clojure
 
@@ -103,7 +114,7 @@ Replaces the current process image with the process image specified
 
 Returns a process builder (as record).
 
-## <a name="babashka.process/pipeline">`pipeline`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L402-L436)
+## <a name="babashka.process/pipeline">`pipeline`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L408-L442)
 <a name="babashka.process/pipeline"></a>
 ``` clojure
 
@@ -122,7 +133,7 @@ Returns the processes for one pipe created with -> or creates
   Also see [Pipelines](/README.md#pipelines).
   
 
-## <a name="babashka.process/process">`process`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L281-L385)
+## <a name="babashka.process/process">`process`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L287-L391)
 <a name="babashka.process/process"></a>
 ``` clojure
 
@@ -178,7 +189,7 @@ Creates a child process. Takes a command (vector of strings or
       running processes are cleaned up on shutdown.
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+.
 
-## <a name="babashka.process/sh">`sh`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L488-L502)
+## <a name="babashka.process/sh">`sh`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L494-L508)
 <a name="babashka.process/sh"></a>
 ``` clojure
 
@@ -193,7 +204,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `cjs/sh` it does not check the exit code (this can be done with
   [`check`](#babashka.process/check)).
 
-## <a name="babashka.process/shell">`shell`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L549-L588)
+## <a name="babashka.process/shell">`shell`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L555-L594)
 <a name="babashka.process/shell"></a>
 ``` clojure
 
@@ -222,7 +233,7 @@ Convenience function around [`process`](#babashka.process/process) that was orig
 
   Also see the [`shell`](#babashka.process/shell) entry in the babashka book [here](https://book.babashka.org/#_shell).
 
-## <a name="babashka.process/start">`start`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L438-L444)
+## <a name="babashka.process/start">`start`</a> [:page_facing_up:](https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L444-L450)
 <a name="babashka.process/start"></a>
 ``` clojure
 
