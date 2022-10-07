@@ -285,6 +285,13 @@
 
 (jdk9+)
 
+(deftest alive-lives
+  (let [{:keys [in] :as res} (process '[cat])]
+    (is (true? (p/alive? res)))
+    (.close in)
+    @res
+    (is (false? (p/alive? res)))))
+
 ;;;; Windows tests
 ;;;; Run with clojure -M:test -i windows
 
