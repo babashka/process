@@ -3,6 +3,8 @@
 ## 0.3.11
 
 - Add `alive?` to check if process is still alive ([@grzm](https://github.com/grzm))
+- Update `process`' docstring to mention clojure standard streams ([@ikappaki](https://github.com/ikappaki))
+- Slurp `:err` in `check` only if it is an input stream ([@ikappaki](https://github.com/ikappaki))
 
 ## 0.2.10
 
