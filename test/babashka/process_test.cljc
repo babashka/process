@@ -285,24 +285,12 @@
 
 (jdk9+)
 
-(defmacro ^:private if-have-alive [have-alive no-alive]
-  (if (identical? ::ex (try
-                         (.getDeclaredMethod (java.lang.Class/forName "java.lang.Process")
-                                             "isAlive" (into-array java.lang.Class []))
-                         (catch Throwable _ ::ex)))
-    no-alive
-    have-alive))
-
-(if-have-alive
-    (deftest alive-lives
-      (let [{:keys [in] :as res} (process '[cat])]
-        (is (true? (p/alive? res)))
-        (.close in)
-        @res
-        (is (false? (p/alive? res)))))
-  (deftest alive-throws
-    (let [p (process "echo")]
-      (is (thrown? clojure.lang.ExceptionInfo #"failed" (p/alive? p) "no isAlive method")))))
+(deftest alive-lives
+  (let [{:keys [in] :as res} (process '[cat])]
+    (is (true? (p/alive? res)))
+    (.close in)
+    @res
+    (is (false? (p/alive? res)))))
 
 ;;;; Windows tests
 ;;;; Run with clojure -M:test -i windows

@@ -593,16 +593,5 @@
         cmd (into cmd args)]
     (check (process prev cmd (merge default-shell-opts opts)))))
 
-(def ^:private has-isAlive?
-  (boolean (try
-             (.getDeclaredMethod (java.lang.Class/forName "java.lang.Process")
-                                 "isAlive" (into-array java.lang.Class []))
-             (catch Throwable _ false))))
-
-(defmacro ^:private if-has-isAlive [then else]
-  (if has-isAlive? then else))
-
 (defn alive? [p]
-  (if-has-isAlive
-      (.isAlive ^java.lang.Process (:proc p))
-    (throw (ex-info "The `alive?` function is not supported before JDK 8" {}))))
+  (.isAlive ^java.lang.Process (:proc p)))
