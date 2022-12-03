@@ -320,6 +320,65 @@
      :args args
      :opts opts}))
 
+(defn process*
+  {:no-doc true}
+  [{:keys [prev args opts]}]
+  (let [cmd args
+        opts (merge *defaults* (normalize-opts opts))
+        {:keys [in in-enc
+                out out-enc
+                err err-enc
+                shutdown
+                pre-start-fn
+                exit-fn]} opts
+        in (or in (:out prev))
+        cmd (if (and (string? cmd)
+                     (not (.exists (io/file cmd))))
+              (tokenize cmd)
+              cmd)
+        ^java.lang.ProcessBuilder pb
+        (if (instance? java.lang.ProcessBuilder cmd)
+          cmd
+          (build cmd opts))
+        cmd (vec (.command pb))
+        _ (when pre-start-fn
+            (let [interceptor-map {:cmd cmd}]
+              (pre-start-fn interceptor-map)))
+        proc (.start pb)
+        stdin  (.getOutputStream proc)
+        stdout (.getInputStream proc)
+        stderr (.getErrorStream proc)
+        out (if (and out (or (identical? :string out)
+                             (not (keyword? out))))
+              (future (copy stdout out out-enc))
+              stdout)
+        err (if (and err (or (identical? :string err)
+                             (not (keyword? err))))
+              (future (copy stderr err err-enc))
+              stderr)]
+    ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
+    (when (and in (not (identical? :inherit in)))
+      (future (with-open [stdin stdin] ;; needed to close stdin after writing
+                (io/copy in stdin :encoding in-enc))))
+    (let [;; bb doesn't support map->Process at the moment
+          res (->Process proc
+                         nil
+                         stdin
+                         out
+                         err
+                         prev
+                         cmd)]
+      (when shutdown
+        (-> (Runtime/getRuntime)
+            (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+      (when exit-fn
+        (if-before-jdk8
+            (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
+          (-> (.onExit proc)
+              (.thenRun (fn []
+                          (exit-fn @res))))))
+      res)))
+
 (defn process
   "Creates a child process. Takes a command (vector of strings or
   objects that will be turned into strings) and optionally a map of
@@ -366,65 +425,8 @@
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
-  ([cmd] (process nil cmd nil))
-  ([cmd opts] (if (map? cmd) ;; prev
-                (process cmd opts nil)
-                (process nil cmd opts)))
-  ([prev cmd opts]
-   (let [opts (merge *defaults* (normalize-opts opts))
-         {:keys [in in-enc
-                 out out-enc
-                 err err-enc
-                 shutdown
-                 pre-start-fn
-                 exit-fn]} opts
-         in (or in (:out prev))
-         cmd (if (and (string? cmd)
-                      (not (.exists (io/file cmd))))
-               (tokenize cmd)
-               cmd)
-         ^java.lang.ProcessBuilder pb
-         (if (instance? java.lang.ProcessBuilder cmd)
-           cmd
-           (build cmd opts))
-         cmd (vec (.command pb))
-         _ (when pre-start-fn
-             (let [interceptor-map {:cmd cmd}]
-               (pre-start-fn interceptor-map)))
-         proc (.start pb)
-         stdin  (.getOutputStream proc)
-         stdout (.getInputStream proc)
-         stderr (.getErrorStream proc)
-         out (if (and out (or (identical? :string out)
-                              (not (keyword? out))))
-               (future (copy stdout out out-enc))
-               stdout)
-         err (if (and err (or (identical? :string err)
-                              (not (keyword? err))))
-               (future (copy stderr err err-enc))
-               stderr)]
-     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-     (when (and in (not (identical? :inherit in)))
-       (future (with-open [stdin stdin] ;; needed to close stdin after writing
-                 (io/copy in stdin :encoding in-enc))))
-     (let [;; bb doesn't support map->Process at the moment
-           res (->Process proc
-                          nil
-                          stdin
-                          out
-                          err
-                          prev
-                          cmd)]
-       (when shutdown
-         (-> (Runtime/getRuntime)
-             (.addShutdownHook (Thread. (fn [] (shutdown res))))))
-       (when exit-fn
-         (if-before-jdk8
-             (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
-             (-> (.onExit proc)
-                 (.thenRun (fn []
-                             (exit-fn @res))))))
-       res))))
+  ([& args]
+   (process* (normalize-args args))))
 
 (if-before-jdk8
     (defn pipeline
@@ -525,23 +527,18 @@
            (if (map? fcmd#)
              [(merge opts# fcmd#) (rest cmd#)]
              [opts# cmd#])]
-       (process prev# cmd# opts#))))
+       (process* {:prev prev# :args cmd# :opts opts#}))))
 
 (defn sh
   "Convenience function similar to `clojure.java.shell/sh` that sets
   `:out` and `:err` to `:string` by default and blocks. Similar to
   `cjs/sh` it does not check the exit code (this can be done with
   `check`)."
-  ([cmd] (sh cmd nil))
-  ([cmd opts]
-   (let [[prev cmd opts] (if (:proc cmd)
-                           [cmd opts nil]
-                           [nil cmd opts])]
-     @(process prev cmd (merge {:out :string
-                                :err :string} opts))))
-  ([prev cmd opts]
-   @(process prev cmd (merge {:out :string
-                              :err :string} opts))))
+  [& args]
+  (let [{:keys [opts args prev]} (normalize-args args)
+        opts (merge {:out :string
+                     :err :string} opts)]
+    @(process* {:args args :opts opts :prev prev})))
 
 (def ^:private has-exec?
   (boolean (try (.getMethod ^Class
@@ -609,25 +606,9 @@
   - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`
 
   Also see the `shell` entry in the babashka book [here](https://book.babashka.org/#_shell)."
-  [cmd & args]
-  (let [[prev cmd args]
-        (if (and (map? cmd)
-                 (:proc cmd))
-          [cmd (first args) (rest args)]
-          [nil cmd args])
-        [opts cmd args]
-        (if (map? cmd)
-          [cmd (first args) (rest args)]
-          [nil cmd args])
-        opts (if prev
-               (assoc opts :in nil)
-               opts)
-        _ (assert (string? cmd))
-        cmd (if (.exists (io/file cmd))
-              [cmd]
-              (tokenize cmd))
-        cmd (into cmd args)]
-    (check (process prev cmd (merge default-shell-opts opts)))))
+  [& args]
+  (let [{:keys [opts] :as args} (normalize-args args)]
+    (check (process* (assoc args :opts (merge default-shell-opts opts))))))
 
 (defn alive?
   "Returns `true` if the process is still running and false otherwise."
