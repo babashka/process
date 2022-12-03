@@ -315,7 +315,8 @@
         args (let [args (map str args)
                    fst (first args)
                    rst (rest args)]
-               (vec (into (tokenize fst) rst)))]
+               (vec (into (if (fs/exists? fst)
+                            fst (tokenize fst)) rst)))]
     {:prev prev
      :args args
      :opts opts}))
@@ -484,7 +485,7 @@
   [pb]
   (let [pipe (pipeline pb)]
     (if (= 1 (count pipe))
-      (process (:pb pb) (:opts pb))
+      (process* {:args (:pb pb) :opts (:opts pb)})
       (last (apply pipeline pipe)))))
 
 (defn- process-unquote [arg]
