@@ -284,6 +284,42 @@
     (io/copy in out :encoding encoding)
     (post-fn out)))
 
+(defn process? [x]
+  (instance? Process x))
+
+(defn- normalize-args [args]
+  (let [arg-count (count args)
+        maybe-prev (first args)
+        args (rest args)
+        [prev args] (if (process? maybe-prev)
+                      [maybe-prev args]
+                      [nil (cons maybe-prev args)])
+        ;; we've parsed the input process, now assume the first argument is either an opts map, or a sequential
+        maybe-opts (first args)
+        args (rest args)
+        [opts args] (cond (map? maybe-opts)
+                          [maybe-opts args args]
+                          (sequential? maybe-opts)
+                          ;; flatten command structure
+                          [nil (into (vec maybe-opts) args)]
+                          (string? maybe-opts)
+                          [nil (cons maybe-opts args)]
+                          :else [nil (cons maybe-opts args)])
+        [args opts] (cond opts
+                          [args opts]
+                          (and (= (+ 2 (if prev 1 0)) arg-count)
+                               (map? (last args)))
+                          [(butlast args) (last args)]
+                          ;; no options found
+                          :else [args opts])
+        args (let [fst (first args)
+                   rst (rest args)]
+               (vec (into (tokenize fst) rst))
+               )]
+    {:prev prev
+     :args args
+     :opts opts}))
+
 (defn process
   "Creates a child process. Takes a command (vector of strings or
   objects that will be turned into strings) and optionally a map of

@@ -31,7 +31,22 @@
          (tokenize "some=\"something else\"")))
   (is (= ["bash" "-c" "echo two words | wc -w"]
          (tokenize "bash -c \"echo 'two words' | wc -w\"")))
-)
+  )
+
+(def normalize-args #'p/normalize-args)
+
+(deftest normalize-args-test
+  (let [norm (normalize-args [(p/process "echo hello") "cat"])]
+    (is (p/process? (:prev norm)))
+    (is (= ["cat"] (:args norm))))
+  (let [norm (normalize-args [(p/process "echo hello") ["cat"] {:out :string}])]
+    (is (p/process? (:prev norm)))
+    (is (= ["cat"] (:args norm)))
+    (is (= {:out :string} (:opts norm))))
+  (is (= ["foo" "bar" "baz"] (:args (normalize-args ["foo bar" "baz"]))))
+  (let [norm (normalize-args [{:out :string } "foo bar" "baz"])]
+    (is (= ["foo" "bar" "baz"] (:args norm)))
+    (is (= {:out :string} (:opts norm)))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit
