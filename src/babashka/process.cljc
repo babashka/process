@@ -312,10 +312,10 @@
                           [(butlast args) (last args)]
                           ;; no options found
                           :else [args opts])
-        args (let [fst (first args)
+        args (let [args (map str args)
+                   fst (first args)
                    rst (rest args)]
-               (vec (into (tokenize fst) rst))
-               )]
+               (vec (into (tokenize fst) rst)))]
     {:prev prev
      :args args
      :opts opts}))
