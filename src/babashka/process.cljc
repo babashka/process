@@ -326,13 +326,18 @@
   [{:keys [prev args opts]}]
   (let [cmd args
         opts (merge *defaults* (normalize-opts opts))
+        prev-in (:out prev)
+        opt-in (:in opts)
+        opts (assoc opts :in
+                    (cond (not opt-in) prev-in
+                          (= :inherit opt-in) (or prev-in opt-in)
+                          :else opt-in))
         {:keys [in in-enc
                 out out-enc
                 err err-enc
                 shutdown
                 pre-start-fn
                 exit-fn]} opts
-        in (or in (:out prev))
         cmd (if (and (string? cmd)
                      (not (.exists (io/file cmd))))
               (tokenize cmd)

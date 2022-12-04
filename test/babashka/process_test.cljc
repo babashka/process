@@ -65,7 +65,6 @@
       (is (str/blank? err))
       (is (number? exit))
       (is (zero? exit))))
-  (prn :yolo)
   (testing "When specifying :out and :err both a non-strings, the process keeps
   running. :in is the stdin of the process to which we can write. Calling close
   on that stream closes stdin, so a program like cat will exit. We wait for the
@@ -156,6 +155,7 @@
               (is (= command (:cmd (ex-data e)))))
             (testing "and contains a babashka process type"
               (is (= :babashka.process/error (:type (ex-data e))))))))))
+  #_{:clj-kondo/ignore [:unused-binding]}
   (testing "$ macro"
     (let [config {:a 1}]
       (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
@@ -196,7 +196,11 @@
        (is (= 0 (:exit (deref (process ["ls"]) 250 nil)))))))
 
 (deftest shell-test
-  (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello")))
+  (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello"))
+  #_(is (str/includes? (-> (p/shell {:out :string} "echo hello")
+                         (p/shell {:out :string } "cat")
+                         :out)
+                     "hello")))
 
 (deftest dollar-pipe-test
   (is (str/includes?
