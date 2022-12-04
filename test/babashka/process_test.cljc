@@ -33,19 +33,17 @@
          (tokenize "bash -c \"echo 'two words' | wc -w\"")))
   )
 
-(def normalize-args #'p/normalize-args)
-
-(deftest normalize-args-test
-  (let [norm (normalize-args [(p/process "echo hello") "cat"])]
+(deftest parse-args-test
+  (let [norm (p/parse-args [(p/process "echo hello") "cat"])]
     (is (instance? babashka.process.Process (:prev norm)))
-    (is (= ["cat"] (:args norm))))
-  (let [norm (normalize-args [(p/process "echo hello") ["cat"] {:out :string}])]
+    (is (= ["cat"] (:cmd norm))))
+  (let [norm (p/parse-args [(p/process "echo hello") ["cat"] {:out :string}])]
     (is (instance? babashka.process.Process (:prev norm)))
-    (is (= ["cat"] (:args norm)))
+    (is (= ["cat"] (:cmd norm)))
     (is (= {:out :string} (:opts norm))))
-  (is (= ["foo" "bar" "baz"] (:args (normalize-args ["foo bar" "baz"]))))
-  (let [norm (normalize-args [{:out :string } "foo bar" "baz"])]
-    (is (= ["foo" "bar" "baz"] (:args norm)))
+  (is (= ["foo" "bar" "baz"] (:cmd (p/parse-args ["foo bar" "baz"]))))
+  (let [norm (p/parse-args [{:out :string } "foo bar" "baz"])]
+    (is (= ["foo" "bar" "baz"] (:cmd norm)))
     (is (= {:out :string} (:opts norm)))))
 
 (deftest process-test

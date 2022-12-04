@@ -264,7 +264,15 @@
 
 (defrecord ProcessBuilder [pb opts prev])
 
-(defn- normalize-args [args]
+(defn parse-args
+  "Parses arguments to `process` to map with:
+
+  * `:prev`: a (previous) process whose input is piped into the current process
+  * `:cmd`: a vector of command line argument strings
+  * `:opts`: options map
+  "
+
+  [args]
   (let [arg-count (count args)
         maybe-prev (first args)
         args (rest args)
@@ -296,15 +304,15 @@
                (vec (into (if (fs/exists? fst)
                             fst (tokenize fst)) rst)))]
     {:prev prev
-     :args args
+     :cmd args
      :opts opts}))
 
 (defn pb
   "Returns a process builder (as record)."
   [& args]
-  (let [{:keys [args opts prev]} (normalize-args args)]
+  (let [{:keys [cmd opts prev]} (parse-args args)]
     (let [opts (merge *defaults* (normalize-opts opts))]
-      (->ProcessBuilder (build args opts)
+      (->ProcessBuilder (build cmd opts)
                         opts
                         prev))))
 
@@ -317,10 +325,9 @@
     (post-fn out)))
 
 (defn process*
-  {:no-doc true}
-  [{:keys [prev args opts]}]
-  (let [cmd args
-        opts (merge *defaults* (normalize-opts opts))
+  "Same as with `process` but called with parsed arguments (the result from `parse-args`)"
+  [{:keys [prev cmd opts]}]
+  (let [opts (merge *defaults* (normalize-opts opts))
         prev-in (:out prev)
         opt-in (:in opts)
         opts (assoc opts :in
@@ -426,8 +433,9 @@
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
-  ([& args]
-   (process* (normalize-args args))))
+  {:arglists '([opts? & args])}
+  [& args]
+  (process* (parse-args args)))
 
 (if-before-jdk8
     (defn pipeline
@@ -485,7 +493,7 @@
   [pb]
   (let [pipe (pipeline pb)]
     (if (= 1 (count pipe))
-      (process* {:args (:pb pb) :opts (:opts pb)})
+      (process* {:cmd (:pb pb) :opts (:opts pb)})
       (last (apply pipeline pipe)))))
 
 (defn- process-unquote [arg]
@@ -503,6 +511,7 @@
   "Convenience macro around `process`. Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`"
+  {:arglists '([opts? & args])}
   [& args]
   (let [opts (meta &form)
         farg (first args)
@@ -528,18 +537,19 @@
            (if (map? fcmd#)
              [(merge opts# fcmd#) (rest cmd#)]
              [opts# cmd#])]
-       (process* {:prev prev# :args cmd# :opts opts#}))))
+       (process* {:prev prev# :cmd cmd# :opts opts#}))))
 
 (defn sh
   "Convenience function similar to `clojure.java.shell/sh` that sets
   `:out` and `:err` to `:string` by default and blocks. Similar to
   `cjs/sh` it does not check the exit code (this can be done with
   `check`)."
+  {:arglists '([opts? & args])}
   [& args]
-  (let [{:keys [opts args prev]} (normalize-args args)
+  (let [{:keys [opts cmd prev]} (parse-args args)
         opts (merge {:out :string
                      :err :string} opts)]
-    @(process* {:args args :opts opts :prev prev})))
+    @(process* {:cmd cmd :opts opts :prev prev})))
 
 (def ^:private has-exec?
   (boolean (try (.getMethod ^Class
@@ -555,30 +565,32 @@
 (defn exec
   "Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
-  native images. Override the first argument using `:args0`."
-  ([cmd] (exec cmd nil))
-  ([cmd {:keys [escape env extra-env]
-         :or {escape default-escape}
-         :as opts}]
-   (let [cmd (if (and (string? cmd)
-                      (not (.exists (io/file cmd))))
-               (tokenize cmd)
-               cmd)
-         str-fn (comp escape str)
-         cmd (mapv str-fn cmd)
-         arg0 (or (:arg0 opts)
-                  (first cmd))
-         cmd (let [program-resolver (:program-resolver opts -program-resolver)
-                   [program & args] cmd]
-               (into [(program-resolver program)] args))
-         [program & args] cmd
-         args (cons arg0 args)
-         ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
-     (if-has-exec
-         (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
-                                                         (into-array String args)
-                                                         env)
-       (throw (ex-info "exec is not supported in non-GraalVM environments" {:cmd cmd}))))))
+  native images. Override the first argument using `:arg0`."
+  {:arglists '([opts? & args])}
+  [& args]
+  (let [{:keys [cmd opts]} (parse-args args)]
+    (let [{:keys [escape env extra-env]
+           :or {escape default-escape}
+           :as opts} opts
+          cmd (if (and (string? cmd)
+                       (not (.exists (io/file cmd))))
+                (tokenize cmd)
+                cmd)
+          str-fn (comp escape str)
+          cmd (mapv str-fn cmd)
+          arg0 (or (:arg0 opts)
+                   (first cmd))
+          cmd (let [program-resolver (:program-resolver opts -program-resolver)
+                    [program & args] cmd]
+                (into [(program-resolver program)] args))
+          [program & args] cmd
+          args (cons arg0 args)
+          ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
+      (if-has-exec
+          (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
+                                                          (into-array String args)
+                                                          env)
+        (throw (ex-info "exec is not supported in non-GraalVM environments" {:cmd cmd}))))))
 
 (def ^:private default-shell-opts
   {:in :inherit
@@ -594,21 +606,15 @@
   first argument, followed by multiple command line arguments. The
   first command line argument is automatically tokenized.
 
-  Differences with process:
-
-  - Does not work with threading for piping output from another
-  process.
-  - It does not take a vector of strings, but varargs strings.
-  - Option map goes first, not last.
-
   Examples:
 
   - `(shell \"ls -la\")`
   - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`
 
   Also see the `shell` entry in the babashka book [here](https://book.babashka.org/#_shell)."
+  {:arglists '([opts? & args])}
   [& args]
-  (let [{:keys [opts] :as args} (normalize-args args)]
+  (let [{:keys [opts] :as args} (parse-args args)]
     (let [proc (process* (assoc args :opts (merge default-shell-opts opts)))
           proc (deref proc)]
       (if (:continue opts)
