@@ -60,12 +60,46 @@ drwxr-xr-x@  5 borkdude  staff    160 Mar 10  2022 .clj-kondo
 drwxr-xr-x@ 50 borkdude  staff   1600 Dec  3 20:55 .cpcache
 ```
 
-The `shell` function also checks the exit code and throws if it is non-zero:
+The first string argument to `shell` is tokenized automatically: `"ls -la"` is
+broken up into `"ls"` and `"-la"`. You can provide more arguments if you need to:
 
 ``` clojure
-user=> (shell "sl")
-Execution error (IOException) at java.lang.ProcessImpl/forkAndExec (ProcessImpl.java:-2).
-error=2, No such file or directory
+user=> (shell "ls -la" "src" "test")
+src:
+total 0
+drwxr-xr-x@  3 borkdude  staff   96 Mar 10  2022 .
+drwxr-xr-x@ 22 borkdude  staff  704 Dec  4 14:13 ..
+drwxr-xr-x@  4 borkdude  staff  128 Dec  4 14:01 babashka
+
+test:
+total 0
+drwxr-xr-x@  3 borkdude  staff   96 Mar 10  2022 .
+drwxr-xr-x@ 22 borkdude  staff  704 Dec  4 14:13 ..
+drwxr-xr-x@  3 borkdude  staff   96 Dec  4 14:01 babashka
+```
+
+This is particularly handy when you want to supply commands coming from the command line:
+
+``` clojure
+(apply shell "-ls -la" *command-line-args*)
+```
+
+The `shell` function checks the exit code and throws if it is non-zero:
+
+``` clojure
+user=> (shell "ls nothing")
+ls: nothing: No such file or directory
+Execution error (ExceptionInfo) at babashka.process/check (process.cljc:113).
+```
+
+To avoid throwing, you can use `:continue true`. You will still see the error
+being printed to stderr, but no exception will be thrown. That is convenient
+when you want to handle the `:exit` code yourself:
+
+``` clojure
+user=> (-> (shell {:continue true} "ls nothing") :exit)
+ls: nothing: No such file or directory
+1
 ```
 
 To collect output as a `:string`, use the `:out :string` option as the first argument:
@@ -92,66 +126,82 @@ user=> (-> (shell {:out :string :extra-env {"FOO" "BAR"}} "bb -e '(System/getenv
 ### process
 
 The `shell` function is a combination of `process` and `deref` and `check`. The
-process function is for lower level usage and requires more configuration than
-`shell`. Use `process` 
+`process` function is the lower level function of this library that doesn't make
+any opiniated choices:
+
+- It does not provide a default for `:out`, `:in` and `:err`: in `shell` these
+  default to `:inherit` which means: read and write from and to the console. In
+  `process` they default to the default of `java.lang.ProcessBuilder`.
+- It does not wait until the process completes.
+- It does not check the exit code and throw an exception.
+
+Use `process` when you need to change one of the above and `shell`'s options do
+not support it. In practice this means: whenever you need async processing,
+e.g. reading output from a process while it is running.
 
 The return value of `process` implements `clojure.lang.IDeref`. When
-dereferenced, it will wait for the process to finish and will add the `:exit` value:
+dereferenced, it will wait for the process to finish and will add the `:exit` value.
 
 ``` clojure
-user=> (-> @(process '[ls foo]) :exit)
+user=> (-> (process "ls foo") deref :exit)
 1
 ```
 
-The function `check` takes a process, waits for it to finish and returns it. When
-the exit code is non-zero, it will throw.
+The function `check` takes a process, waits for it to finish (so you can omit
+`deref`) and returns it. When the exit code is non-zero, it will throw.
 
 ``` clojure
-user=> (-> (process '[ls foo]) check :out slurp)
+user=> (-> (process {:out :string} "ls") check :out str/split-lines first)
+"API.md"
+user=> (-> (process {:out :string} "ls foo") check :out str/split-lines first)
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:74).
 ls: foo: No such file or directory
 ```
 
-
-
 Both `:in`, `:out` may contain objects that are compatible with `clojure.java.io/copy`:
 
 ``` clojure
-user=> (with-out-str (check (process '[cat] {:in "foo" :out *out*})))
+user=> (with-out-str (check (process {:in "foo" :out *out*} "cat")))
 "foo"
 
-user=> (with-out-str (check (process '[ls] {:out *out*})))
-"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+user=> (->> (with-out-str (check (process {:out *out*} "ls"))) str/split-lines (take 2))
+("API.md" "CHANGELOG.md")
 ```
 
 The `:out` option also supports `:string`. You will need to `deref` the process
-in order for the string to be there:
+in order for the string to be there, since the output can't be finalized if the
+process hasn't finished running:
 
 ``` clojure
-user=> (-> @(process '[ls] {:out :string}) :out)
-"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+user=> (-> @(process {:out :string} "ls") :out str/split-lines first)
+"API.md"
 ```
 
-Redirect output stream from one process to input stream of the next process:
+## Piping output
+
+Both `shell` and `process` support piping output from one process to the next
+using but note that `shell` writes the output to the system's stdout by
+default, so you have to provide it with `{:out :string}` for the next process to
+capture the input, while `process` uses the default `java.lang.ProcessBuilder`
+setting which defaults to writing to a stream:
 
 ``` clojure
-user=> (let [is (-> (process '[ls]) :out)]
-         @(process ["cat"] {:in is
-                            :out :inherit})
+user=> (let [stream (-> (process "ls") :out)]
+         @(process {:in stream
+                    :out :inherit} "cat")
          nil)
+API.md
+CHANGELOG.md
 LICENSE
 README.md
-deps.edn
-src
-test
-nil
+...
 ```
 
-Forwarding the output of a process as the input of another process can also be done with thread-first:
+Forwarding the output of a process as the input of another process can also be done with thread-first (`->`):
 
 ``` clojure
-user=> (-> (process '[ls])
-           (process '[grep "README"]) :out slurp)
+user=> (-> (process "ls")
+           (process {:out :string} "grep README") deref :out)
 "README.md\n"
 ```
 
@@ -162,19 +212,25 @@ To write to a file use `:out :write` and set `:out-file` to a file:
 ``` clojure
 user=> (require '[clojure.java.io :as io])
 nil
-user=> (do @(p/process ["ls"] {:out :write :out-file (io/file "/tmp/out.txt")}) nil)
+user=> (do @(process {:out :write :out-file (io/file "/tmp/out.txt")} "ls") nil)
 nil
 user=> (slurp "/tmp/out.txt")
-"CHANGELOG.md\nLICENSE\nREADME.md\ndeps.edn\nproject.clj\nscript\nsrc\ntest\n"
+"CHANGELOG.md\nLICENSE\nREADME.md..."
+```
+
+or simply:
+
+``` clojure
+(do (shell {:out "/tmp/out.txt"} "ls") nil)
 ```
 
 To append to a file, use `:out :append`:
 
 ``` clojure
-user=> (do @(p/process ["ls"] {:out :append :out-file (io/file "/tmp/out.txt")}) nil)
+user=> (do @(process {:out :append :out-file (io/file "/tmp/out.txt")} "ls") nil)
 nil
 user=> (slurp "/tmp/out.txt")
-"CHANGELOG.md\nLICENSE\nREADME.md\ndeps.edn\nproject.clj\nscript\nsrc\ntest\nCHANGELOG.md\nLICENSE\nREADME.md\ndeps.edn\nproject.clj\nscript\nsrc\ntest\n"
+"CHANGELOG.md\nLICENSE\nREADME.md..."
 ```
 
 ## Feeding input
@@ -184,12 +240,12 @@ is running, then close stdin and read the output of cat afterwards:
 
 ``` clojure
 (ns cat-demo
-  (:require [babashka.process :refer [process]]
+  (:require [babashka.process :refer [process alive?]]
             [clojure.java.io :as io]))
 
-(def catp (process '[cat]))
+(def catp (process "cat"))
 
-(.isAlive (:proc catp)) ;; true
+(alive? catp) ;; true
 
 (def stdin (io/writer (:in catp)))
 
@@ -200,9 +256,9 @@ is running, then close stdin and read the output of cat afterwards:
 
 (slurp (:out catp)) ;; "hello\n"
 
-(def exit (:exit @catp)) ;; 0
+(:exit @catp) ;; 0
 
-(.isAlive (:proc catp)) ;; false
+(alive? catp) ;; false
 ```
 
 ## Processing output

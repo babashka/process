@@ -197,10 +197,11 @@
 
 (deftest shell-test
   (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello"))
-  #_(is (str/includes? (-> (p/shell {:out :string} "echo hello")
+  (is (str/includes? (-> (p/shell {:out :string} "echo hello")
                          (p/shell {:out :string } "cat")
                          :out)
-                     "hello")))
+                     "hello"))
+  (is (= 1 (do (p/shell {:continue true} "ls nothing") 1))))
 
 (deftest dollar-pipe-test
   (is (str/includes?

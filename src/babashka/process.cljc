@@ -614,7 +614,11 @@
   Also see the `shell` entry in the babashka book [here](https://book.babashka.org/#_shell)."
   [& args]
   (let [{:keys [opts] :as args} (normalize-args args)]
-    (check (process* (assoc args :opts (merge default-shell-opts opts))))))
+    (let [proc (process* (assoc args :opts (merge default-shell-opts opts)))
+          proc (deref proc)]
+      (if (:continue opts)
+        proc
+        (check proc )))))
 
 (defn alive?
   "Returns `true` if the process is still running and false otherwise."
