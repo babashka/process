@@ -65,6 +65,7 @@
       (is (str/blank? err))
       (is (number? exit))
       (is (zero? exit))))
+  (prn :yolo)
   (testing "When specifying :out and :err both a non-strings, the process keeps
   running. :in is the stdin of the process to which we can write. Calling close
   on that stream closes stdin, so a program like cat will exit. We wait for the
