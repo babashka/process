@@ -37,10 +37,10 @@
 
 (deftest normalize-args-test
   (let [norm (normalize-args [(p/process "echo hello") "cat"])]
-    (is (p/process? (:prev norm)))
+    (is (instance? babashka.process.Process (:prev norm)))
     (is (= ["cat"] (:args norm))))
   (let [norm (normalize-args [(p/process "echo hello") ["cat"] {:out :string}])]
-    (is (p/process? (:prev norm)))
+    (is (instance? babashka.process.Process (:prev norm)))
     (is (= ["cat"] (:args norm)))
     (is (= {:out :string} (:opts norm))))
   (is (= ["foo" "bar" "baz"] (:args (normalize-args ["foo bar" "baz"]))))

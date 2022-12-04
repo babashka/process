@@ -264,14 +264,12 @@
 
 (defrecord ProcessBuilder [pb opts prev])
 
-(defn process? [x]
-  (instance? Process x))
-
 (defn- normalize-args [args]
   (let [arg-count (count args)
         maybe-prev (first args)
         args (rest args)
-        [prev args] (if (process? maybe-prev)
+        [prev args] (if (or (instance? Process maybe-prev)
+                            (instance? ProcessBuilder maybe-prev))
                       [maybe-prev args]
                       [nil (cons maybe-prev args)])
         ;; we've parsed the input process, now assume the first argument is either an opts map, or a sequential
