@@ -81,7 +81,7 @@ drwxr-xr-x@  3 borkdude  staff   96 Dec  4 14:01 babashka
 This is particularly handy when you want to supply commands coming from the command line:
 
 ``` clojure
-(apply shell "-ls -la" *command-line-args*)
+(apply shell "ls -la" *command-line-args*)
 ```
 
 The `shell` function checks the exit code and throws if it is non-zero:
