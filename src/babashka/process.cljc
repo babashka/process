@@ -264,17 +264,49 @@
 
 (defrecord ProcessBuilder [pb opts prev])
 
+(defn- normalize-args [args]
+  (let [arg-count (count args)
+        maybe-prev (first args)
+        args (rest args)
+        [prev args] (if (or (instance? Process maybe-prev)
+                            (instance? ProcessBuilder maybe-prev))
+                      [maybe-prev args]
+                      [nil (cons maybe-prev args)])
+        ;; we've parsed the input process, now assume the first argument is either an opts map, or a sequential
+        maybe-opts (first args)
+        args (rest args)
+        [opts args] (cond (map? maybe-opts)
+                          [maybe-opts args args]
+                          (sequential? maybe-opts)
+                          ;; flatten command structure
+                          [nil (into (vec maybe-opts) args)]
+                          (string? maybe-opts)
+                          [nil (cons maybe-opts args)]
+                          :else [nil (cons maybe-opts args)])
+        [args opts] (cond opts
+                          [args opts]
+                          (and (= (+ 2 (if prev 1 0)) arg-count)
+                               (map? (last args)))
+                          [(butlast args) (last args)]
+                          ;; no options found
+                          :else [args opts])
+        args (let [args (map str args)
+                   fst (first args)
+                   rst (rest args)]
+               (vec (into (if (fs/exists? fst)
+                            fst (tokenize fst)) rst)))]
+    {:prev prev
+     :args args
+     :opts opts}))
+
 (defn pb
   "Returns a process builder (as record)."
-  ([cmd] (pb nil cmd nil))
-  ([cmd opts] (if (map? cmd) ;; prev
-                (pb cmd opts nil)
-                (pb nil cmd opts)))
-  ([prev cmd opts]
-   (let [opts (merge *defaults* (normalize-opts opts))]
-     (->ProcessBuilder (build cmd opts)
-                       opts
-                       prev))))
+  [& args]
+  (let [{:keys [args opts prev]} (normalize-args args)]
+    (let [opts (merge *defaults* (normalize-opts opts))]
+      (->ProcessBuilder (build args opts)
+                        opts
+                        prev))))
 
 (defn- copy [in out encoding]
   (let [[out post-fn] (if (keyword? out)
@@ -283,6 +315,70 @@
                         [out identity])]
     (io/copy in out :encoding encoding)
     (post-fn out)))
+
+(defn process*
+  {:no-doc true}
+  [{:keys [prev args opts]}]
+  (let [cmd args
+        opts (merge *defaults* (normalize-opts opts))
+        prev-in (:out prev)
+        opt-in (:in opts)
+        opts (assoc opts :in
+                    (cond (not opt-in) prev-in
+                          (= :inherit opt-in) (or prev-in opt-in)
+                          :else opt-in))
+        {:keys [in in-enc
+                out out-enc
+                err err-enc
+                shutdown
+                pre-start-fn
+                exit-fn]} opts
+        cmd (if (and (string? cmd)
+                     (not (.exists (io/file cmd))))
+              (tokenize cmd)
+              cmd)
+        ^java.lang.ProcessBuilder pb
+        (if (instance? java.lang.ProcessBuilder cmd)
+          cmd
+          (build cmd opts))
+        cmd (vec (.command pb))
+        _ (when pre-start-fn
+            (let [interceptor-map {:cmd cmd}]
+              (pre-start-fn interceptor-map)))
+        proc (.start pb)
+        stdin  (.getOutputStream proc)
+        stdout (.getInputStream proc)
+        stderr (.getErrorStream proc)
+        out (if (and out (or (identical? :string out)
+                             (not (keyword? out))))
+              (future (copy stdout out out-enc))
+              stdout)
+        err (if (and err (or (identical? :string err)
+                             (not (keyword? err))))
+              (future (copy stderr err err-enc))
+              stderr)]
+    ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
+    (when (and in (not (identical? :inherit in)))
+      (future (with-open [stdin stdin] ;; needed to close stdin after writing
+                (io/copy in stdin :encoding in-enc))))
+    (let [;; bb doesn't support map->Process at the moment
+          res (->Process proc
+                         nil
+                         stdin
+                         out
+                         err
+                         prev
+                         cmd)]
+      (when shutdown
+        (-> (Runtime/getRuntime)
+            (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+      (when exit-fn
+        (if-before-jdk8
+            (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
+          (-> (.onExit proc)
+              (.thenRun (fn []
+                          (exit-fn @res))))))
+      res)))
 
 (defn process
   "Creates a child process. Takes a command (vector of strings or
@@ -330,65 +426,8 @@
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown.
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
-  ([cmd] (process nil cmd nil))
-  ([cmd opts] (if (map? cmd) ;; prev
-                (process cmd opts nil)
-                (process nil cmd opts)))
-  ([prev cmd opts]
-   (let [opts (merge *defaults* (normalize-opts opts))
-         {:keys [in in-enc
-                 out out-enc
-                 err err-enc
-                 shutdown
-                 pre-start-fn
-                 exit-fn]} opts
-         in (or in (:out prev))
-         cmd (if (and (string? cmd)
-                      (not (.exists (io/file cmd))))
-               (tokenize cmd)
-               cmd)
-         ^java.lang.ProcessBuilder pb
-         (if (instance? java.lang.ProcessBuilder cmd)
-           cmd
-           (build cmd opts))
-         cmd (vec (.command pb))
-         _ (when pre-start-fn
-             (let [interceptor-map {:cmd cmd}]
-               (pre-start-fn interceptor-map)))
-         proc (.start pb)
-         stdin  (.getOutputStream proc)
-         stdout (.getInputStream proc)
-         stderr (.getErrorStream proc)
-         out (if (and out (or (identical? :string out)
-                              (not (keyword? out))))
-               (future (copy stdout out out-enc))
-               stdout)
-         err (if (and err (or (identical? :string err)
-                              (not (keyword? err))))
-               (future (copy stderr err err-enc))
-               stderr)]
-     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-     (when (and in (not (identical? :inherit in)))
-       (future (with-open [stdin stdin] ;; needed to close stdin after writing
-                 (io/copy in stdin :encoding in-enc))))
-     (let [;; bb doesn't support map->Process at the moment
-           res (->Process proc
-                          nil
-                          stdin
-                          out
-                          err
-                          prev
-                          cmd)]
-       (when shutdown
-         (-> (Runtime/getRuntime)
-             (.addShutdownHook (Thread. (fn [] (shutdown res))))))
-       (when exit-fn
-         (if-before-jdk8
-             (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
-             (-> (.onExit proc)
-                 (.thenRun (fn []
-                             (exit-fn @res))))))
-       res))))
+  ([& args]
+   (process* (normalize-args args))))
 
 (if-before-jdk8
     (defn pipeline
@@ -446,7 +485,7 @@
   [pb]
   (let [pipe (pipeline pb)]
     (if (= 1 (count pipe))
-      (process (:pb pb) (:opts pb))
+      (process* {:args (:pb pb) :opts (:opts pb)})
       (last (apply pipeline pipe)))))
 
 (defn- process-unquote [arg]
@@ -489,23 +528,18 @@
            (if (map? fcmd#)
              [(merge opts# fcmd#) (rest cmd#)]
              [opts# cmd#])]
-       (process prev# cmd# opts#))))
+       (process* {:prev prev# :args cmd# :opts opts#}))))
 
 (defn sh
   "Convenience function similar to `clojure.java.shell/sh` that sets
   `:out` and `:err` to `:string` by default and blocks. Similar to
   `cjs/sh` it does not check the exit code (this can be done with
   `check`)."
-  ([cmd] (sh cmd nil))
-  ([cmd opts]
-   (let [[prev cmd opts] (if (:proc cmd)
-                           [cmd opts nil]
-                           [nil cmd opts])]
-     @(process prev cmd (merge {:out :string
-                                :err :string} opts))))
-  ([prev cmd opts]
-   @(process prev cmd (merge {:out :string
-                              :err :string} opts))))
+  [& args]
+  (let [{:keys [opts args prev]} (normalize-args args)
+        opts (merge {:out :string
+                     :err :string} opts)]
+    @(process* {:args args :opts opts :prev prev})))
 
 (def ^:private has-exec?
   (boolean (try (.getMethod ^Class
@@ -573,25 +607,13 @@
   - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`
 
   Also see the `shell` entry in the babashka book [here](https://book.babashka.org/#_shell)."
-  [cmd & args]
-  (let [[prev cmd args]
-        (if (and (map? cmd)
-                 (:proc cmd))
-          [cmd (first args) (rest args)]
-          [nil cmd args])
-        [opts cmd args]
-        (if (map? cmd)
-          [cmd (first args) (rest args)]
-          [nil cmd args])
-        opts (if prev
-               (assoc opts :in nil)
-               opts)
-        _ (assert (string? cmd))
-        cmd (if (.exists (io/file cmd))
-              [cmd]
-              (tokenize cmd))
-        cmd (into cmd args)]
-    (check (process prev cmd (merge default-shell-opts opts)))))
+  [& args]
+  (let [{:keys [opts] :as args} (normalize-args args)]
+    (let [proc (process* (assoc args :opts (merge default-shell-opts opts)))
+          proc (deref proc)]
+      (if (:continue opts)
+        proc
+        (check proc )))))
 
 (defn alive?
   "Returns `true` if the process is still running and false otherwise."

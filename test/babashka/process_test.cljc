@@ -31,7 +31,22 @@
          (tokenize "some=\"something else\"")))
   (is (= ["bash" "-c" "echo two words | wc -w"]
          (tokenize "bash -c \"echo 'two words' | wc -w\"")))
-)
+  )
+
+(def normalize-args #'p/normalize-args)
+
+(deftest normalize-args-test
+  (let [norm (normalize-args [(p/process "echo hello") "cat"])]
+    (is (instance? babashka.process.Process (:prev norm)))
+    (is (= ["cat"] (:args norm))))
+  (let [norm (normalize-args [(p/process "echo hello") ["cat"] {:out :string}])]
+    (is (instance? babashka.process.Process (:prev norm)))
+    (is (= ["cat"] (:args norm)))
+    (is (= {:out :string} (:opts norm))))
+  (is (= ["foo" "bar" "baz"] (:args (normalize-args ["foo bar" "baz"]))))
+  (let [norm (normalize-args [{:out :string } "foo bar" "baz"])]
+    (is (= ["foo" "bar" "baz"] (:args norm)))
+    (is (= {:out :string} (:opts norm)))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit
@@ -140,6 +155,7 @@
               (is (= command (:cmd (ex-data e)))))
             (testing "and contains a babashka process type"
               (is (= :babashka.process/error (:type (ex-data e))))))))))
+  #_{:clj-kondo/ignore [:unused-binding]}
   (testing "$ macro"
     (let [config {:a 1}]
       (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
@@ -180,7 +196,12 @@
        (is (= 0 (:exit (deref (process ["ls"]) 250 nil)))))))
 
 (deftest shell-test
-  (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello")))
+  (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello"))
+  (is (str/includes? (-> (p/shell {:out :string} "echo hello")
+                         (p/shell {:out :string } "cat")
+                         :out)
+                     "hello"))
+  (is (= 1 (do (p/shell {:continue true} "ls nothing") 1))))
 
 (deftest dollar-pipe-test
   (is (str/includes?
