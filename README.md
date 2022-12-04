@@ -266,13 +266,17 @@ is running, then close stdin and read the output of cat afterwards:
 Here is an example where we read the output of `yes` line by line and print it ourselves:
 
 ``` clojure
-(require '[babashka.process :as p :refer [process]]
+(require '[babashka.process :as p :refer [process destroy-tree]]
          '[clojure.java.io :as io])
 
-(def yes (process ["yes"] {:err :inherit
-                           :shutdown p/destroy}))
+(def yesp (process
+           {:err :inherit
+            :shutdown destroy-tree}
+           "yes"))
 
-(with-open [rdr (io/reader (:out yes))]
+;; Beware: infinite loop reading lines of "y" from the `yes` process:
+
+(with-open [rdr (io/reader (:out yesp))]
   (binding [*in* rdr]
     (loop []
       (let [line (read-line)]
@@ -282,15 +286,17 @@ Here is an example where we read the output of `yes` line by line and print it o
 
 ## Printing command
 
-We can use `:pre-start-fn` to report commands being run:
+The `:pre-start-fn` option can be used to report commands being run:
 
 ``` clojure
 (require '[babashka.process :refer [process]])
 
 (doseq [file ["LICENSE" "CHANGELOG.md"]]
-         (-> (process ["head" "-1" file] {:out :string 
-                                           :pre-start-fn #(apply println "Running" (:cmd %))})
-             deref :out println))
+  (-> (process
+        {:out :string
+         :pre-start-fn #(apply println "Running" (:cmd %))}
+        "head" "-1" file)
+      deref :out println))
 
 Running head -1 LICENSE
 Eclipse Public License - v 1.0
@@ -300,15 +306,6 @@ Running head -1 CHANGELOG.md
 ```
 
 ## sh
-
-`$` is a convenience macro around `process`:
-
-``` clojure
-user=> (def config {:output {:format :edn}})
-#'user/config
-user=> (-> ($ clj-kondo --config ~config --lint "src") deref :out slurp edn/read-string)
-{:findings [], :summary {:error 0, :warning 0, :info 0, :type :summary, :duration 34}}
-```
 
 `sh` is a convenience function around `process` which sets `:out` and `:err` to
 `:string` and blocks automatically, similar to `clojure.java.shell/sh`:
@@ -322,17 +319,20 @@ user=> (-> (sh ["clj-kondo" "--lint" "src"]) :out slurp edn/read-string)
 
 ## Tokenization
 
-Both `process` and `sh` support tokenization when passed a single string argument:
+All of `shell`, `process` and `sh` support tokenization on the first string argument using `tokenize`:
 
 ``` clojure
+user=> (require '[babashka.process :refer [sh tokenize]])
+nil
+user=> (tokenize "hello there")
+["hello" "there"]
 user=> (-> (sh "echo hello there") :out)
 "hello there\n"
 ```
 
 ``` clojure
-user=> (-> (sh "clj-kondo --lint -" {:in "(inc)"}) :out print)
-<stdin>:1:1: error: clojure.core/inc is called with 0 args but expects 1
-linting took 11ms, errors: 1, warnings: 0
+user=> (-> (sh {:in "(inc)"} "clj-kondo --lint -") :out)
+"<stdin>:1:1: error: clojure.core/inc is called with 0 args but expects 1\nlinting took 10ms, errors: 1, warnings: 0\n"
 ```
 
 ## Output buffering
@@ -344,15 +344,15 @@ will deadlock because the process is buffering the output stream but it's not
 being consumed, so the process won't be able to finish:
 
 ``` clojure
-user=> (-> (process ["cat"] {:in (slurp "https://datahub.io/datahq/1mb-test/r/1mb-test.csv")}) check :out slurp count)
+user=> (-> (process {:in (apply str (repeat 1000000 "hello\n"))} "cat") check :out count)
 ```
 
 The way to deal with this is providing an explicit `:out` option so the process
 can finish writing its output:
 
 ``` clojure
-user=> (-> (process ["cat"] {:in (slurp "https://datahub.io/datahq/1mb-test/r/1mb-test.csv") :out :string}) check :out count)
-1043005
+user=> (-> (process {:out :string :in (apply str (repeat 1000000 "hello\n"))} "cat") check :out count)
+6000000
 ```
 
 ## Add Environment
@@ -375,23 +375,25 @@ of processes from a process that was created with `->` or by passing multiple
 objects created with `pb`:
 
 ``` clojure
-user=> (mapv :cmd (pipeline (-> (process '[ls]) (process '[cat]))))
+user=> (require '[babashka.process :refer [pipeline pb process check]])
+nil
+user=> (mapv :cmd (pipeline (-> (process "ls") (process "ls"))))
 [["ls"] ["cat"]]
-user=> (mapv :cmd (pipeline (pb '[ls]) (pb '[cat])))
+user=> (mapv :cmd (pipeline (pb "ls") (pb "cat")))
 [["ls"] ["cat"]]
 ```
 
 To obtain the right-most process from the pipeline, use `last` (or `peek`):
 
 ``` clojure
-user=> (-> (pipeline (pb ["ls"]) (pb ["cat"])) last :out slurp)
-"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n"
+user=> (-> (pipeline (pb "ls") (pb "cat")) last :out slurp)
+"LICENSE\nREADME.md\ndeps.edn\nsrc\ntest\n..."
 ```
 
 Calling `pipeline` on the right-most process returns the pipeline:
 
 ``` clojure
-user=> (def p (pipeline (pb ["ls"]) (pb ["cat"])))
+user=> (def p (pipeline (pb "ls") (pb "cat")))
 #'user/p
 user=> (= p (pipeline (last p)))
 true
@@ -400,7 +402,7 @@ true
 To check an entire pipeline for non-zero exit codes, you can use:
 
 ``` clojure
-user=> (run! check (pipeline (-> (process '[ls "foo"]) (process '[cat]))))
+user=> (run! check (pipeline (pb "ls foo") (pb "cat")))
 Execution error (ExceptionInfo) at babashka.process/check (process.clj:37).
 ls: foo: No such file or directory
 ```
@@ -417,17 +419,17 @@ before you would see any output due to buffering.
     (Thread/sleep 10)
     (recur)))
 
-(-> (process '[tail -f "log.txt"])
-    (process '[cat])
-    (process '[grep "5"] {:out :inherit}))
+(-> (process "tail" "-f" "log.txt")
+    (process "cat")
+    (process {:out :inherit} "grep "5"))
 ```
 
 The solution then it to use `pipeline` + `pb`:
 
 ``` clojure
-(pipeline (pb '[tail -f "log.txt"])
-          (pb '[cat])
-          (pb '[grep "5"] {:out :inherit}))
+(pipeline (pb "tail" "-f" "log.txt")
+          (pb "cat")
+          (pb {:out :inherit} "grep" "5"))
 ```
 
 The varargs arity of `pipeline` is only available in JDK9 or higher due to the
@@ -436,12 +438,15 @@ following solution that reads the output of `tail` line by line may work for
 you:
 
 ``` clojure
-(def tail (process '[tail -f "log.txt"] {:err :inherit}))
+user=> (require '[clojure.java.io :as io])
+nil
+
+(def tail (process {:err :inherit} "tail" "-f" "log.txt"))
 
 (def cat-and-grep
-  (-> (process '[cat]      {:err :inherit})
-      (process '[grep "5"] {:out :inherit
-                            :err :inherit})))
+  (-> (process {:err :inherit} "cat")
+      (process {:out :inherit
+                :err :inherit} "grep 5")))
 
 (binding [*in*  (io/reader (:out tail))
           *out* (io/writer (:in cat-and-grep))]
@@ -453,9 +458,7 @@ you:
 
 Another solution is to let bash handle the pipes by shelling out with `bash -c`.
 
-## Notes
-
-### Differences with `clojure.java.shell/sh`
+## Differences with `clojure.java.shell/sh`
 
 If `clojure.java.shell` works for your purposes, keep using it. But there are
 contexts in which you need more flexibility. The major differences compared with
@@ -469,43 +472,37 @@ this library:
 - `sh` offers integration with `clojure.java.io/copy` for `:in`, `process` extends
   this to `:out` and `:err`
 
-
-
-### Script termination
+###Script termination
 
 Because `process` spawns threads for non-blocking I/O, you might have to run
 `(shutdown-agents)` at the end of your Clojure JVM scripts to force
 termination. Babashka does this automatically.
 
-### Clojure.pprint
+## Clojure.pprint
 
 When pretty-printing a process, by default you will get an exception:
 
 ``` clojure
-(require '[clojure.pprint :as pprint])
-(pprint/pprint (process ["ls"]))
+user=> (require '[babashka.process :refer [process]])
+nil
+user=> (require '[clojure.pprint :as pprint])
+nil
+user=> (pprint/pprint (process "ls"))
 Execution error (IllegalArgumentException) at user/eval257 (REPL:1).
 Multiple methods in multimethod 'simple-dispatch' match dispatch value: class babashka.process.Process -> interface clojure.lang.IDeref and interface clojure.lang.IPersistentMap, and neither is preferred
 ```
 
 The reason is that a process is both a record and a `clojure.lang.IDeref` and
-pprint does not have a preference for how to print this. Two potential resolutions for this are:
-- require the `babashka.process.pprint` namespace, which will define a `pprint` implementation for a `Process` record:
+pprint does not have a preference for how to print this. The recommended solution is to require the `babashka.process.pprint` namespace, which will define a `pprint` implementation for a `Process` record:
 ```clojure
-(require '[babashka.process.pprint]
-         '[clojure.pprint :as pprint])
+user=> (require '[babashka.process.pprint])
+nil
 
-(pprint/pprint (process ["ls"]))
-
-=> {:proc
-    #object[java.lang.ProcessImpl...]
-    ...
-    }
-```
-- define a preference for `pprint`'s dispatch mulitmethod:
-
-``` clojure
-(prefer-method pprint/simple-dispatch clojure.lang.IPersistentMap clojure.lang.IDeref)
+user=> (pprint/pprint (process "ls"))
+{:proc
+ #object[java.lang.ProcessImpl 0x1d61a348 "Process[pid=43771, exitValue=\"not exited\"]"],
+ :exit nil,
+...
 ```
 
 ### Promesa
@@ -520,7 +517,7 @@ in the following way. This requires `:exit-fn` which was released in version
 
 (defn process
   "Returns promise that will be resolved upon process termination. The promise is rejected when the exit code is non-zero."
-  [cmd opts]
+  [opts & cmd]
   (prom/create
    (fn [resolve reject]
      (let [exit-fn (fn [response]
@@ -528,16 +525,18 @@ in the following way. This requires `:exit-fn` which was released in version
                        (if (zero? exit)
                          (resolve r)
                          (reject r))))]
-       (proc/process cmd (assoc opts :exit-fn exit-fn))))))
+       (apply proc/process (assoc opts :exit-fn exit-fn) cmd)))))
 
-(prom/let [ls (process "ls" {:out :string
-                             :err :inherit})
+(prom/let [ls (process
+               {:out :string
+                :err :inherit}
+               "ls")
            ls-out (:out ls)]
   (prn ls-out))
 ```
 
 ## License
 
-Copyright © 2020-2021 Michiel Borkent
+Copyright © 2020-2022 Michiel Borkent
 
 Distributed under the EPL License. See LICENSE.

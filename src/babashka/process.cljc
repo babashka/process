@@ -264,26 +264,6 @@
 
 (defrecord ProcessBuilder [pb opts prev])
 
-(defn pb
-  "Returns a process builder (as record)."
-  ([cmd] (pb nil cmd nil))
-  ([cmd opts] (if (map? cmd) ;; prev
-                (pb cmd opts nil)
-                (pb nil cmd opts)))
-  ([prev cmd opts]
-   (let [opts (merge *defaults* (normalize-opts opts))]
-     (->ProcessBuilder (build cmd opts)
-                       opts
-                       prev))))
-
-(defn- copy [in out encoding]
-  (let [[out post-fn] (if (keyword? out)
-                        (case out
-                          :string [(java.io.StringWriter.) str])
-                        [out identity])]
-    (io/copy in out :encoding encoding)
-    (post-fn out)))
-
 (defn process? [x]
   (instance? Process x))
 
@@ -320,6 +300,23 @@
     {:prev prev
      :args args
      :opts opts}))
+
+(defn pb
+  "Returns a process builder (as record)."
+  [& args]
+  (let [{:keys [args opts prev]} (normalize-args args)]
+    (let [opts (merge *defaults* (normalize-opts opts))]
+      (->ProcessBuilder (build args opts)
+                        opts
+                        prev))))
+
+(defn- copy [in out encoding]
+  (let [[out post-fn] (if (keyword? out)
+                        (case out
+                          :string [(java.io.StringWriter.) str])
+                        [out identity])]
+    (io/copy in out :encoding encoding)
+    (post-fn out)))
 
 (defn process*
   {:no-doc true}
