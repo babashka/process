@@ -44,7 +44,10 @@
   (is (= ["foo" "bar" "baz"] (:cmd (p/parse-args ["foo bar" "baz"]))))
   (let [norm (p/parse-args [{:out :string } "foo bar" "baz"])]
     (is (= ["foo" "bar" "baz"] (:cmd norm)))
-    (is (= {:out :string} (:opts norm)))))
+    (is (= {:out :string} (:opts norm))))
+  (testing "existing file invocation"
+    (let [args ["README.md" "a" "b" "c"]]
+      (is (= args (:cmd (p/parse-args args)))))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit

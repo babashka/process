@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.4.13
+
+- Fix invocation with file argument
+
 ## 0.4.12
 
 - #95: Unify arg parsing for `shell` and `process`: the recommended syntax is now: `(process opts? & args)`

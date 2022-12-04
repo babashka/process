@@ -271,7 +271,6 @@
   * `:cmd`: a vector of command line argument strings
   * `:opts`: options map
   "
-
   [args]
   (let [arg-count (count args)
         maybe-prev (first args)
@@ -302,7 +301,7 @@
                    fst (first args)
                    rst (rest args)]
                (vec (into (if (fs/exists? fst)
-                            fst (tokenize fst)) rst)))]
+                            [fst] (tokenize fst)) rst)))]
     {:prev prev
      :cmd args
      :opts opts}))
