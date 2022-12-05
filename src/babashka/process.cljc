@@ -276,13 +276,15 @@
         maybe-prev (first args)
         args (rest args)
         [prev args] (if (or (instance? Process maybe-prev)
-                            (instance? ProcessBuilder maybe-prev))
+                            (instance? ProcessBuilder maybe-prev)
+                            (and (nil? maybe-prev)
+                                 (sequential? (first args))))
                       [maybe-prev args]
                       [nil (cons maybe-prev args)])
         ;; we've parsed the input process, now assume the first argument is either an opts map, or a sequential
         maybe-opts (first args)
         args (rest args)
-        [opts args] (cond (map? maybe-opts)
+        [opts args] (cond (or (nil? maybe-opts) (map? maybe-opts))
                           [maybe-opts args args]
                           (sequential? maybe-opts)
                           ;; flatten command structure
