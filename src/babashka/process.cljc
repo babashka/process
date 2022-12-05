@@ -301,7 +301,10 @@
                    fst (first args)
                    rst (rest args)]
                (vec (into (if (fs/exists? fst)
-                            [fst] (tokenize fst)) rst)))]
+                            [fst]
+                            (if fst
+                              (tokenize fst)
+                              fst)) rst)))]
     {:prev prev
      :cmd args
      :opts opts}))
