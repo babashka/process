@@ -5,6 +5,8 @@
 
 Clojure library for shelling out / spawning sub-processes.
 
+> **_NOTE:_**  When using process from babashka, this README assumes v1.0.168 or later.
+
 ## API
 
 In 90% of the use cases you will probably need `shell` and for the remaining use
