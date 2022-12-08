@@ -263,25 +263,31 @@ is running, then close stdin and read the output of cat afterwards:
 (alive? catp) ;; false
 ```
 
-## Processing output
+## Processing streaming output
 
-Here is an example where we read the output of `cat README.md` line by line and print it ourselves:
+Here is an example where we read the output of `bb -o -e '(range)'`, an infinite
+stream of numbers, line by line and print it ourselves:
 
 ``` clojure
 (require '[babashka.process :as p :refer [process destroy-tree]]
          '[clojure.java.io :as io])
 
-(def catp (process
-           {:err :inherit
-            :shutdown destroy-tree}
-           "cat README.md"))
+(def number-stream
+  (process
+   {:err :inherit
+    :shutdown destroy-tree}
+   "bb -o -e '(range)'"))
 
-(with-open [rdr (io/reader (:out catp))]
+(with-open [rdr (io/reader (:out number-stream))]
   (binding [*in* rdr]
-    (loop []
+    (loop [max 10]
       (when-let [line (read-line)]
         (println :line line)
-        (recur)))))
+        (when (pos? max)
+          (recur (dec max)))))))
+
+;; kill the streaming bb process:
+(p/destroy-tree number-stream)
 ```
 
 ## Printing command
