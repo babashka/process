@@ -265,25 +265,23 @@ is running, then close stdin and read the output of cat afterwards:
 
 ## Processing output
 
-Here is an example where we read the output of `yes` line by line and print it ourselves:
+Here is an example where we read the output of `cat README.md` line by line and print it ourselves:
 
 ``` clojure
 (require '[babashka.process :as p :refer [process destroy-tree]]
          '[clojure.java.io :as io])
 
-(def yesp (process
+(def catp (process
            {:err :inherit
             :shutdown destroy-tree}
-           "yes"))
+           "cat README.md"))
 
-;; Beware: infinite loop reading lines of "y" from the `yes` process:
-
-(with-open [rdr (io/reader (:out yesp))]
+(with-open [rdr (io/reader (:out catp))]
   (binding [*in* rdr]
     (loop []
-      (let [line (read-line)]
-        (println :line line))
-      (recur))))
+      (when-let [line (read-line)]
+        (println :line line)
+        (recur)))))
 ```
 
 ## Printing command
