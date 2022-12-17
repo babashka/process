@@ -23,7 +23,7 @@ since
 but is also intended as a JVM library:
 
 ``` clojure
-$ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.3.11"}}}'
+$ clojure -Sdeps '{:deps {babashka/process {:mvn/version "0.4.13"}}}'
 
 user=> (require '[clojure.string :as str])
 nil
