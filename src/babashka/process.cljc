@@ -629,3 +629,8 @@
   "Returns `true` if the process is still running and false otherwise."
   [p]
   (.isAlive ^java.lang.Process (:proc p)))
+
+#?(:bb nil
+   :clj
+   (when (contains? (loaded-libs) 'clojure.pprint) ;; pprint was already loaded, e.g. by nREPL
+     (require '[babashka.process.pprint])))

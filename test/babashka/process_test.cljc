@@ -241,11 +241,11 @@
       (is (= 2 (count (re-seq #"error" (slurp out))))))))
 
 (deftest pprint-test
-  #?(:bb nil ;; in bb we already required the babashka.process.pprint namespace
-     :clj
-     (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
-       (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
-                             (-> (process "cat missing-file.txt") pprint)))))
+  ;; #?(:bb nil ;; in bb we already required the babashka.process.pprint namespace
+  ;;    :clj
+  ;;    (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
+  ;;      (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
+  ;;                            (-> (process "cat missing-file.txt") pprint)))))
   (testing "after requiring pprint namespace, process gets pprinted as a map"
     (do
       (require '[babashka.process] :reload '[babashka.process.pprint] :reload)
