@@ -341,7 +341,7 @@
 
 (when-windows
   (deftest ^:windows windows-pprint-test
-    (testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
+    #_(testing "calling pprint on a process without requiring pprint namespace causes exception (ambiguous on pprint/simple-dispatch multimethod)"
       (is (thrown-with-msg? IllegalArgumentException #"Multiple methods in multimethod 'simple-dispatch' match dispatch value"
             (-> (process "cmd /c type missing-file.txt") pprint))))
     (testing "after requiring pprint namespace, process gets pprinted as a map"
