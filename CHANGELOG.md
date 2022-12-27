@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.4.14
+
+- Auto-load `babashka.process.pprint` if `clojure.pprint` was already loaded
+
 ## 0.4.13
 
 - Fix invocation with file argument

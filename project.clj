@@ -1,4 +1,4 @@
-(defproject babashka/process "0.4.13"
+(defproject babashka/process "0.4.14"
   :description "Clojure library for shelling out / spawning subprocesses"
   :url "https://github.com/babashka/process"
   :scm {:name "git"
