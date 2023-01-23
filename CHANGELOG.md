@@ -5,7 +5,7 @@ Clojure library for shelling out / spawning sub-processes
 
 ## 0.4.15
 
-- *BREAKING*: `:write` instead of `:append` to an `:out-file` by default. This
+- **BREAKING**: `:write` instead of `:append` to an `:out-file` by default. This
   default was undocumented so the impact should be small.
 
 ## 0.4.14
