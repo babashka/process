@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.4.15
+
+- *BREAKING*: `:write` instead of `:append` to an `:out-file` by default
+
 ## 0.4.14
 
 - Auto-load `babashka.process.pprint` if `clojure.pprint` was already loaded
@@ -13,7 +17,7 @@ Clojure library for shelling out / spawning sub-processes
 
 ## 0.4.12
 
-- #95: Unify arg parsing for `shell` and `process`: the recommended syntax is now: `(process opts? & args)`
+- [#95](https://github.com/babashka/process/issues/95): Unify arg parsing for `shell` and `process`: the recommended syntax is now: `(process opts? & args)`
 
 ## 0.3.11
 

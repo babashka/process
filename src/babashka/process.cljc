@@ -217,11 +217,11 @@
     (or (instance? java.io.File out)
         (string? out))
     (-> (assoc :out-file (io/file out))
-        (assoc :out :append))
+        (assoc :out :write))
     (or (instance? java.io.File err)
         (string? err))
     (-> (assoc :err-file (io/file err))
-        (assoc :err :append))))
+        (assoc :err :write))))
 
 (defn- build
   (^java.lang.ProcessBuilder [cmd] (build cmd nil))
