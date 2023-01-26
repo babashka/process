@@ -27,14 +27,12 @@
                    (conj parsed (str buf))
                    parsed)
         (= 39 c) ;; single-quotes
-        (if in-single-quotes?
-          ;; exit single-quoted string
-          (if in-double-quotes?
-            (recur s in-double-quotes? false buf parsed)
-            (recur s in-double-quotes? false (java.io.StringWriter.) (conj parsed (str buf))))
-          ;; enter single-quoted string
-          (recur s in-double-quotes? true buf parsed))
-
+        (if in-double-quotes?
+          (recur s in-double-quotes? false (doto buf
+                                             (.write c)) parsed)
+          (if in-single-quotes?
+            (recur s in-double-quotes? false (java.io.StringWriter.) (conj parsed (str buf)))
+            (recur s in-double-quotes? true buf parsed)))
         (= 92 c) ;; the \\ escape character
         (let [escaped (.read s)
               buf (if (and in-double-quotes?

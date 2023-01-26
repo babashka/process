@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.4.16
+
+- [#100](https://github.com/babashka/process/issues/100): preserve single-quotes in double-quoted string
+
 ## 0.4.15
 
 - **BREAKING**: `:write` instead of `:append` to an `:out-file` by default. This

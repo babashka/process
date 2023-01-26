@@ -29,9 +29,8 @@
          (tokenize "xxx[\"dude\"]xxx")))
   (is (= ["some=something else"]
          (tokenize "some=\"something else\"")))
-  (is (= ["bash" "-c" "echo two words | wc -w"]
-         (tokenize "bash -c \"echo 'two words' | wc -w\"")))
-  )
+  (is (= ["bash" "-c" "echo 'two words' | wc -w"]
+         (tokenize "bash -c \"echo 'two words' | wc -w\""))))
 
 #?(:bb nil
    :clj
