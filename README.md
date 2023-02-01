@@ -478,7 +478,7 @@ this library:
 - `sh` offers integration with `clojure.java.io/copy` for `:in`, `process` extends
   this to `:out` and `:err`
 
-###Script termination
+### Script termination
 
 Because `process` spawns threads for non-blocking I/O, you might have to run
 `(shutdown-agents)` at the end of your Clojure JVM scripts to force
