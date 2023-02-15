@@ -399,7 +399,7 @@
     (when (and in (not (identical? :inherit in)))
       @(future
         (if (instance? java.io.InputStream in)
-          (let [stream in
+          (let [^java.io.InputStream stream in
                 buf (byte-array 1024)]
             (loop []
               (let [read (.read stream buf)]
