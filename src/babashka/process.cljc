@@ -610,8 +610,8 @@
 
   Examples:
 
-  - `(shell \"ls -la\")`
-  - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")`
+  - `(shell \"ls -la\")` -- \"ls -la\" is tokenized as [\"ls\" \"-la\"]
+  - `(shell {:out \"/tmp/log.txt\"} \"git commit -m\" \"WIP\")` -- \"git commit -m\" is tokenized as [\"git\" \"commit\" \"-m\"] and \"WIP\" is an additional argument
 
   Also see the `shell` entry in the babashka book [here](https://book.babashka.org/#_shell)."
   {:arglists '([opts? & args])}

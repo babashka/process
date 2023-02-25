@@ -1,7 +1,7 @@
 {:deps {io.github.borkdude/quickdoc
         #_{:local/root "../../quickdoc"}
         {:git/url "https://github.com/borkdude/quickdoc"
-         :git/sha "1e810ddd08ee724ff5736530a35a989d0ecdc9de"}}
+         :git/sha "32e726cd6d785d00e49d4e614a05f7436d3831c0"}}
 
  :tasks
  {quickdoc {:doc "Invoke quickdoc"
