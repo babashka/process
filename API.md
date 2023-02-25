@@ -228,8 +228,8 @@ Convenience function around [`process`](#babashka.process/process) that was orig
 
   Examples:
 
-  - `(shell "ls -la")` -- "ls -la" is tokenized as ["ls" "-la"]
-  - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")` -- "git commit -m" is tokenized as ["git" "commit" "-m"] and "WIP" is an additional argument
+  - `(shell "ls -la")` ;; `"ls -la"` is tokenized as `["ls" "-la"]`
+  - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")` ;; `"git commit -m"` is tokenized as `["git" "commit" "-m"]` and `"WIP"` is an additional argument
 
   Also see the [`shell`](#babashka.process/shell) entry in the babashka book [here](https://book.babashka.org/#_shell).
 <p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L603-L624">Source</a></sub></p>
