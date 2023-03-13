@@ -129,7 +129,7 @@ user=> (-> (shell {:out :string :extra-env {"FOO" "BAR"}} "bb -e '(System/getenv
 
 The `shell` function is a combination of `process` and `deref` and `check`. The
 `process` function is the lower level function of this library that doesn't make
-any opiniated choices:
+any opinionated choices:
 
 - It does not provide a default for `:out`, `:in` and `:err`: in `shell` these
   default to `:inherit` which means: read and write from and to the console. In
