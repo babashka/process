@@ -383,7 +383,7 @@ objects created with `pb`:
 ``` clojure
 user=> (require '[babashka.process :refer [pipeline pb process check]])
 nil
-user=> (mapv :cmd (pipeline (-> (process "ls") (process "ls"))))
+user=> (mapv :cmd (pipeline (-> (process "ls") (process "cat"))))
 [["ls"] ["cat"]]
 user=> (mapv :cmd (pipeline (pb "ls") (pb "cat")))
 [["ls"] ["cat"]]
