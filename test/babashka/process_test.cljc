@@ -111,9 +111,9 @@
     (is (= (-> (process ["ls"]) :out slurp)
            (-> (process ["ls"] {:dir "."}) :out slurp)))
     ;; skip this test when ran from babashka lib tests
-    (when (.exists (io/file "src" "babashka" "process.clj"))
+    (when (.exists (io/file "src" "babashka" "process.cljc"))
       (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
-             "process_test.clj\n")))
+             "process_test.cljc\n")))
     (is (not= (-> (process ["ls"]) :out slurp)
               (-> (process ["ls"] {:dir "test/babashka"}) :out slurp))))
   (testing "use of :env options"
