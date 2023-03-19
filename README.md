@@ -190,8 +190,9 @@ setting which defaults to writing to a stream:
 ``` clojure
 user=> (let [stream (-> (process "ls") :out)]
          @(process {:in stream
-                    :out :inherit} "cat")
-         nil)
+                    :out :string} "cat")
+         :out
+         println)
 API.md
 CHANGELOG.md
 LICENSE
