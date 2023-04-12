@@ -50,7 +50,12 @@
        (let [args ["README.md" "a" "b" "c"]]
          (is (= args (:cmd (p/parse-args args))))))
      (testing "prev may be nil"
-       (is (= ["echo" "hello"] (:cmd (p/parse-args [nil ["echo hello"]])))))))
+       (is (= ["echo" "hello"] (:cmd (p/parse-args [nil ["echo hello"]])))))
+     (testing "cmd + prev"
+       (let [parsed (p/parse-args [{:cmd ["echo" "hello"]
+                                    :prev @(process {:out :string} "ls")}])]
+         (is (= ["echo" "hello"] (:cmd parsed)))
+         (is (string? (:out (:prev parsed))))))))
 
 (deftest process-test
   (testing "By default process returns string out and err, returning the exit
