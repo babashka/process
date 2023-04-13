@@ -52,6 +52,7 @@ user=> (require '[babashka.process :refer [process check sh pipeline pb]])
 The functions `shell`, `process` and `exec` take an optional map followed by one or more strings:
 
 ``` clojure
+(shell "ls" "-la") ;; no options
 (shell {:dir "target"} "ls" "-la")
 (process {:in "hello"} "cat")
 (exec {:extra-env {"FOO" "BAR"}} "bash")
