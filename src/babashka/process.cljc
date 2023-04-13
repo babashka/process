@@ -268,7 +268,10 @@
   * `:prev`: a (previous) process whose input is piped into the current process
   * `:cmd`: a vector of command line argument strings
   * `:opts`: options map
-  "
+
+  Note that this function bridges the legacy `[cmds ?opts]` syntax to
+  the newer recommended syntax `[?opts & args]` and therefore looks
+  unnecessarily complex."
   [args]
   (let [arg-count (count args)
         maybe-prev (first args)
