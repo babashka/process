@@ -1,5 +1,5 @@
 (ns babashka.process
-  "Shell out in Clojure with simplicity and ease.
+  "Clojure library for shelling out / spawning sub-processes.
   If you are not yet familiar with the API, start reading the
   docstrings for `process` and `shell`."
   (:require [babashka.fs :as fs]
