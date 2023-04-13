@@ -47,13 +47,29 @@ user=> (-> (shell {:out :string} "ls -la") :out str/split-lines first)
 user=> (require '[babashka.process :refer [process check sh pipeline pb]])
 ```
 
+### Syntax
+
+The functions `shell`, `process` and `exec` take an optional map followed by one or more strings:
+
+``` clojure
+(shell {:dir "target"} "ls" "-la")
+(process {:in "hello"} "cat")
+(exec {:extra-env {"FOO" "BAR"}} "bash")
+```
+
+Previous versions of babashka process supported the `(process ["prog" "arg"]
+{})` syntax. This syntax is no longer recommended, but is still supported to not
+break existing programs.
+
 ### shell
 
 Most commonly you will use `shell`. It executes a command and streams the output
-to stdout and stderr while the process is running:
+to stdout and stderr while the process is running. The name `shell` comes from
+"shelling out", but note that it does not invoke a bash/zsh/cmd.exe shell: it
+just starts an external program.
 
 ``` clojure
-user=> (shell "ls -la")
+user=> (shell "ls" "-la")
 total 144
 drwxr-xr-x@ 22 borkdude  staff    704 Dec  4 13:39 .
 drwxr-xr-x@ 75 borkdude  staff   2400 Dec  3 14:18 ..
@@ -63,7 +79,10 @@ drwxr-xr-x@ 50 borkdude  staff   1600 Dec  3 20:55 .cpcache
 ```
 
 The first string argument to `shell` is tokenized automatically: `"ls -la"` is
-broken up into `"ls"` and `"-la"`. You can provide more arguments if you need to:
+broken up into `"ls"` and `"-la"`, so `(shell "ls -la")` also works. This eases
+the migration from existing bash scripts.
+
+You can provide more arguments if you need to:
 
 ``` clojure
 user=> (shell "ls -la" "src" "test")
