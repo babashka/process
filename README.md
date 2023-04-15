@@ -34,6 +34,7 @@ The functions `shell`, `process` and `exec` take an optional map followed by one
 (require '[babashka.process :refer [shell process exec]])
 
 (shell "ls" "-la") ;; no options
+(shell "ls -la" "dir") ;; first string is tokenized automatically, more strings may be provided
 (shell {:dir "target"} "ls" "-la")
 (process {:in "hello"} "cat")
 (exec {:extra-env {"FOO" "BAR"}} "bash")
