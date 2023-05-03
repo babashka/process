@@ -26,6 +26,10 @@ jobs:
             chmod +x linux-install-1.10.3.1040.sh
             sudo ./linux-install-1.10.3.1040.sh
       - run:
+          name: Download deps
+          command: |
+            clojure -P
+      - run:
           name: Run JVM tests
           command: |
             script/test
@@ -51,6 +55,10 @@ jobs:
             chmod +x linux-install-1.10.3.1040.sh
             sudo ./linux-install-1.10.3.1040.sh
       - run:
+          name: Download deps
+          command: |
+            clojure -P
+       - run:
           name: Run JVM tests
           command: |
             script/test

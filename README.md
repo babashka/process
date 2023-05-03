@@ -113,6 +113,21 @@ user=> (-> (shell {:out :string} "ls -la") :out str/split-lines first)
 "total 144"
 ```
 
+To also capture stderr to a `:string`, add in the `:err :string` option:
+
+``` clojure
+user=> (-> (shell {:out :string :err :string} "git conpig user.name")
+           (select-keys [:out :err]))
+{:out "borkdude\n", :err "WARNING: You called a Git command named 'conpig', which does not exist.\nContinuing in -1.1 seconds, assuming that you meant 'config'.\n"}
+```
+
+To redirect stderr to stdout specify the `:err :out` option:
+
+``` clojure
+user=> (-> (shell {:out :string :err :out} "git conpig user.name") :out)
+"WARNING: You called a Git command named 'conpig', which does not exist.\nContinuing in -1.1 seconds, assuming that you meant 'config'.\nborkdude\n"
+```
+
 To change the working directory, use the `:dir` option:
 
 ``` clojure
