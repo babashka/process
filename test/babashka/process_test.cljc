@@ -92,7 +92,7 @@
       (is (= 0 ret))
       (is (= "foo" (slurp out)))))
   (testing "redirect :err to :out"
-    (let [test-cmd "clojure -M -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"]
+    (let [test-cmd "bb -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"]
       (testing "baseline"
         (let [res @(process {:out :string :err :string} test-cmd)]
           (is (= ":to-stdout\n" (:out res)))

@@ -32,12 +32,7 @@ jobs:
       uses: DeLaGuardo/setup-clojure@10.3
       with:
         cli: 1.10.3.1040
-
-    - name: Download deps
-      run: |
-        clojure -P -M:clj-1.9
-        clojure -P -M:clj-1.10
-        clojure -P -M:clj-1.11
+        bb: 'latest'
 
     - name: Run tests not Windows
       if: ${{ matrix.os != 'windows-latest' }}
