@@ -92,7 +92,15 @@
       (is (= 0 ret))
       (is (= "foo" (slurp out)))))
   (testing "redirect :err to :out"
-    (let [test-cmd "bb -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"]
+    (let [bb (fs/which "bb")
+          bb (or bb (if (fs/windows?)
+                      "bb.exe"
+                      "./bb"))
+          bb (if (fs/exists? bb)
+               bb
+               "clojure -M -m babashka.main")
+          test-cmd (format "%s -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"
+                           bb)]
       (testing "baseline"
         (let [res @(process {:out :string :err :string} test-cmd)]
           (is (= ":to-stdout\n" (:out res)))
