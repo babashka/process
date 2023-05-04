@@ -26,6 +26,10 @@ jobs:
             chmod +x linux-install-1.10.3.1040.sh
             sudo ./linux-install-1.10.3.1040.sh
       - run:
+          name: Install Babashka
+          command: |
+            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
+      - run:
           name: Run JVM tests
           command: |
             script/test
@@ -50,6 +54,10 @@ jobs:
             wget https://download.clojure.org/install/linux-install-1.10.3.1040.sh
             chmod +x linux-install-1.10.3.1040.sh
             sudo ./linux-install-1.10.3.1040.sh
+      - run:
+          name: Install Babashka
+          command: |
+            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
       - run:
           name: Run JVM tests
           command: |

@@ -29,9 +29,10 @@ jobs:
         restore-keys: "${{ runner.os }}-deps-"
 
     - name: Setup Clojure
-      uses: DeLaGuardo/setup-clojure@3.6
+      uses: DeLaGuardo/setup-clojure@10.3
       with:
         cli: 1.10.3.1040
+        bb: 'latest'
 
     - name: Run tests not Windows
       if: ${{ matrix.os != 'windows-latest' }}
