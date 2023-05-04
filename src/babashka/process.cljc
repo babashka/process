@@ -576,8 +576,9 @@
   {:arglists '([opts? & args])}
   [& args]
   (let [{:keys [cmd opts]} (parse-args args)]
-    (let [{:keys [escape env extra-env]
-           :or {escape default-escape}
+    (let [{:keys [escape env extra-env pre-start-fn]
+           :or {escape (:escape *defaults*)
+                pre-start-fn (:pre-start-fn *defaults*)}
            :as opts} opts
           cmd (if (and (string? cmd)
                        (not (.exists (io/file cmd))))
@@ -587,9 +588,13 @@
           cmd (mapv str-fn cmd)
           arg0 (or (:arg0 opts)
                    (first cmd))
-          cmd (let [program-resolver (:program-resolver opts -program-resolver)
-                    [program & args] cmd]
+          program-resolver (or (:program-resolver opts)
+                               (:program-resolver *defaults*))
+          cmd (let [[program & args] cmd]
                 (into [(program-resolver program)] args))
+          _ (when pre-start-fn
+              (let [interceptor-map {:cmd cmd}]
+                (pre-start-fn interceptor-map)))
           [program & args] cmd
           args (cons arg0 args)
           ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
@@ -611,7 +616,10 @@
   while the process runs. Throws on non-zero exit codes. Kills all
   subprocesses on shutdown. Optional options map can be passed as the
   first argument, followed by multiple command line arguments. The
-  first command line argument is automatically tokenized.
+  first command line argument is automatically tokenized. Counter to
+  what the name of this function may suggest, it does not start a
+  new (bash, etc.) shell, it just shells out to a program. As such, it
+  does not support bash syntax like `ls *.clj`.
 
   Examples:
 
