@@ -98,21 +98,22 @@
                       "./bb"))
           bb (if (fs/exists? bb)
                bb
-               "clojure -M -m babashka.main")
-          test-cmd (format "%s -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"
-                           bb)]
-      (testing "baseline"
-        (let [res @(process {:out :string :err :string} test-cmd)]
-          (is (= ":to-stdout\n" (:out res)))
-          (is (= ":to-stderr\n" (:err res)))))
-      (testing "redirect"
-        (let [res @(process {:out :string :err :out} test-cmd)
-              out-string (:out res)
-              err-null-input-stream (:err res)]
-          (is (= ":to-stdout\n:to-stderr\n" out-string))
-          (is (instance? java.io.InputStream err-null-input-stream))
-          (is (= 0 (.available err-null-input-stream)))
-          (is (= -1 (.read err-null-input-stream)))))))
+               (println "WARNING: Skipping tests because bb not installed"))]
+      (when bb
+        (let [test-cmd (format "%s -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"
+                               bb)]
+          (testing "baseline"
+            (let [res @(process {:out :string :err :string} test-cmd)]
+              (is (= ":to-stdout\n" (:out res)))
+              (is (= ":to-stderr\n" (:err res)))))
+          (testing "redirect"
+            (let [res @(process {:out :string :err :out} test-cmd)
+                  out-string (:out res)
+                  err-null-input-stream (:err res)]
+              (is (= ":to-stdout\n:to-stderr\n" out-string))
+              (is (instance? java.io.InputStream err-null-input-stream))
+              (is (= 0 (.available err-null-input-stream)))
+              (is (= -1 (.read err-null-input-stream)))))))))
   (testing "copy output to *out*"
     (let [s (with-out-str
               @(process '[cat] {:in "foo" :out *out*}))]
