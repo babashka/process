@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## Unreleased
+
+- Fix [#112](https://github.com/babashka/process/issues/112): pre-start-fn in exec
+
 ## 0.4.16
 
 - [#100](https://github.com/babashka/process/issues/100): preserve single-quotes in double-quoted string
