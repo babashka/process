@@ -3,7 +3,7 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
-## Unreleased
+## 0.5.17
 
 - [#113](https://github.com/babashka/process/issues/113): Support redirecting stderr to stdout ([@lread](https://github.com/lread))
 - [#112](https://github.com/babashka/process/issues/112): Support `:pre-start-fn` in exec
