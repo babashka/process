@@ -52,7 +52,7 @@
      (testing "prev may be nil"
        (is (= ["echo" "hello"] (:cmd (p/parse-args [nil ["echo hello"]])))))))
 
-(deftest process-wait-realize
+(deftest process-wait-realize-test
   (testing "By default process returns string out and err, returning the exit
   code in a delay. Waiting for the process to end happens through realizing the
   delay. Waiting also happens implicitly by not specifying :stream, since
@@ -70,7 +70,7 @@
       (is (number? exit))
       (is (zero? exit)))))
 
-(deftest process-wait-realize-with-stdin
+(deftest process-wait-realize-with-stdin-test
   (testing "When specifying :out and :err both a non-strings, the process keeps
   running. :in is the stdin of the process to which we can write. Calling close
   on that stream closes stdin, so a program like cat will exit. We wait for the
@@ -88,14 +88,14 @@
           out-stream (:out res)]
       (is (= "hello\n" (slurp out-stream))))))
 
-(deftest process-copy-input-from-string
+(deftest process-copy-input-from-string-test
   (let [proc (process '[cat] {:in "foo"})
         out (:out proc)
         ret (:exit @proc)]
     (is (= 0 ret))
     (is (= "foo" (slurp out)))))
 
-(deftest process-redirect-err-out
+(deftest process-redirect-err-out-test
   (let [bb (fs/which "bb")
         bb (or bb (if (fs/windows?)
                     "bb.exe"
@@ -119,18 +119,18 @@
             (is (= 0 (.available err-null-input-stream)))
             (is (= -1 (.read err-null-input-stream)))))))))
 
-(deftest process-copy-to-out
+(deftest process-copy-to-out-test
   (let [s (with-out-str
             @(process '[cat] {:in "foo" :out *out*}))]
     (is (= "foo" s))))
 
-(deftest process-copy-stderr-to-out
+(deftest process-copy-stderr-to-out-test
   (let [s (with-out-str
             (-> (process '[curl "foo"] {:err *out*})
                 deref :exit))]
     (is (pos? (count s)))))
 
-(deftest process-chaining
+(deftest process-chaining-test
   (is (= "README.md\n"
          (-> (process ["ls"])
              (process ["grep" "README.md"]) :out slurp)))
@@ -138,7 +138,7 @@
          (-> (sh ["ls"])
              (sh ["grep" "README.md"]) :out))))
 
-(deftest process-dir-option
+(deftest process-dir-option-test
   (is (= (-> (process ["ls"]) :out slurp)
          (-> (process ["ls"] {:dir "."}) :out slurp)))
   ;; skip this test when ran from babashka lib tests
@@ -148,7 +148,7 @@
   (is (not= (-> (process ["ls"]) :out slurp)
             (-> (process ["ls"] {:dir "test/babashka"}) :out slurp))))
 
-(deftest process-env-option
+(deftest process-env-option-test
   (is (= "" (-> (process ["env"] {:env {}}) :out slurp)))
   (let [out (-> (sh "env" {:extra-env {:FOO "BAR"}}) :out)]
     (is (str/includes? out "PATH"))
@@ -164,7 +164,7 @@
              (str/split-lines)
              (sort)))))
 
-(deftest process-check-throws-on-non-zero-exit
+(deftest process-check-throws-on-non-zero-exit-test
   (let [err-form '(binding [*out* *err*]
                     (println "error123")
                     (System/exit 1))]
@@ -194,7 +194,7 @@
             (is (= :babashka.process/error (:type (ex-data e))))))))))
 
 #_{:clj-kondo/ignore [:unused-binding]}
-(deftest process-dollar-macro
+(deftest process-dollar-macro-test
   (let [config {:a 1}]
     (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
     (let [sw (java.io.StringWriter.)]
@@ -211,17 +211,17 @@
                                 deref)
                             (str sw)))))))
 
-(deftest process-same-as-pb-start
+(deftest process-same-as-pb-start-test
   (let [out (-> (process ["ls"]) :out slurp)]
     (is (and (string? out) (not (str/blank? out))))
     (is (= out (-> (pb ["ls"]) (start) :out slurp)))))
 
-(deftest process-out-to-string
+(deftest process-out-to-string-test
   (is (string? (-> (process ["ls"] {:out :string})
                    check
                    :out))))
 
-(deftest process-tokenization
+(deftest process-tokenization-test
   (is (string? (-> (process "ls -la" {:out :string})
                    check
                    :out)))
@@ -232,7 +232,7 @@
                    :out))))
 #?(:bb nil
    :clj
-   (deftest process-deref-timeout
+   (deftest process-deref-timeout-test
      (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
      (is (= 0 (:exit (deref (process ["ls"]) 250 nil))))))
 
@@ -347,7 +347,7 @@
 
 (jdk9+)
 
-(deftest alive-lives
+(deftest alive-lives-test
   (let [{:keys [in] :as res} (process '[cat])]
     (is (true? (p/alive? res)))
     (.close in)
