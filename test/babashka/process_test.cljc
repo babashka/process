@@ -52,7 +52,7 @@
      (testing "prev may be nil"
        (is (= ["echo" "hello"] (:cmd (p/parse-args [nil ["echo hello"]])))))))
 
-(deftest process-test
+(deftest process-wait-realize
   (testing "By default process returns string out and err, returning the exit
   code in a delay. Waiting for the process to end happens through realizing the
   delay. Waiting also happens implicitly by not specifying :stream, since
@@ -68,7 +68,9 @@
       (is (not (str/blank? out)))
       (is (str/blank? err))
       (is (number? exit))
-      (is (zero? exit))))
+      (is (zero? exit)))))
+
+(deftest process-wait-realize-with-stdin
   (testing "When specifying :out and :err both a non-strings, the process keeps
   running. :in is the stdin of the process to which we can write. Calling close
   on that stream closes stdin, so a program like cat will exit. We wait for the
@@ -84,143 +86,155 @@
           _ (is (zero? exit))
           _ (is (false? (.isAlive (:proc res))))
           out-stream (:out res)]
-      (is (= "hello\n" (slurp out-stream)))))
-  (testing "copy input from string"
-    (let [proc (process '[cat] {:in "foo"})
-          out (:out proc)
-          ret (:exit @proc)]
-      (is (= 0 ret))
-      (is (= "foo" (slurp out)))))
-  (testing "redirect :err to :out"
-    (let [bb (fs/which "bb")
-          bb (or bb (if (fs/windows?)
-                      "bb.exe"
-                      "./bb"))
-          bb (if (fs/exists? bb)
-               bb
-               (println "WARNING: Skipping tests because bb not installed"))]
-      (when bb
-        (let [test-cmd (format "%s -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"
-                               bb)]
-          (testing "baseline"
-            (let [res @(process {:out :string :err :string} test-cmd)]
-              (is (= ":to-stdout\n" (:out res)))
-              (is (= ":to-stderr\n" (:err res)))))
-          (testing "redirect"
-            (let [res @(process {:out :string :err :out} test-cmd)
-                  out-string (:out res)
-                  err-null-input-stream (:err res)]
-              (is (= ":to-stdout\n:to-stderr\n" out-string))
-              (is (instance? java.io.InputStream err-null-input-stream))
-              (is (= 0 (.available err-null-input-stream)))
-              (is (= -1 (.read err-null-input-stream)))))))))
-  (testing "copy output to *out*"
-    (let [s (with-out-str
-              @(process '[cat] {:in "foo" :out *out*}))]
-      (is (= "foo" s))))
-  (testing "copy stderr to *out*"
-    (let [s (with-out-str
-              (-> (process '[curl "foo"] {:err *out*})
-                  deref :exit))]
-      (is (pos? (count s)))))
-  (testing "chaining"
-    (is (= "README.md\n"
-           (-> (process ["ls"])
-               (process ["grep" "README.md"]) :out slurp)))
-    (is (= "README.md\n"
-           (-> (sh ["ls"])
-               (sh ["grep" "README.md"]) :out))))
-  (testing "use of :dir options"
-    (is (= (-> (process ["ls"]) :out slurp)
-           (-> (process ["ls"] {:dir "."}) :out slurp)))
-    ;; skip this test when ran from babashka lib tests
-    (when (.exists (io/file "src" "babashka" "process.cljc"))
-      (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
-             "process_test.cljc\n")))
-    (is (not= (-> (process ["ls"]) :out slurp)
-              (-> (process ["ls"] {:dir "test/babashka"}) :out slurp))))
-  (testing "use of :env options"
-    (is (= "" (-> (process ["env"] {:env {}}) :out slurp)))
-    (let [out (-> (sh "env" {:extra-env {:FOO "BAR"}}) :out)]
-      (is (str/includes? out "PATH"))
-      (is (str/includes? out "FOO=BAR")))
-    (is (= ["SOME_VAR=SOME_VAL"
-            "keyword_val=:keyword-val"
-            "keyword_var=KWVARVAL"]
-           (-> (process ["env"] {:env {"SOME_VAR" "SOME_VAL"
-                                       :keyword_var "KWVARVAL"
-                                       "keyword_val" :keyword-val}})
-               :out
-               slurp
-               (str/split-lines)
-               (sort)))))
-  (testing "check throws on non-zero exit"
-    (let [err-form '(binding [*out* *err*]
-                      (println "error123")
-                      (System/exit 1))]
-      (is (thrown-with-msg?
-           clojure.lang.ExceptionInfo #"error123"
-           (-> (process ["clojure" "-e" (str err-form)]) (check)))
-          "with :err string"))
-    (is (thrown?
-         clojure.lang.ExceptionInfo #"failed"
-         (-> (process ["clojure" "-e" (str '(System/exit 1))])
-             (check)))
-        "With no :err string")
-    (is (thrown?
-         clojure.lang.ExceptionInfo #"failed"
-         (-> (process ["clojure" "-e" (str '(System/exit 1))] {:err *err*})
-             (check)))
-        "With :err set to *err*")
-    (testing "and the exception"
-      (let [command ["clojure" "-e" (str '(System/exit 1))]]
-        (try
-          (-> (process command)
-              (check))
-          (catch clojure.lang.ExceptionInfo e
-            (testing "contains the process arguments"
-              (is (= command (:cmd (ex-data e)))))
-            (testing "and contains a babashka process type"
-              (is (= :babashka.process/error (:type (ex-data e))))))))))
-  #_{:clj-kondo/ignore [:unused-binding]}
-  (testing "$ macro"
-    (let [config {:a 1}]
-      (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
-      (let [sw (java.io.StringWriter.)]
-        (is (= "{:a 1}\n" (do (-> ^{:out sw}
-                                  ($ echo ~config)
-                                  deref)
-                              (str sw)))))
-      (let [sw (java.io.StringWriter.)]
-        (is (= "{:a 1}\n" (do (-> ($ ~{:out sw} echo ~config)
-                                  deref)
-                              (str sw)))))
-      (let [sw (java.io.StringWriter.)]
-        (is (= "{:a 1}\n" (do (-> ($ {:out sw} echo ~config)
-                                  deref)
-                              (str sw)))))))
-  (testing "pb + start = process"
-    (let [out (-> (process ["ls"]) :out slurp)]
-      (is (and (string? out) (not (str/blank? out))))
-      (is (= out (-> (pb ["ls"]) (start) :out slurp)))))
-  (testing "output to string"
-    (is (string? (-> (process ["ls"] {:out :string})
-                     check
-                     :out))))
-  (testing "tokenize"
-    (is (string? (-> (process "ls -la" {:out :string})
-                     check
-                     :out)))
-    (is (string? (-> ^{:out :string} ($ "ls -la" )
-                     check
-                     :out)))
-    (is (string? (-> (sh "ls -la")
-                     :out))))
-  #?(:bb nil
-     :clj
-     (testing "deref timeout"
-       (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
-       (is (= 0 (:exit (deref (process ["ls"]) 250 nil)))))))
+      (is (= "hello\n" (slurp out-stream))))))
+
+(deftest process-copy-input-from-string
+  (let [proc (process '[cat] {:in "foo"})
+        out (:out proc)
+        ret (:exit @proc)]
+    (is (= 0 ret))
+    (is (= "foo" (slurp out)))))
+
+(deftest process-redirect-err-out
+  (let [bb (fs/which "bb")
+        bb (or bb (if (fs/windows?)
+                    "bb.exe"
+                    "./bb"))
+        bb (if (fs/exists? bb)
+             bb
+             (println "WARNING: Skipping tests because bb not installed"))]
+    (when bb
+      (let [test-cmd (format "%s -cp '' -e '(println :to-stdout)(binding [*out* *err*] (println :to-stderr))'"
+                             bb)]
+        (testing "baseline"
+          (let [res @(process {:out :string :err :string} test-cmd)]
+            (is (= ":to-stdout\n" (:out res)))
+            (is (= ":to-stderr\n" (:err res)))))
+        (testing "redirect"
+          (let [res @(process {:out :string :err :out} test-cmd)
+                out-string (:out res)
+                err-null-input-stream (:err res)]
+            (is (= ":to-stdout\n:to-stderr\n" out-string))
+            (is (instance? java.io.InputStream err-null-input-stream))
+            (is (= 0 (.available err-null-input-stream)))
+            (is (= -1 (.read err-null-input-stream)))))))))
+
+(deftest process-copy-to-out
+  (let [s (with-out-str
+            @(process '[cat] {:in "foo" :out *out*}))]
+    (is (= "foo" s))))
+
+(deftest process-copy-stderr-to-out
+  (let [s (with-out-str
+            (-> (process '[curl "foo"] {:err *out*})
+                deref :exit))]
+    (is (pos? (count s)))))
+
+(deftest process-chaining
+  (is (= "README.md\n"
+         (-> (process ["ls"])
+             (process ["grep" "README.md"]) :out slurp)))
+  (is (= "README.md\n"
+         (-> (sh ["ls"])
+             (sh ["grep" "README.md"]) :out))))
+
+(deftest process-dir-option
+  (is (= (-> (process ["ls"]) :out slurp)
+         (-> (process ["ls"] {:dir "."}) :out slurp)))
+  ;; skip this test when ran from babashka lib tests
+  (when (.exists (io/file "src" "babashka" "process.cljc"))
+    (is (= (-> (process ["ls"] {:dir "test/babashka"}) :out slurp)
+           "process_test.cljc\n")))
+  (is (not= (-> (process ["ls"]) :out slurp)
+            (-> (process ["ls"] {:dir "test/babashka"}) :out slurp))))
+
+(deftest process-env-option
+  (is (= "" (-> (process ["env"] {:env {}}) :out slurp)))
+  (let [out (-> (sh "env" {:extra-env {:FOO "BAR"}}) :out)]
+    (is (str/includes? out "PATH"))
+    (is (str/includes? out "FOO=BAR")))
+  (is (= ["SOME_VAR=SOME_VAL"
+          "keyword_val=:keyword-val"
+          "keyword_var=KWVARVAL"]
+         (-> (process ["env"] {:env {"SOME_VAR" "SOME_VAL"
+                                     :keyword_var "KWVARVAL"
+                                     "keyword_val" :keyword-val}})
+             :out
+             slurp
+             (str/split-lines)
+             (sort)))))
+
+(deftest process-check-throws-on-non-zero-exit
+  (let [err-form '(binding [*out* *err*]
+                    (println "error123")
+                    (System/exit 1))]
+    (is (thrown-with-msg?
+          clojure.lang.ExceptionInfo #"error123"
+          (-> (process ["clojure" "-e" (str err-form)]) (check)))
+        "with :err string"))
+  (is (thrown?
+        clojure.lang.ExceptionInfo #"failed"
+        (-> (process ["clojure" "-e" (str '(System/exit 1))])
+            (check)))
+      "With no :err string")
+  (is (thrown?
+        clojure.lang.ExceptionInfo #"failed"
+        (-> (process ["clojure" "-e" (str '(System/exit 1))] {:err *err*})
+            (check)))
+      "With :err set to *err*")
+  (testing "and the exception"
+    (let [command ["clojure" "-e" (str '(System/exit 1))]]
+      (try
+        (-> (process command)
+            (check))
+        (catch clojure.lang.ExceptionInfo e
+          (testing "contains the process arguments"
+            (is (= command (:cmd (ex-data e)))))
+          (testing "and contains a babashka process type"
+            (is (= :babashka.process/error (:type (ex-data e))))))))))
+
+#_{:clj-kondo/ignore [:unused-binding]}
+(deftest process-dollar-macro
+  (let [config {:a 1}]
+    (is (= "{:a 1}\n" (-> ($ echo ~config) :out slurp)))
+    (let [sw (java.io.StringWriter.)]
+      (is (= "{:a 1}\n" (do (-> ^{:out sw}
+                                ($ echo ~config)
+                                deref)
+                            (str sw)))))
+    (let [sw (java.io.StringWriter.)]
+      (is (= "{:a 1}\n" (do (-> ($ ~{:out sw} echo ~config)
+                                deref)
+                            (str sw)))))
+    (let [sw (java.io.StringWriter.)]
+      (is (= "{:a 1}\n" (do (-> ($ {:out sw} echo ~config)
+                                deref)
+                            (str sw)))))))
+
+(deftest process-same-as-pb-start
+  (let [out (-> (process ["ls"]) :out slurp)]
+    (is (and (string? out) (not (str/blank? out))))
+    (is (= out (-> (pb ["ls"]) (start) :out slurp)))))
+
+(deftest process-out-to-string
+  (is (string? (-> (process ["ls"] {:out :string})
+                   check
+                   :out))))
+
+(deftest process-tokenization
+  (is (string? (-> (process "ls -la" {:out :string})
+                   check
+                   :out)))
+  (is (string? (-> ^{:out :string} ($ "ls -la" )
+                   check
+                   :out)))
+  (is (string? (-> (sh "ls -la")
+                   :out))))
+#?(:bb nil
+   :clj
+   (deftest process-deref-timeout
+     (is (= ::timeout (deref (process ["clojure" "-e" "(Thread/sleep 500)"]) 250 ::timeout)))
+     (is (= 0 (:exit (deref (process ["ls"]) 250 nil))))))
 
 (deftest shell-test
   (is (str/includes? (:out (p/shell {:out :string} "echo hello")) "hello"))
