@@ -29,6 +29,7 @@ jobs:
           name: Install Babashka
           command: |
             sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
+            bb --version
       - run:
           name: Run JVM tests
           command: |
@@ -58,6 +59,7 @@ jobs:
           name: Install Babashka
           command: |
             sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
+            bb --version
       - run:
           name: Run JVM tests
           command: |
