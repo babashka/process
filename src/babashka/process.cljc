@@ -136,7 +136,7 @@
 
 #_{:clj-kondo/ignore [:unused-private-var]}
 (defn- proc->Process [^java.lang.Process proc cmd prev]
-  (let [stdin  (.getOutputStream proc)
+  (let [stdin (.getOutputStream proc)
         stdout (.getInputStream proc)
         stderr (.getErrorStream proc)]
     (->Process proc
@@ -161,16 +161,16 @@
   proc)
 
 (if-before-jdk8
-    (def destroy-tree destroy)
-  (defn destroy-tree
-    "Same as `destroy` but also destroys all descendants. JDK9+
+ (def destroy-tree destroy)
+ (defn destroy-tree
+   "Same as `destroy` but also destroys all descendants. JDK9+
   only. Falls back to `destroy` on older JVM versions."
-    [proc]
-    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
-      (run! (fn [^java.lang.ProcessHandle handle]
-              (.destroy handle))
-            (cons handle (iterator-seq (.iterator (.descendants handle))))))
-    proc))
+   [proc]
+   (let [handle (.toHandle ^java.lang.Process (:proc proc))]
+     (run! (fn [^java.lang.ProcessHandle handle]
+             (.destroy handle))
+           (cons handle (iterator-seq (.iterator (.descendants handle))))))
+   proc))
 
 (def ^:private windows?
   (-> (System/getProperty "os.name")
@@ -359,7 +359,7 @@
             (let [interceptor-map {:cmd cmd}]
               (pre-start-fn interceptor-map)))
         proc (.start pb)
-        stdin  (.getOutputStream proc)
+        stdin (.getOutputStream proc)
         stdout (.getInputStream proc)
         stderr (.getErrorStream proc)
         out (if (and out (or (identical? :string out)
@@ -387,10 +387,10 @@
             (.addShutdownHook (Thread. (fn [] (shutdown res))))))
       (when exit-fn
         (if-before-jdk8
-            (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
-          (-> (.onExit proc)
-              (.thenRun (fn []
-                          (exit-fn @res))))))
+         (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
+         (-> (.onExit proc)
+             (.thenRun (fn []
+                         (exit-fn @res))))))
       res)))
 
 (defn process
@@ -445,8 +445,8 @@
   (process* (parse-args args)))
 
 (if-before-jdk8
-    (defn pipeline
-      "Returns the processes for one pipe created with -> or creates
+ (defn pipeline
+   "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
@@ -455,12 +455,12 @@
 
   Also see [Pipelines](/README.md#pipelines).
   "
-      ([proc]
-       (if-let [prev (:prev proc)]
-         (conj (pipeline prev) proc)
-         [proc])))
-  (defn pipeline
-    "Returns the processes for one pipe created with -> or creates
+   ([proc]
+    (if-let [prev (:prev proc)]
+      (conj (pipeline prev) proc)
+      [proc])))
+ (defn pipeline
+   "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
@@ -469,31 +469,31 @@
 
   Also see [Pipelines](/README.md#pipelines).
   "
-    ([proc]
-     (if-let [prev (:prev proc)]
-       (conj (pipeline prev) proc)
-       [proc]))
-    ([pb & pbs]
-     (let [pbs (cons pb pbs)
-           opts (map :opts pbs)
-           pbs (map :pb pbs)
-           procs (java.lang.ProcessBuilder/startPipeline pbs)
-           pbs+opts+procs (map vector pbs opts procs)]
-       (-> (reduce (fn [{:keys [:prev :procs]}
-                        [pb opts proc]]
-                     (let [shutdown (:shutdown opts)
-                           cmd (.command ^java.lang.ProcessBuilder pb)
-                           new-proc (proc->Process proc cmd prev)
-                           new-procs (conj procs new-proc)]
-                       (when shutdown
-                         (-> (Runtime/getRuntime)
-                             (.addShutdownHook (Thread.
-                                                (fn []
-                                                  (shutdown new-proc))))))
-                       {:prev new-proc :procs new-procs}))
-                   {:prev nil :procs []}
-                   pbs+opts+procs)
-           :procs)))))
+   ([proc]
+    (if-let [prev (:prev proc)]
+      (conj (pipeline prev) proc)
+      [proc]))
+   ([pb & pbs]
+    (let [pbs (cons pb pbs)
+          opts (map :opts pbs)
+          pbs (map :pb pbs)
+          procs (java.lang.ProcessBuilder/startPipeline pbs)
+          pbs+opts+procs (map vector pbs opts procs)]
+      (-> (reduce (fn [{:keys [:prev :procs]}
+                       [pb opts proc]]
+                    (let [shutdown (:shutdown opts)
+                          cmd (.command ^java.lang.ProcessBuilder pb)
+                          new-proc (proc->Process proc cmd prev)
+                          new-procs (conj procs new-proc)]
+                      (when shutdown
+                        (-> (Runtime/getRuntime)
+                            (.addShutdownHook (Thread.
+                                               (fn []
+                                                 (shutdown new-proc))))))
+                      {:prev new-proc :procs new-procs}))
+                  {:prev nil :procs []}
+                  pbs+opts+procs)
+          :procs)))))
 
 (defn start
   "Takes a process builder, calls start and returns a process (as record)."
@@ -560,7 +560,7 @@
 
 (def ^:private has-exec?
   (boolean (try (.getMethod ^Class
-                            (resolve 'org.graalvm.nativeimage.ProcessProperties) "exec"
+                 (resolve 'org.graalvm.nativeimage.ProcessProperties) "exec"
                             (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map]))
                 (catch Exception _ false))))
 
@@ -588,8 +588,11 @@
           cmd (mapv str-fn cmd)
           arg0 (or (:arg0 opts)
                    (first cmd))
-          program-resolver (or (:program-resolver opts)
-                               (:program-resolver *defaults*))
+          program-resolver (:program-resolver opts
+                                              ;; we don't look at the *defaults*
+                                              ;; here since on non-Windows it
+                                              ;; does nothing, we need to always resolve the full path
+                                              -program-resolver)
           cmd (let [[program & args] cmd]
                 (into [(program-resolver program)] args))
           _ (when pre-start-fn
@@ -599,10 +602,10 @@
           args (cons arg0 args)
           ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
       (if-has-exec
-          (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
-                                                          (into-array String args)
-                                                          env)
-        (throw (ex-info "exec is not supported in non-GraalVM environments" {:cmd cmd}))))))
+       (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
+                                                       (into-array String args)
+                                                       env)
+       (throw (ex-info "exec is not supported in non-GraalVM environments" {:cmd cmd}))))))
 
 (def ^:private default-shell-opts
   {:in :inherit
@@ -634,7 +637,7 @@
           proc (deref proc)]
       (if (:continue opts)
         proc
-        (check proc )))))
+        (check proc)))))
 
 (defn alive?
   "Returns `true` if the process is still running and false otherwise."
