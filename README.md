@@ -390,6 +390,9 @@ The `:env` option replaces your entire environment with the provided map. To add
 For example, `"PATH"` will not update the value of `"Path"` on Windows.
 Here's an [example of a babashka task](https://github.com/babashka/fs/blob/3b8010d1a0db166771ac7f47573ea09ed45abe33/bb.edn#L10-L11) that understands this nuance.
 
+> **:env TIP**: An OS might have default environment variables it always includes.
+For example, as of this writing, Windows always includes `SystemRoot` and macOS always includes `__CF_USER_TEXT_ENCODING`.
+
 ## Pipelines
 
 The `pipeline` function returns a
