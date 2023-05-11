@@ -308,9 +308,10 @@
                             [fst]
                             (if fst
                               (tokenize fst)
-                              fst)) rst)))]
+                              fst)) rst)))
+        prev (:prev opts prev)]
     {:prev prev
-     :cmd args
+     :cmd (or (:cmd opts) args)
      :opts opts}))
 
 (defn pb
@@ -412,9 +413,11 @@
   the exit code.
 
   Supported options:
+   - `:cmd`: a vector of strings. A single string can be tokenized into a vector of strings with `tokenize`.
+      Overrides the variadic `args` argument.
    - `:in`, `:out`, `:err`: objects compatible with `clojure.java.io/copy` that
-      will be copied to or from the process's corresponding stream. May be set
-      to `:inherit` for redirecting to the parent process's corresponding
+      will be copied to from the process's corresponding stream.
+      May be set to `:inherit` for redirecting to the parent process's corresponding
       stream. Optional `:in-enc`, `:out-enc` and `:err-enc` values will
       be passed along to `clojure.java.io/copy`.
       For redirecting to Clojure's `*in*`, `*out*` or `*err*` stream, set
@@ -426,6 +429,7 @@
       For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
        - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
        - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
+   - `:prev`: output from `:prev` will be piped to the input of this process. Overrides `:in`.
    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
    - `:dir`: working directory.
    - `:env`, `:extra-env`: a map of environment variables. See [Add environment](/README.md#add-environment).

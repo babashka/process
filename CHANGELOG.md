@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.5.19 (2023-05-11)
+
+- #124: Allow `:cmd` to be passed in map argument
+
 ## 0.5.18
 
 - Fix regression introduced in #112: `exec` always needs to resolve the full path of the program
@@ -25,7 +29,7 @@ Clojure library for shelling out / spawning sub-processes
 
 - Auto-load `babashka.process.pprint` if `clojure.pprint` was already loaded
 
-## 0.4.13
+## 0.4.13 (2022-12-04)
 
 - Fix invocation with file argument
 
