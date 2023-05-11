@@ -3,6 +3,15 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.5.18
+
+- Fix regression introduced in #112: `exec` always needs to resolve the full path of the program
+
+## 0.5.17
+
+- [#113](https://github.com/babashka/process/issues/113): Support redirecting stderr to stdout ([@lread](https://github.com/lread))
+- [#112](https://github.com/babashka/process/issues/112): Support `:pre-start-fn` in exec
+
 ## 0.4.16
 
 - [#100](https://github.com/babashka/process/issues/100): preserve single-quotes in double-quoted string
