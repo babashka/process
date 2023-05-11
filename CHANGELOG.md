@@ -5,11 +5,11 @@ Clojure library for shelling out / spawning sub-processes
 
 ## 0.5.19 (2023-05-11)
 
-- #124: Allow `:cmd` to be passed in map argument
+- [#124](https://github.com/babashka/process/issues/124): Allow `:cmd` to be passed in map argument
 
 ## 0.5.18
 
-- Fix regression introduced in #112: `exec` always needs to resolve the full path of the program
+- Fix regression introduced in [#112](https://github.com/babashka/process/issues/112): `exec` always needs to resolve the full path of the program
 
 ## 0.5.17
 
