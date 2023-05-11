@@ -311,7 +311,7 @@
                               fst)) rst)))
         prev (:prev opts prev)]
     {:prev prev
-     :cmd (or (not-empty args) (:cmd opts))
+     :cmd (or (:cmd opts) args)
      :opts opts}))
 
 (defn pb
