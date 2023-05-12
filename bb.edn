@@ -1,14 +1,80 @@
-{:deps {io.github.borkdude/quickdoc
+{:paths ["script"]
+ :deps {io.github.borkdude/quickdoc
         #_{:local/root "../../quickdoc"}
         {:git/url "https://github.com/borkdude/quickdoc"
-         :git/sha "32e726cd6d785d00e49d4e614a05f7436d3831c0"}}
-
+         :git/sha "32e726cd6d785d00e49d4e614a05f7436d3831c0"}
+        org.clj-commons/digest {:mvn/version "1.4.100"} }
  :tasks
- {quickdoc {:doc "Invoke quickdoc"
+ {:requires ([babashka.fs :as fs])
+  clean {:doc "Delete build work"
+         :task (do
+                 (fs/delete-tree "target")
+                 (shell {:dir "test-native"} "bb clean"))}
+  quickdoc {:doc "Invoke quickdoc"
             :requires ([quickdoc.api :as api])
             :task (api/quickdoc {:git/branch "master"
                                  :github/repo "https://github.com/babashka/process"
                                  :toc true
                                  :var-links true})}
-  test {:doc "Run tests"
-        :task (shell "script/test")}}}
+
+  -prep-native-exec {:doc "Prep for native exec test"
+                     :task (shell {:dir "test-native"} "bb native")}
+
+  test:native {:doc "Run exec tests with native runner (requires GraalVM compilation)."
+               :depends [-prep-native-exec]
+               :task (apply clojure "-M:test:clj-1.11" "--namespace" "babashka.process-exec-test" *command-line-args*)}
+
+  test:bb {:doc "Run all tests under bb"
+           :extra-paths ["test"]
+           :extra-deps  {;; inherit base deps from deps.edn
+                         babashka/process {:local/root "."}
+                         ;; repeat necessary :test deps from deps.edn
+                         io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+           :requires ([cognitect.test-runner])
+           :task (do
+                   ;; flag: sub-process should reload babashka.process
+                   (System/setProperty "babashka.process.test.reload" "true")
+                   ;; flag: force use of bb even if natively compiled version of run-exec exists
+                   (System/setProperty "babashka.process.test.run-exec" "bb")
+                   ;; run from babashka.process sources, not built-in babaska.process
+                   (require '[babashka.process] :reload)
+                   (apply cognitect.test-runner.-main *command-line-args*))}
+
+  test:jvm {:doc "Run jvm tests, optionally specify clj-version (ex. :clj-1.10 :clj-1.11(default) or :clj-all)"
+            :requires ([clojure.string :as str]
+                       [clojure.edn :as edn])
+            :task (let [args *command-line-args*
+                        farg (first *command-line-args*)
+                        ;; allow for missing leading colon
+                        farg (if (str/starts-with? farg "clj-")
+                               (str ":" farg)
+                               farg)
+                        clj-version-aliases (->> "deps.edn"
+                                                 slurp
+                                                 edn/read-string
+                                                 :aliases
+                                                 keys
+                                                 (map str)
+                                                 (filter (fn [a] (-> a name (str/starts-with?  ":clj-"))))
+                                                 (into []))
+                        [aliases args] (cond
+                                         (nil? farg) [[":clj-1.11"] []]
+
+                                         (= ":clj-all" farg) [clj-version-aliases (rest args)]
+
+                                         (and (str/starts-with? farg ":clj-")
+                                              (not (some #{farg} clj-version-aliases)))
+                                         (throw (ex-info (format "%s not recognized, valid clj- args are: %s or \":clj-all\"" farg clj-version-aliases) {}))
+
+                                         (some #{farg} clj-version-aliases) [[farg] (rest args)]
+
+                                         :else [[":clj-1.11"] args])]
+                    (doseq [alias aliases]
+                      (do
+                        (println (format "-[Running jvm tests for %s]-" alias))
+                        (apply clojure (str "-M:test" alias) "--namespace" "babashka.process-test" args))))}
+
+  ;; hidden CI support tasks
+  -ci-install-jdk {:doc "Helper to download and install jdk under ~/tools on circleci"
+                   :requires ([circle-ci])
+                   :task (apply circle-ci/install-jdk *command-line-args*)}}}

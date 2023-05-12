@@ -578,7 +578,11 @@
 (defn exec
   "Replaces the current process image with the process image specified
   by the given path invoked with the given args. Works only in GraalVM
-  native images. Override the first argument using `:arg0`."
+  native images (which includes babashka).
+
+  Supported `opts`
+  - `:arg0`: override first argument (the executable). No-op on Windows.
+  - `:env`,`:extra-env`,`:escape`,`:pre-start-fn` : see `process`."
   {:arglists '([opts? & args])}
   [& args]
   (let [{:keys [cmd opts]} (parse-args args)]
@@ -606,7 +610,9 @@
                 (pre-start-fn interceptor-map)))
           [program & args] cmd
           args (cons arg0 args)
-          ^java.util.Map env (into (or env (into {} (System/getenv))) extra-env)]
+          ^java.util.Map env (into (or (as-string-map env)
+                                       (into {} (System/getenv)))
+                                   (as-string-map extra-env))]
       (if-has-exec
        (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
                                                        (into-array String args)

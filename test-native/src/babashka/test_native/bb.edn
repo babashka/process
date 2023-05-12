@@ -1,0 +1,2 @@
+;; when run from bb we want to be able to load our local sources
+{:paths ["../../../../src"]}

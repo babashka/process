@@ -1,69 +1,180 @@
-# Clojure CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-clojure/ for more details
-#
 version: 2.1
+
+orbs:
+  win: circleci/windows@5.0.0
+
+executors:
+  linux:
+    docker:
+      - image: cimg/openjdk:17.0
+    working_directory: ~/repo
+    resource_class: large
+  macos:
+    macos:
+      xcode: 14.3
+    working_directory: ~/repo
+  windows:
+    machine:
+      image: windows-server-2019-vs2019:stable
+      resource_class: windows.medium
+      shell: powershell.exe -ExecutionPolicy Bypass
+    working_directory: ~/repo
+
+aliases:
+  - &restore_deps_cache
+    restore_cache:
+      name: "Restore deps cache"
+      keys:
+        - &deps_cache_key v2-dependencies-{{ arch }}-{{ checksum "project.clj" }}-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+        - v2-dependencies-{{ arch }}
+  - &save_deps_cache
+    save_cache:
+      name: "Save deps cache"
+      key: *deps_cache_key
+      paths:
+        - ~/.m2
+        - ~/.gitlibs
+        - ~/.deps.clj
+  - &restore_tools_cache
+    restore_cache:
+      name: "Restore tools cache"
+      keys:
+        - &tools_cache_key v3-tools-{{ arch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum ".circleci/config.yml" }}
+        # no fallback only restore exact match on match
+  - &save_tools_cache
+    save_cache:
+      name: "Save tools cache"
+      key: *tools_cache_key
+      paths:
+        - ~/tools
+
+commands:
+  tools-versions:
+    steps:
+      - run:
+          name: Tools Versions
+          command: |
+            java -version
+            bb --version
+  install-babashka-macos-linux:
+    steps:
+      - run:
+          name: Install Babashka
+          # temporarily use SNAPSHOT version, use latest official after next bb bump
+          command: |
+            bash <(curl https://raw.githubusercontent.com/babashka/babashka/master/install) --version 1.3.180-SNAPSHOT --dir .
+            sudo mv ./bb /usr/local/bin/bb
+            bb --version
+  install-babashka-windows:
+    steps:
+      - run:
+          name: Install Babashka
+          # Temporarily using snapshot, switch to scoop after next bb release
+          command: |
+            iwr https://github.com/babashka/babashka-dev-builds/releases/download/v1.3.180-SNAPSHOT/babashka-1.3.180-SNAPSHOT-windows-amd64.zip -outfile 'bbwin.zip'; if(-not $?){exit 9}
+            Expand-Archive bbwin.zip .                                    ; if(-not $?){exit 9}
+            mkdir C:\bbtools                                              ; if(-not $?){exit 9}
+            mv .\bb.exe C:\bbtools                                        ; if(-not $?){exit 9}
+            add-content $PROFILE $("`$env:PATH=""C:\bbtools;`$env:PATH"""); if(-not $?){exit 9}
+            Write-host $env:PATH                                          ; if(-not $?){exit 9}
+
+  setup:
+    parameters:
+      os:
+        type: string
+      jdk:
+        type: string
+    steps:
+      - run:
+          name: "Bundled executor java version"
+          command: java -version
+      - when:
+          condition:
+            not:
+              equal: [ 'windows', <<parameters.os>> ]
+          steps:
+            - install-babashka-macos-linux
+      - when:
+          condition:
+            equal: [ 'windows', <<parameters.os>> ]
+          steps:
+            - install-babashka-windows
+      - run:
+          name: "Setup JDK"
+          command: |
+            bb -ci-install-jdk <<parameters.os>> << parameters.jdk >>
+
 jobs:
-  java-8:
-    docker:
-      # specify the version you desire here
-      - image: circleci/clojure:openjdk-8-lein
-    working_directory: ~/repo
-    environment:
-      LEIN_ROOT: "true"
-    resource_class: large
+  test:
+    parameters:
+      os:
+        type: string
+      jdk:
+        type: string
+    executor:
+      name: << parameters.os >>
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "project.clj" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+      - *restore_deps_cache
+      - *restore_tools_cache
+      - setup:
+          os: << parameters.os >>
+          jdk: << parameters.jdk >>
+      - tools-versions
       - run:
-          name: Install Clojure
+          name: Run bb tests
           command: |
-            wget https://download.clojure.org/install/linux-install-1.10.3.1040.sh
-            chmod +x linux-install-1.10.3.1040.sh
-            sudo ./linux-install-1.10.3.1040.sh
-      - run:
-          name: Install Babashka
-          command: |
-            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
-            bb --version
+            bb test:bb
       - run:
           name: Run JVM tests
           command: |
-            script/test
-  java-11:
-    docker:
-      # specify the version you desire here
-      - image: circleci/clojure:openjdk-11-lein
-    working_directory: ~/repo
-    environment:
-      LEIN_ROOT: "true"
-    resource_class: large
+            bb test:jvm :clj-all
+      - *save_deps_cache
+      - *save_tools_cache
+
+  test-native:
+    parameters:
+      os:
+        type: string
+      jdk:
+        type: string
+    executor:
+      name: << parameters.os >>
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "project.clj" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-      - run:
-          name: Install Clojure
-          command: |
-            wget https://download.clojure.org/install/linux-install-1.10.3.1040.sh
-            chmod +x linux-install-1.10.3.1040.sh
-            sudo ./linux-install-1.10.3.1040.sh
-      - run:
-          name: Install Babashka
-          command: |
-            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
-            bb --version
-      - run:
-          name: Run JVM tests
-          command: |
-            script/test
+      - *restore_deps_cache
+      - *restore_tools_cache
+      - setup:
+          os: << parameters.os >>
+          jdk: << parameters.jdk >>
+      - tools-versions
+      - when:
+          condition:
+            equal: [ 'windows', <<parameters.os>> ]
+          steps:
+            - run:
+                name: "Run native tests (windows)"
+                # setting vcvars.bat in powershell is awkward
+                command: |
+                  cmd.exe /c "call `"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars.txt"
+                  Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
+                  if ($_ -match "^(.*?)=(.*)$") {
+                    Set-Content "env:\$($matches[1])" $matches[2]
+                    }
+                  }
+                  bb test:native
+      - when:
+          condition:
+            not:
+              equal: [ 'windows', <<parameters.os>> ]
+          steps:
+            - run:
+                name: "Run native tests (linux, macos)"
+                command: |
+                  bb test:native
+      - *save_deps_cache
+      - *save_tools_cache
+
   deploy:
     resource_class: large
     docker:
@@ -73,28 +184,30 @@ jobs:
       LEIN_ROOT: "true"
     steps:
       - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "project.clj" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      - *restore_deps_cache
       - run: .circleci/script/deploy
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: v1-dependencies-{{ checksum "project.clj" }}
+      - *save_deps_cache
 
 workflows:
   version: 2
   ci:
     jobs:
-      - java-8
-      - java-11
+      - test:
+          name: test-<< matrix.os >>-<< matrix.jdk >>
+          matrix:
+            parameters:
+              os: [linux, macos, windows]
+              jdk: ['temurin@8','temurin@11','temurin@17']
+      - test-native:
+          name: test-<< matrix.os >>-native
+          matrix:
+            parameters:
+              os: [linux, macos, windows]
+              jdk: ['graalvm_ce19']
       - deploy:
           filters:
             branches:
               only: master
           requires:
-            - java-8
-            - java-11
-
+            - test
+            - test-native
