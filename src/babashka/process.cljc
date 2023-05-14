@@ -177,21 +177,23 @@
       (str/lower-case)
       (str/includes? "windows")))
 
-(defn- -program-resolver [program]
+(defn- -program-resolver [{:keys [program dir]}]
   ;; this should make life easier and not cause any bugs that weren't there previously
   ;; on exception we just return the program as is
   (try
     (if (fs/relative? program)
-      (if-let [f (fs/which program)]
+      (if-let [f (fs/which (if dir
+                             (-> (fs/file dir program) fs/absolutize)
+                             program))]
         (str f)
         program)
       program)
     (catch Throwable _ program)))
 
 (defn ^:no-doc default-program-resolver
-  [program]
+  [{:keys [program] :as opts}]
   (if windows?
-    (-program-resolver program)
+    (-program-resolver opts)
     program))
 
 (def ^:private default-escape
@@ -239,7 +241,7 @@
          cmd (mapv str-fn cmd)
          cmd (if-let [program-resolver (:program-resolver opts)]
                (let [[program & args] cmd]
-                 (into [(program-resolver program)] args))
+                 (into [(program-resolver {:program program :dir dir})] args))
                cmd)
          pb (cond-> (java.lang.ProcessBuilder. ^java.util.List cmd)
               dir (.directory (io/file dir))
@@ -598,7 +600,7 @@
                                               ;; does nothing, we need to always resolve the full path
                                               -program-resolver)
           cmd (let [[program & args] cmd]
-                (into [(program-resolver program)] args))
+                (into [(program-resolver {:program program})] args))
           _ (when pre-start-fn
               (let [interceptor-map {:cmd cmd}]
                 (pre-start-fn interceptor-map)))

@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## Unreleased
+
+- [#126](https://github.com/babashka/process/issues/126): Consider `:dir` when resolving relative `program` on Windows ([@lread](https://github.com/lread)) 
+
 ## 0.5.19 (2023-05-11)
 
 - [#124](https://github.com/babashka/process/issues/124): Allow `:cmd` to be passed in map argument
