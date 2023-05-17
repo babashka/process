@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.5.20 (2023-05-17)
+
+- Bump `babashka.fs` to 0.4.18
+
 ## 0.5.19 (2023-05-11)
 
 - [#124](https://github.com/babashka/process/issues/124): Allow `:cmd` to be passed in map argument
