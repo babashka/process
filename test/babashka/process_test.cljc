@@ -104,7 +104,11 @@
                                  ["cat"] {:out :string}])]
          (is (instance? babashka.process.Process (:prev norm)))
          (is (= ["cat"] (:cmd norm)))
-         (is (= {:out :string} (:opts norm)))))
+         (is (= {:out :string} (:opts norm))))
+       (testing "cmd + prev"
+         (let [parsed (p/parse-args [{:cmd ["echo" "hello"]
+                                      :prev @(process {:out :string} (format "%s %s :ls ." bb wd))}])]
+           (is (= ["echo" "hello"] (:cmd parsed)) (:out (:prev parsed))))))
      (is (= ["foo" "bar" "baz"] (:cmd (p/parse-args ["foo bar" "baz"]))))
      (let [norm (p/parse-args [{:out :string} "foo bar" "baz"])]
        (is (= ["foo" "bar" "baz"] (:cmd norm)))
@@ -113,12 +117,7 @@
        (let [args ["README.md" "a" "b" "c"]]
          (is (= args (:cmd (p/parse-args args))))))
      (testing "prev may be nil"
-       (is (= ["echo" "hello"] (:cmd (p/parse-args [nil ["echo hello"]])))))
-     (testing "cmd + prev"
-       (let [parsed (p/parse-args [{:cmd ["echo" "hello"]
-                                    :prev @(process {:out :string} "ls")}])]
-         (is (= ["echo" "hello"] (:cmd parsed)))
-         (is (string? (:out (:prev parsed))))))))
+       (is (= ["echo" "hello"] (:cmd (p/parse-args [nil ["echo hello"]])))))))
 
 (deftest process-wait-realize-test
   (testing "By default process returns string out and err, returning the exit
@@ -205,26 +204,66 @@
                (sh [bb wd ":grep" "README.md"]) :out)))))
 
 (deftest process-dir-option-test
-  (when-let [bb (find-bb)]
-    (let [out (-> (process [bb wd ":ls" "."]) :out slurp)]
-      (is (str/includes? out "README.md"))
-      (is (= out
-             (-> (process [bb wd ":ls" "."] {:dir "."}) :out slurp))))
-
-    (let [subdir (if (= "script/wd.clj" wd) ;; handle running from babashka vs babashka/process
-                   "test/babashka"
-                   "process/test/babashka")
-          rel (str/replace subdir #"[^/]+" "..")
-          rel-wd (str rel "/" wd)
-          rel-bb (if (= "./bb" bb)
-                   (str rel "/bb")
-                   bb)]
-      (let [out1 (-> (process [bb wd ":ls" "."]) :out slurp)
-            out2 (-> (process [rel-bb rel-wd ":ls" "."] {:dir subdir})
-                     :out slurp)]
-        (is (str/includes? out1 "README.md"))
-        (is (str/includes? out2 "process_test.cljc"))
-        (is (not= out1 out2))))))
+  ;; It is not practical to use bb for this test (bb will not be on the PATH when
+  ;; testing under babashka)
+  ;; It would be nice to use clojure, but on Windows the official install
+  ;; is still currently a PowerShell Module, which cannot be spawned directly.
+  ;; So we'll use java. This test assumes that java and javac are on the PATH."
+  (let [test-dir "target/process-dir-option-test"
+        java (fs/which "java")
+        java-dir (-> java fs/parent fs/canonicalize str)
+        java-src (-> (fs/file test-dir "UserDir.java") str)
+        args ["-cp" (str (fs/absolutize test-dir)) "UserDir"]
+        subdir (str (fs/file test-dir "foo/bar/baz"))
+        subdir-absolute (-> subdir fs/canonicalize str)]
+    (fs/create-dirs subdir)
+    (spit java-src
+          (str/join "\n" ["class UserDir {"
+                          "  public static void main( String []args ) {"
+                          "    System.out.println( System.getProperty (\"user.dir\"));"
+                          "  }"
+                          "}"]))
+    (p/shell "javac" java-src) ;; typically under 0.5s to compile
+    (testing "program is absolute"
+      (is (= (ols (str subdir-absolute "\n"))
+             (-> (apply process {:dir subdir}
+                        (str (fs/file java-dir "java")) args)
+                 :out
+                 slurp))))
+    (when (fs/windows?)
+      (testing "program with ext is absolute (windows)")
+      (is (= (ols (str subdir-absolute "\n"))
+             (-> (apply process {:dir subdir}
+                        (str (fs/canonicalize java)) args)
+                 :out
+                 slurp))))
+    (testing "program is on path"
+      (is (= (ols (str subdir-absolute "\n"))
+             (-> (apply process {:dir subdir}
+                        "java" args)
+                 :out
+                 slurp))))
+    (when (fs/windows?)
+      (testing "program with ext is on path (windows)"
+        (is (= (ols (str subdir-absolute "\n"))
+               (-> (apply process {:dir subdir}
+                          (fs/file-name java) args)
+                   :out
+                   slurp)))))
+    (testing "program is relative"
+      (is (= (ols (str java-dir "\n"))
+             (-> (apply process {:dir java-dir}
+                        (str "./java") args)
+                 :out
+                 slurp))))
+    (when (fs/windows?)
+      (testing "program with ext is relative (windows)"
+        (is (= (ols (str java-dir "\n"))
+               (-> (apply process {:dir java-dir}
+                          (str "./" (fs/file-name java)) args)
+                   :out
+                   slurp)))))
+    (fs/delete-tree test-dir)) )
 
 (deftest process-env-option-test
   (when-let [bb (find-bb)]
