@@ -582,7 +582,7 @@
 
   Supported `opts`
   - `:arg0`: override first argument (the executable). No-op on Windows.
-  - `:env`,`:extra-env`,`:escape`,`:pre-start-fn` : see `process`."
+  - `:cmd`, `:env`,`:extra-env`, `:escape`,`:pre-start-fn` : see `process`."
   {:arglists '([opts? & args])}
   [& args]
   (let [{:keys [cmd opts]} (parse-args args)]

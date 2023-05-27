@@ -183,3 +183,11 @@
       (let [java-dir (-> (fs/which "java") fs/parent fs/absolutize str)]
         (shell/with-sh-dir java-dir
           (= expected (run-exec "./java -version")))))))
+
+(deftest cmd-opt-test
+  (when-let [bb (u/find-bb)]
+    (is (= {:exit 0
+            :out (u/ols "o-one\no-two\n")
+            :err (u/ols "e-one\n")}
+           (run-exec {:cmd [bb u/wd ":out" "o-one" ":err" "e-one" ":out" "o-two"]
+                      :out :string :err :string})))))
