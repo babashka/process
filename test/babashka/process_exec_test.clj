@@ -101,7 +101,7 @@
              :cause))))
 
 (when (fs/windows?)
-  (deftest arg0-test-windows
+  (deftest arg0-windows-test
     (when-let [bb (u/find-bb)]
       (testing "on Windows, arg0 is a no-op, make sure cmd still runs with it"
         (is (= {:out (u/ols "all good\n")
@@ -110,7 +110,7 @@
                (run-exec {:arg0 "newarg0"} (format "%s %s :out 'all good'" bb u/wd)))))) ))
 
 (when (not (fs/windows?))
-  (deftest arg0-test-mac-and-linux
+  (deftest arg0-mac-and-linux-test
     (when-let [bb (u/find-bb)]
       (testing "on macOS and Linux, arg0 is supported"
         (testing "baseline - not overriden"
@@ -169,7 +169,7 @@
            (run-exec {:pre-start-fn :canned}
                      (format "%s %s :out foobar" bb u/wd))))))
 
-(deftest resolves-program
+(deftest resolves-program-test
   ;; use java -version instead of --version, it is supported even on jdk8
   (let [expected (shell/sh "java" "-version")]
     (is (zero? (:exit expected)) "sanity expected exit")
