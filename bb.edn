@@ -46,7 +46,7 @@
             :task (let [args *command-line-args*
                         farg (first *command-line-args*)
                         ;; allow for missing leading colon
-                        farg (if (str/starts-with? farg "clj-")
+                        farg (if (and farg (str/starts-with? farg "clj-"))
                                (str ":" farg)
                                farg)
                         clj-version-aliases (->> "deps.edn"
