@@ -590,10 +590,6 @@
            :or {escape (:escape *defaults*)
                 pre-start-fn (:pre-start-fn *defaults*)}
            :as opts} opts
-          cmd (if (and (string? cmd)
-                       (not (.exists (io/file cmd))))
-                (tokenize cmd)
-                cmd)
           str-fn (comp escape str)
           cmd (mapv str-fn cmd)
           arg0 (or (:arg0 opts)
