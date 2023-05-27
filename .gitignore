@@ -2,4 +2,5 @@
 .clj-kondo/.cache
 .lein-failures
 /target
+/test-native/target
 pom.xml

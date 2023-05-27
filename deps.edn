@@ -1,8 +1,6 @@
 {:deps {babashka/fs {:mvn/version "0.4.18"}}
  :aliases {:test {:extra-paths ["test"]
-                  :extra-deps {cognitect/test-runner
-                               {:git/url "https://github.com/cognitect-labs/test-runner"
-                                :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
+                  :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
                   :main-opts ["-m" "cognitect.test-runner"]}
            :clj-1.9 {:extra-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
            :clj-1.10 {:extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}}}

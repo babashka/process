@@ -1,0 +1,70 @@
+{:deps {;; delete after bb bumps fs
+        babashka/fs {:mvn/version "0.4.18"}}
+ :tasks
+ {:requires ([babashka.fs :as fs] :reload ;; remove :reload after bb bumps fs
+             [clojure.string :as str])
+
+  clean {:doc "Clean"
+         :task (doseq [d ["target" ".cpcache"]]
+                 (fs/delete-tree d))}
+
+  aot {:doc "AOT Compile Clojure"
+       :task (let [target "target/classes"
+                   newer-thans (fs/modified-since "target/classes"
+                                                  ["src" "../src"])]
+               (if (not (seq newer-thans))
+                 (println (format "Skipping AOT compilation, sources already compiled to %s." target))
+                 (do
+                   (println "AOT Compiling Clojure sources")
+                   (fs/delete-tree ".cpcache")
+                   (fs/delete-tree target)
+                   (fs/create-dirs target)
+                   (clojure "-M" "-e"
+                            (format "(binding [*compile-path* \"%s\"] (compile 'babashka.test-native.run-exec))"
+                                    target)))))}
+
+
+  -graalvm-native-image-exe
+  {:doc "Installs/resolves and returns graalvm native-image binary"
+   :task (when-let [native-image (if-let [ghome (System/getenv "GRAALVM_HOME")]
+                                   (or (fs/which (fs/file ghome "bin" "native-image"))
+                                       (if-let [gu (fs/which (fs/file ghome "bin" "gu"))]
+                                         (do
+                                           (shell gu "install" "native-image")
+                                           (fs/which (fs/file ghome "bin" "native-image")))
+                                         (throw (ex-info "Could not find GraalVM gu via GRAALVM_HOME." {}))))
+                                   (or (fs/which "native-image")
+                                       (if-let [gu (fs/which "gu")]
+                                         (do (shell gu "install" "native-image")
+                                             (fs/which "native-image"))
+                                         (throw (ex-info "GRAALVM_HOME not set, and did not find GraalVM gu on PATH" {})))))]
+           (println "Using GraalVM native-image:" (str native-image))
+           (shell native-image "--version")
+           native-image)}
+
+  -exe-name {:doc "Returns executable name to be built"
+             :task (do
+                     (load-file "../test/babashka/process/test_utils.clj")
+                     (deref (requiring-resolve 'babashka.process.test-utils/run-exec-exe)))}
+
+  native {:doc "Compile AOT to native image"
+          :depends [aot -exe-name]
+          :task (let [exe-dir "target"
+                      exe-file (fs/which (fs/file exe-dir -exe-name))
+                      newer-thans (fs/modified-since exe-file
+                                                     "target/classes")]
+                  (if (not (seq newer-thans))
+                    (println (format "Skipping native-image creation, AOT already compiled to %s." exe-file))
+                    (let [classpath (-> (clojure "-Spath")
+                                        with-out-str
+                                        str/trim)]
+                      (println "Creating native image")
+                      (let [native-image (run '-graalvm-native-image-exe)]
+                        (shell
+                         native-image
+                         "-cp" (str classpath (System/getProperty "path.separator") "target/classes")
+                         (str "-H:Path=" exe-dir)
+                         (str "-H:Name=" -exe-name)
+                         "--verbose"
+                         "--no-fallback"
+                         "babashka.test_native.run_exec")))))}}}
