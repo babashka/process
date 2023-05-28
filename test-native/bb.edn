@@ -1,7 +1,5 @@
-{:deps {;; delete after bb bumps fs
-        babashka/fs {:mvn/version "0.4.18"}}
- :tasks
- {:requires ([babashka.fs :as fs] :reload ;; remove :reload after bb bumps fs
+{:tasks
+ {:requires ([babashka.fs :as fs]
              [clojure.string :as str])
 
   clean {:doc "Clean"
