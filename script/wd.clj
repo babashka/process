@@ -8,6 +8,7 @@
 ;; :err <somestring> - dump <somestring> to stderr
 ;; :ls <somefile> - dir of <somefile> to stdout
 ;; :env - dump env to stdout
+;; :echo - redirect the content of stdin to stdout
 ;; :grep <somestring> - returns all lines from stdin matching <somestring>
 ;; :upper - read and emit lines from stdin, but converted to uppercase
 ;; :ps-me - dump some info for current process (macOS & Linux only)
@@ -21,6 +22,7 @@
     ":err" (binding [*out* *err*] (println val))
     ":ls" (pr (->> val io/file (.listFiles) (map str) sort))
     ":env" (pr (->> (System/getenv) (into {})))
+    ":echo" (io/copy System/in System/out)
     ":grep" (doseq [l (->> *in* io/reader line-seq (filter #(str/includes? % val)))]
               (println l))
     ":upper" (doseq [l (->> *in* io/reader line-seq)]
