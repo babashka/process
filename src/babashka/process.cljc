@@ -328,7 +328,9 @@
 (defn- copy [in out encoding]
   (let [[out post-fn] (if (keyword? out)
                         (case out
-                          :string [(java.io.StringWriter.) str])
+                          :string [(java.io.StringWriter.) str]
+                          :bytes [(java.io.ByteArrayOutputStream.)
+                                  #(.toByteArray ^java.io.ByteArrayOutputStream %)])
                         [out identity])]
     (io/copy in out :encoding encoding)
     (post-fn out)))
@@ -366,10 +368,12 @@
         stdout (.getInputStream proc)
         stderr (.getErrorStream proc)
         out (if (and out (or (identical? :string out)
+                             (identical? :bytes out)
                              (not (keyword? out))))
               (future (copy stdout out out-enc))
               stdout)
         err (if (and err (or (identical? :string err)
+                             (identical? :bytes err)
                              (not (keyword? err))))
               (future (copy stderr err err-enc))
               stderr)]
@@ -425,8 +429,8 @@
       For redirecting to Clojure's `*in*`, `*out*` or `*err*` stream, set
       the corresponding option accordingly.
       The `:out` and `:err` options support `:string` for writing to a string
-      output. You will need to `deref` the process before accessing the string
-      via the process's `:out`.
+      output and `:bytes` for writing to a byte array. You will need to `deref`
+      the process before accessing the string or byte array via the process's `:out`.
       To redirect `:err` to `:out`, specify `:err :out`.
       For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
        - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
