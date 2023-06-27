@@ -162,7 +162,7 @@
   ;; It would be nice to use clojure, but on Windows the official install
   ;; is still currently a PowerShell Module, which cannot be spawned directly.
   ;; So we'll use java. This test assumes that java and javac are on the PATH."
-  (let [test-dir "target/process-dir-option-test"
+  (let [test-dir (fs/path "target/process-dir-option-test")
         java (fs/which "java")
         java-dir (-> java fs/parent fs/canonicalize str)
         java-src (-> (fs/file test-dir "UserDir.java") str)
