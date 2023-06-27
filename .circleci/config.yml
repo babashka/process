@@ -60,18 +60,18 @@ commands:
     steps:
       - run:
           name: Install Babashka
-          # temporarily use SNAPSHOT version, use latest official after next bb bump
           command: |
-            bash <(curl https://raw.githubusercontent.com/babashka/babashka/master/install) --version 1.3.180-SNAPSHOT --dir .
+            bash <(curl https://raw.githubusercontent.com/babashka/babashka/master/install) --dir .
             sudo mv ./bb /usr/local/bin/bb
             bb --version
   install-babashka-windows:
     steps:
       - run:
           name: Install Babashka
-          # Temporarily using snapshot, switch to scoop after next bb release
           command: |
-            iwr https://github.com/babashka/babashka-dev-builds/releases/download/v1.3.180-SNAPSHOT/babashka-1.3.180-SNAPSHOT-windows-amd64.zip -outfile 'bbwin.zip'; if(-not $?){exit 9}
+            $bb_latest = Invoke-RestMethod https://raw.githubusercontent.com/babashka/babashka/master/resources/BABASHKA_RELEASED_VERSION ; if (-not $?){exit 9}
+            $download_url = "https://github.com/babashka/babashka/releases/download/v$bb_latest/babashka-$bb_latest-windows-amd64.zip" ; if(-not $?){exit 9}
+            (New-Object System.Net.WebClient).DownloadFile($download_url, "bbwin.zip") ; if(-not $?){exit 9}
             Expand-Archive bbwin.zip .                                    ; if(-not $?){exit 9}
             mkdir C:\bbtools                                              ; if(-not $?){exit 9}
             mv .\bb.exe C:\bbtools                                        ; if(-not $?){exit 9}

@@ -488,3 +488,13 @@
       (.close in)
       @res
       (is (false? (p/alive? res))))))
+
+(deftest byte-array-out-test
+  (when-let [bb (u/find-bb)]
+    (let [ba (byte-array (range 1000))
+          result (-> (format "%s %s :echo" bb u/wd)
+                     (process {:in ba :out :bytes})
+                     deref
+                     :out)]
+      (is (bytes? result))
+      (is (= (seq ba) (seq result))))))

@@ -187,13 +187,16 @@ user=> (->> (with-out-str (check (process {:out *out*} "ls"))) str/split-lines (
 ("API.md" "CHANGELOG.md")
 ```
 
-The `:out` option also supports `:string`. You will need to `deref` the process
-in order for the string to be there, since the output can't be finalized if the
-process hasn't finished running:
+The `:out` option also supports `:string` for collecting stdout into a string
+and `:bytes` for getting the raw output as a byte array. You will need to
+`deref` the process in order for the string or byte array to be there, since the
+output can't be finalized if the process hasn't finished running:
 
 ``` clojure
 user=> (-> @(process {:out :string} "ls") :out str/split-lines first)
 "API.md"
+user=> (-> @(process {:out :bytes} "head -c 10 /dev/urandom") :out seq)
+(119 -43 -68 -64 -16 -56 32 45 86 56)
 ```
 
 ## Piping output
