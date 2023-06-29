@@ -237,6 +237,7 @@
                  :env
                  :extra-env
                  :escape]} opts
+         dir (some-> dir str) ;; convert Path or File into String
          str-fn (comp escape str)
          cmd (mapv str-fn cmd)
          cmd (if-let [program-resolver (:program-resolver opts)]
