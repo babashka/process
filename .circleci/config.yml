@@ -15,7 +15,7 @@ executors:
     working_directory: ~/repo
   windows:
     machine:
-      image: windows-server-2019-vs2019:stable
+      image: windows-server-2022-gui:current
       resource_class: windows.medium
       shell: powershell.exe -ExecutionPolicy Bypass
     working_directory: ~/repo
@@ -199,7 +199,7 @@ workflows:
               os: [linux, macos, windows]
               jdk: ['temurin@8','temurin@11','temurin@17']
       - test-native:
-          name: test-<< matrix.os >>-native
+          name: test-<< matrix.os >>-<< matrix.jdk>>
           matrix:
             parameters:
               os: [linux, macos, windows]
