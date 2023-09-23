@@ -128,11 +128,15 @@
     (set-jdk-env os install-dir)))
 
 (comment
+
   (install-jdk "macos" "temurin@11")
   (install-jdk "windows" "temurin@17")
   (install-jdk "linux" "temurin@11")
   (install-jdk "linux" "graalvm_ce19")
   (install-jdk "windows" "graalvm_ce19")
+
+  (install-jdk "linux" "graalvm@21" )
+  (install-jdk "linux" "graalvm_community@21" )
 
   (install-jdk "linux" "temurin@8")
 
