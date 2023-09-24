@@ -174,7 +174,7 @@
   (let [expected (shell/sh "java" "-version")]
     (is (zero? (:exit expected)) "sanity expected exit")
     (is (str/blank? (:out expected)) "sanity expected out" )
-    (is (re-find #"(?i)jdk" (:err expected)) "sanity expected err")
+    (is (re-find #"(?i)(jdk|java)" (:err expected)) "sanity expected err")
     (testing "on-path"
       (is (= expected (run-exec "java -version"))))
     (testing "absolute"

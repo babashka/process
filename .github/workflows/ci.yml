@@ -55,9 +55,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu, macOS, windows]
+        distribution: [graalvm, graalvm-community]
 
     runs-on: ${{ matrix.os }}-latest
-    name: test-${{ matrix.os }}-native
+    name: test-${{ matrix.os }}-${{ matrix.distribution}}-native
 
     steps:
     - name: "Checkout code"
@@ -66,10 +67,9 @@ jobs:
     - name: Install GraalVM
       uses: graalvm/setup-graalvm@v1
       with:
-        # match version babashka uses
-        version: '22.3.1'
-        java-version: 19
-        components: 'native-image'
+        # match version babashka uses (or will soon use)
+        java-version: '21'
+        distribution: ${{ matrix.distribution }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: "Restore Cache"
