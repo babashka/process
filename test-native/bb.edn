@@ -63,6 +63,7 @@
                          "-cp" (str classpath (System/getProperty "path.separator") "target/classes")
                          (str "-H:Path=" exe-dir)
                          (str "-H:Name=" -exe-name)
+                         "--features=clj_easy.graal_build_time.InitClojureClasses"
                          "--verbose"
                          "--no-fallback"
                          "babashka.test_native.run_exec")))))}}}

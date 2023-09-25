@@ -1,6 +1,6 @@
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
         babashka/process {:local/root ".."}
-        com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}}
+        com.github.clj-easy/graal-build-time {:mvn/version "1.0.5"}}
  :aliases
  {:test ;; added by neil
   {:extra-paths ["test"]
