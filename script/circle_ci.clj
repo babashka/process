@@ -18,7 +18,7 @@
                                {:query-params {"distro" distro
                                                "package_type" "jdk"
                                                "latest" "available"
-                                               "jdk_version" jdk-major
+                                               "version" jdk-major
                                                "operating_system" os
                                                "architecture" "x64"
                                                "archive_type" archive-type}})
