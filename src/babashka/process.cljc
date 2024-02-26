@@ -250,14 +250,14 @@
               extra-env (add-env extra-env))]
      (case out
        :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
-       :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file out-file)))
-       :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file out-file)))
+       :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file (str out-file))))
+       :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file (str out-file))))
        nil)
      (case err
        :out (.redirectErrorStream pb true)
        :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
-       :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file err-file)))
-       :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file err-file)))
+       :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file (str err-file))))
+       :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file (str err-file))))
        nil)
      (case in
        :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)

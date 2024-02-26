@@ -376,7 +376,11 @@
         (is (= (u/ols "hello\n") (slurp out)))
         @(p/process (format "%s %s :out goodbye" bb u/wd)
                     {:out :append :out-file out})
-        (is (= (u/ols "hello\ngoodbye\n") (slurp out)))))
+        (is (= (u/ols "hello\ngoodbye\n") (slurp out)))
+        (testing "out path"
+          @(p/process (format "%s %s :out goodbye" bb u/wd)
+                      {:out :append :out-file (fs/path out)})
+          (is (= (u/ols "hello\ngoodbye\ngoodbye\n") (slurp out))))))
     (fs/with-temp-dir [tmp {}]
       (let [out (fs/file tmp "err.txt")]
         @(p/process (format "%s %s :err 'err,hello'" bb u/wd)
@@ -384,7 +388,11 @@
         (is (= (u/ols "err,hello\n") (slurp out)))
         @(p/process (format "%s %s :err 'grrr-oodbye'" bb u/wd)
                     {:err :append :err-file out})
-        (is (= (u/ols "err,hello\ngrrr-oodbye\n") (slurp out)))))))
+        (is (= (u/ols "err,hello\ngrrr-oodbye\n") (slurp out)))
+        (testing "err path"
+          @(p/process (format "%s %s :err goodbye" bb u/wd)
+                      {:err :append :err-file (fs/path out)})
+          (is (= (u/ols "err,hello\ngrrr-oodbye\ngoodbye\n") (slurp out))))))))
 
 (deftest pprint-test
   ;; #?(:bb nil ;; in bb we already required the babashka.process.pprint namespace
