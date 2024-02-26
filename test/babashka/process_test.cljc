@@ -8,6 +8,10 @@
             [clojure.string :as str]
             [clojure.test :as t :refer [deftest is testing use-fixtures]]))
 
+(defmethod clojure.test/report :begin-test-var [m]
+  (println "===" (-> m :var meta :name))
+  (println))
+
 (defn print-env [f]
   (u/print-test-env)
   (println "- testing clojure version:" (clojure-version))
@@ -111,11 +115,17 @@
 
 (deftest process-copy-input-from-string-test
   (when-let [bb (u/find-bb)]
-    (let [proc (process [(symbol bb) (symbol u/wd) ':upper] {:in "foo"})
-          out (:out proc)
-          ret (:exit @proc)]
-      (is (= 0 ret))
-      (is (= (u/ols "FOO\n") (slurp out))))))
+    (doseq [inf [identity fs/file fs/path]]
+      (let [tmp-file (doto (fs/create-temp-file)
+                       fs/delete-on-exit)]
+        (spit (fs/file tmp-file) "foo")
+        (let [proc (process [(symbol bb) (symbol u/wd) ':upper] {:in (if (= inf identity)
+                                                                       "foo"
+                                                                       (inf tmp-file))})
+              out (:out proc)
+              ret (:exit @proc)]
+          (is (= 0 ret))
+          (is (= (u/ols "FOO\n") (slurp out))))))))
 
 (deftest process-redirect-err-out-test
   (when-let [bb (u/find-bb)]
