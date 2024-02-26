@@ -390,7 +390,7 @@
                (io/copy in stdin :encoding in-enc))
              (catch Exception e
                (binding [*out* *err*]
-                 (println "ERROR while copying :in option: "(ex-message e)))))))
+                 (println "ERROR while copying :in option: " (.getMessage e)))))))
     (let [;; bb doesn't support map->Process at the moment
           res (->Process proc
                          nil
