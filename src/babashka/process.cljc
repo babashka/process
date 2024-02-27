@@ -250,18 +250,20 @@
               extra-env (add-env extra-env))]
      (case out
        :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
-       :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file out-file)))
-       :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file out-file)))
+       :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file (str out-file))))
+       :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file (str out-file))))
        nil)
      (case err
        :out (.redirectErrorStream pb true)
        :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
-       :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file err-file)))
-       :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file err-file)))
+       :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file (str err-file))))
+       :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file (str err-file))))
        nil)
      (case in
        :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)
-       nil)
+       (when (or (instance? java.io.File in)
+                 (instance? java.nio.file.Path in))
+         (.redirectInput pb (fs/file in))))
      pb)))
 
 (defrecord ProcessBuilder [pb opts prev])
@@ -379,9 +381,16 @@
               (future (copy stderr err err-enc))
               stderr)]
     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-    (when (and in (not (identical? :inherit in)))
-      (future (with-open [stdin stdin] ;; needed to close stdin after writing
-                (io/copy in stdin :encoding in-enc))))
+    (when (and in
+               (not (or (instance? java.io.File in)
+                        (instance? java.nio.file.Path in)))
+               (not (keyword? in)))
+      (future
+        (try (with-open [stdin stdin] ;; needed to close stdin after writing
+               (io/copy in stdin :encoding in-enc))
+             (catch Exception e
+               (binding [*out* *err*]
+                 (println "ERROR while copying :in option: " (.getMessage e)))))))
     (let [;; bb doesn't support map->Process at the moment
           res (->Process proc
                          nil
