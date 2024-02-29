@@ -3,7 +3,7 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
-## Unreleased
+## 0.5.22 (2024-02-29)
 
 - [#123](https://github.com/babashka/process/issues/123): `exec` now converts `:env` and `:extra-env` keywords ([@lread](https://github.com/lread))
 - [#140](https://github.com/babashka/process/issues/140): accept `java.nio.file.Path` as `:dir` argument
