@@ -8,6 +8,7 @@ Clojure library for shelling out / spawning sub-processes
 - [#123](https://github.com/babashka/process/issues/123): `exec` now converts `:env` and `:extra-env` keywords ([@lread](https://github.com/lread))
 - [#140](https://github.com/babashka/process/issues/140): accept `java.nio.file.Path` as `:dir` argument
 - [#148](https://github.com/babashka/process/issues/148): accept `Path` in `:out`, `:err` and `:in`
+- Support `:out :bytes` ([@hansbugge](https://github.com/hansbugge))
 
 ## 0.5.21 (2023-05-18)
 
