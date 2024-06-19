@@ -638,13 +638,17 @@
 (defn shell
   "Convenience function around `process` that was originally in `babashka.tasks`.
   Defaults to inheriting I/O: input is read and output is printed
-  while the process runs. Throws on non-zero exit codes. Kills all
+  while the process runs. Defaults to throwing on non-zero exit codes. Kills all
   subprocesses on shutdown. Optional options map can be passed as the
   first argument, followed by multiple command line arguments. The
   first command line argument is automatically tokenized. Counter to
   what the name of this function may suggest, it does not start a
   new (bash, etc.) shell, it just shells out to a program. As such, it
   does not support bash syntax like `ls *.clj`.
+
+  Supported options:
+  - `:continue`: if `true`, suppresses throwing on non-zero process exit code.
+  - see `process` for other options
 
   Examples:
 

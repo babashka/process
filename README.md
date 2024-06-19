@@ -88,7 +88,7 @@ This is particularly handy when you want to supply commands coming from the comm
 (apply shell "ls -la" *command-line-args*)
 ```
 
-The `shell` function checks the exit code and throws if it is non-zero:
+The `shell` function checks the command's exit code and throws if it is non-zero:
 
 ``` clojure
 user=> (shell "ls nothing")
@@ -96,8 +96,8 @@ ls: nothing: No such file or directory
 Execution error (ExceptionInfo) at babashka.process/check (process.cljc:113).
 ```
 
-To avoid throwing, you can use `:continue true`. You will still see the error
-being printed to stderr, but no exception will be thrown. That is convenient
+To avoid throwing when the command's exit code is non-zero, use `:continue true`. 
+You will still see the error printed to stderr, but no exception will be thrown. This is convenient
 when you want to handle the `:exit` code yourself:
 
 ``` clojure
@@ -105,6 +105,9 @@ user=> (-> (shell {:continue true} "ls nothing") :exit)
 ls: nothing: No such file or directory
 1
 ```
+
+> Note that `:continue true` only suppresses throwing an exception when the executed command's exit code is non-zero.
+> Other exceptions can throw, for example, when the executable is not found.
 
 To collect output as a `:string`, use the `:out :string` option as the first argument:
 
