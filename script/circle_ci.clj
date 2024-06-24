@@ -13,14 +13,14 @@
 
 (defn- jdk-info
   "Use disco API to find our jdk"
-  [{:keys [os jdk-major distro archive-type]}]
+  [{:keys [os arch jdk-major distro archive-type]}]
   (let [packages (-> (http/get "https://api.foojay.io/disco/v3.0/packages"
                                {:query-params {"distro" distro
                                                "package_type" "jdk"
                                                "latest" "available"
                                                "version" jdk-major
                                                "operating_system" os
-                                               "architecture" "x64"
+                                               "architecture" arch
                                                "archive_type" archive-type}})
                      :body
                      (json/parse-string true)
@@ -91,22 +91,23 @@
     (when (not= expected-sha256 actual-sha256)
       (throw (ex-info (format "Expected sha %s != actual %s" expected-sha256 actual-sha256) {})))))
 
-;; bb task entry points
-(defn install-jdk [& args]
-  (let [[os distro-jdk-major] args
-        [distro jdk-major] (parse-jdk distro-jdk-major)
+(defn install-jdk* [{:keys [os arch distro-jdk-major]}]
+  (let [[distro jdk-major] (parse-jdk distro-jdk-major)
         tools-dir (tools-dir)
         ext (if (= "windows" os) "zip" "tar.gz")
         {:keys [direct_download_uri
                 checksum_uri
                 checksum_type
+                operating_system
+                architecture
                 java_version]} (jdk-info {:os os
+                                          :arch arch
                                           :distro distro
                                           :jdk-major jdk-major
                                           :archive-type ext})
-        install-dir (str (fs/file tools-dir (format "%s-%s" distro java_version)))
+        install-dir (str (fs/file tools-dir (format "%s-%s-%s-%s" distro operating_system architecture java_version)))
         download-file (str (fs/file install-dir (format "%s.%s" distro ext)))]
-    (println "Installing" distro jdk-major)
+    (println "Installing" distro jdk-major "for" os arch)
     ;; allow for caching
     (if (fs/exists? install-dir)
       (println "Already installed to" install-dir)
@@ -127,22 +128,93 @@
              (throw ex))))
     (set-jdk-env os install-dir)))
 
+;; bb task entry points
+(defn install-jdk [distro-jdk-major]
+  (let [os (str/lower-case (System/getProperty "os.name"))
+        os (cond
+             (.startsWith os "windows") "windows"
+             (.startsWith os "mac os x") "macos"
+             :else "linux")
+        arch (System/getProperty "os.arch")]
+    (install-jdk* {:os os
+                   :arch arch
+                   :distro-jdk-major distro-jdk-major})))
+
 (comment
 
-  (install-jdk "macos" "temurin@11")
-  (install-jdk "windows" "temurin@17")
-  (install-jdk "linux" "temurin@11")
-  (install-jdk "linux" "graalvm_ce19")
-  (install-jdk "windows" "graalvm_ce19")
+  (System/getProperty "os.arch")
+  ;; => "amd64"
+  (System/getProperty "os.name")
+  ;; => "Linux"
 
-  (install-jdk "linux" "graalvm@21" )
-  (install-jdk "linux" "graalvm_community@21" )
+  (-> (jdk-info {:os "macos"
+                 :arch "x64"
+                 :jdk-major "11"
+                 :distro "temurin"
+                 :archive-type "tar.gz"})
+      :direct_download_uri)
+  ;; => "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.23%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.23_9.tar.gz"
 
-  (install-jdk "linux" "temurin@8")
+  ;; => "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.23%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.23_9.tar.gz"
+  (-> (jdk-info {:os "macos"
+                 :arch "amd64"
+                 :jdk-major "11"
+                 :distro "temurin"
+                 :archive-type "tar.gz"})
+      :direct_download_uri)
+  ;; => "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.23%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.23_9.tar.gz"
+  (-> (jdk-info {:os "macos"
+                 :arch "aarch64"
+                 :jdk-major "11"
+                 :distro "temurin"
+                 :archive-type "tar.gz"})
+      :direct_download_uri)
+  ;; => "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.23%2B9/OpenJDK11U-jdk_aarch64_mac_hotspot_11.0.23_9.tar.gz"
+
+  (-> (jdk-info {:os "macos"
+                 :arch "amd64"
+                 :jdk-major "11"
+                 :distro "temurin"
+                 :archive-type "tar.gz"})
+      (select-keys [:architecture :operating_system]))
+  ;; => {:architecture "x64", :operating_system "macos"}
+
+
+
+  (-> (jdk-info {:os "linux"
+                 :os-arch "x64"
+                 :jdk-major "11"
+                 :distro "temurin"
+                 :archive-type "tar.gz"})
+      :direct_download_uri)
+  ;; => "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.23%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.23_9.tar.gz"
+
+  ;; jdk8 is not available on Apple silicon:
+  (-> (jdk-info {:os "macos"
+                 :os-arch "aarch64"
+                 :jdk-major "8"
+                 :distro "temurin"
+                 :archive-type "tar.gz"})
+      :direct_download_uri)
+  ;; => clojure.lang.ExceptionInfo: Expected 1 package to match, got: () user /home/lee/proj/oss/babashka/process/script/circle_ci.clj:32:7
+
+
+  (install-jdk "temurin@17")
+
+  (install-jdk* {:os "macos" :arch "x64" :distro-jdk-major "temurin@11"})
+  (install-jdk* {:os "macos" :arch "arm64" :distro-jdk-major "temurin@11"})
+  (install-jdk* {:os "windows" :arch "x64" :distro-jdk-major "temurin@17"})
+  (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "temurin@11"})
+
+  (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "graalvm@21"} )
+  (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "graalvm_community@21"} )
+
+  (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "temurin@8"})
 
   (parse-jdk "graalvm_ce19")
   ;; => ["graalvm_ce19" "19"]
 
   (parse-jdk "foo@123")
   ;; => ("foo" "123")
-)
+
+:eoc)
