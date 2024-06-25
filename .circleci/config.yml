@@ -206,7 +206,7 @@ workflows:
           matrix:
             parameters:
               os: [linux, macos, windows]
-              jdk: ['graalvm@21', 'graalvm_community@21']
+              jdk: ['graalvm@22', 'graalvm_community@22']
       - deploy:
           filters:
             branches:
