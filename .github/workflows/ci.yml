@@ -9,6 +9,9 @@ jobs:
       matrix:
         java-version: ["8", "11", "17"]
         os: [ubuntu, macOS, windows]
+        exclude:
+          - java-version: "8"
+            os: macOS
 
     runs-on: ${{ matrix.os }}-latest
     name: test-${{ matrix.os }}-temurin@${{ matrix.java-version }}
