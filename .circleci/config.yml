@@ -197,7 +197,7 @@ workflows:
           matrix:
             parameters:
               os: [linux, macos, windows]
-              jdk: ['temurin@8','temurin@11','temurin@17']
+              jdk: ['temurin@8','temurin@11','temurin@17','temurin@21']
             exclude:
               - os: macos
                 jdk: 'temurin@8'
