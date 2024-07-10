@@ -102,7 +102,7 @@ commands:
       - run:
           name: "Setup JDK"
           command: |
-            bb -ci-install-jdk <<parameters.os>> << parameters.jdk >>
+            bb -ci-install-jdk << parameters.jdk >>
 
 jobs:
   test:
@@ -197,13 +197,16 @@ workflows:
           matrix:
             parameters:
               os: [linux, macos, windows]
-              jdk: ['temurin@8','temurin@11','temurin@17']
+              jdk: ['temurin@8','temurin@11','temurin@17','temurin@21']
+            exclude:
+              - os: macos
+                jdk: 'temurin@8'
       - test-native:
           name: test-<< matrix.os >>-<< matrix.jdk>>
           matrix:
             parameters:
               os: [linux, macos, windows]
-              jdk: ['graalvm@21', 'graalvm_community@21']
+              jdk: ['graalvm@22', 'graalvm_community@22']
       - deploy:
           filters:
             branches:
