@@ -187,7 +187,8 @@
                           "  }"
                           "}"]))
     (p/shell {:dir test-dir} "javac" "UserDir.java") ;; typically under 0.5s to compile
-    (prn (fs/which "java"))
+    (prn :>1 (fs/which "java"))
+    (prn :>2 (fs/which (-> (fs/file test-dir "java") fs/absolutize)))
     (p/shell {:dir test-dir} "java -version") ;; does this work?
     (testing "program is absolute"
       (is (= (u/ols (str subdir-absolute "\n"))
