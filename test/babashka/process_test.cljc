@@ -23,7 +23,7 @@
   "For the purposes of these tests, we sometimes need to expect how babashka process will resolve an exe for :cmd."
   [exe]
   (if (fs/windows?)
-    (-> exe fs/which str)
+    (-> exe fs/which fs/absolutize fs/normalize str)
     exe))
 
 (deftest tokenize-test
@@ -166,67 +166,177 @@
            (-> (sh [bb u/wd ":out" "foo" ":out" "README.md" ":out" "bar"])
                (sh [bb u/wd ":grep" "README.md"]) :out)))))
 
-(deftest process-dir-option-test
-  ;; It is not practical to use bb for this test (bb will not be on the PATH when
-  ;; testing under babashka)
-  ;; It would be nice to use clojure, but on Windows the official install
-  ;; is still currently a PowerShell Module, which cannot be spawned directly.
-  ;; So we'll use java. This test assumes that java and javac are on the PATH."
-  (let [test-dir (fs/path "target/process-dir-option-test")
-        java (fs/which "java")
-        java-dir (-> java fs/parent fs/canonicalize str)
-        java-src (-> (fs/file test-dir "UserDir.java") str)
-        args ["-cp" (str (fs/absolutize test-dir)) "UserDir"]
-        subdir (str (fs/file test-dir "foo/bar/baz"))
-        subdir-absolute (-> subdir fs/canonicalize str)]
-    (fs/create-dirs subdir)
-    (spit java-src
-          (str/join "\n" ["class UserDir {"
-                          "  public static void main( String []args ) {"
-                          "    System.out.println( System.getProperty (\"user.dir\"));"
-                          "  }"
-                          "}"]))
-    (p/shell {:dir test-dir} "javac" "UserDir.java") ;; typically under 0.5s to compile
-    (testing "program is absolute"
-      (is (= (u/ols (str subdir-absolute "\n"))
-             (-> (apply process {:dir subdir}
-                        (str (fs/file java-dir "java")) args)
-                 :out
-                 slurp))))
-    (when (fs/windows?)
-      (testing "program with ext is absolute (windows)")
-      (is (= (u/ols (str subdir-absolute "\n"))
-             (-> (apply process {:dir subdir}
-                        (str (fs/canonicalize java)) args)
-                 :out
-                 slurp))))
-    (testing "program is on path"
-      (is (= (u/ols (str subdir-absolute "\n"))
-             (-> (apply process {:dir subdir}
-                        "java" args)
-                 :out
-                 slurp))))
-    (when (fs/windows?)
-      (testing "program with ext is on path (windows)"
-        (is (= (u/ols (str subdir-absolute "\n"))
-               (-> (apply process {:dir subdir}
-                          (fs/file-name java) args)
-                   :out
-                   slurp)))))
-    (testing "program is relative"
-      (is (= (u/ols (str java-dir "\n"))
-             (-> (apply process {:dir java-dir}
-                        (str "./java") args)
-                 :out
-                 slurp))))
-    (when (fs/windows?)
-      (testing "program with ext is relative (windows)"
-        (is (= (u/ols (str java-dir "\n"))
-               (-> (apply process {:dir java-dir}
-                          (str "./" (fs/file-name java)) args)
-                   :out
-                   slurp)))))
-    (fs/delete-tree test-dir)))
+(defn- dirs-for [dir-keys]
+  (mapv (fn [dir-key]
+          {:expected-workdir (or dir-key :cwd)
+           :dir (and dir-key (u/real-dir dir-key))})
+        dir-keys))
+
+(defn plines
+  "Convenience fn to return stdout from `program` as vector of lines.
+  Optionally specify `dir`"
+  ([program]
+   (plines program nil))
+  ([program dir]
+   (-> (p/process (cond-> {:out :string}
+                  dir (assoc :dir dir))
+                program)
+       p/check
+       :out
+       str/split-lines)))
+
+(when (not (fs/windows?))
+  ;; see also babashka.process-exec-test/resolve-program-macos-linux-test
+  (deftest process-resolve-program-macos-linux-test
+    (doseq [{:keys [dir expected-workdir]} (dirs-for [nil :workdir])]
+      (u/with-program-scenario {:cwd     [:sh]
+                                :workdir [:sh]
+                                :on-path [:sh]}
+        (doseq [[program expected-exedir]
+                [[(u/test-program :sh)               :on-path]
+                 [(str "./" (u/test-program :sh))    expected-workdir]
+                 [(u/test-program-abs :workdir :sh)  :workdir]]
+                :let [desc (format "program: %s expected-exedir %s" program expected-exedir)]]
+          (is (= (u/etpo {:exedir expected-exedir
+                          :exename (u/test-program :sh)
+                          :workdir expected-workdir})
+                 (plines program dir))
+              desc)))
+      (u/with-program-scenario {:cwd     [:sh]
+                                :workdir [:sh]}
+        (is (thrown-with-msg? Exception #"No such file"
+                              (plines (u/test-program :sh) dir)))))))
+
+(when (fs/windows?)
+  ;; see also babashka.process-exec-test/resolve-program-win-test
+  (deftest process-resolve-program-win-test
+    (doseq [{:keys [dir expected-workdir]} (dirs-for [nil :workdir])]
+      (testing (format "dir: %s" (or dir "<not specified>"))
+        (testing "program `a` resolves from PATH but not cwd"
+          (doseq [[expected-ext on-path-scenario]
+                  [[:com [:bat :cmd :com :exe :ps1]]
+                   [:exe [:bat :cmd :exe :ps1]]
+                   [:bat [:bat :cmd :ps1]]
+                   [:cmd [:cmd :ps1]]]
+                  :let [desc (format "expected-ext: %s on-path: %s" expected-ext on-path-scenario)]]
+            (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                      :on-path on-path-scenario}
+              (is (= (u/etpo {:exedir :on-path
+                              :exename (u/test-program expected-ext)
+                              :workdir expected-workdir})
+                     (plines (u/test-program) dir))
+                  desc)))
+          (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                    :on-path [:ps1]}
+            (is (thrown-with-msg? Exception #"Cannot resolve"
+                                  (plines (u/test-program) dir)))))
+        (testing "program `a.<ext>` resolves from PATH but not cwd nor workdir"
+          (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                    :workdir [:bat :cmd :com :exe :ps1]
+                                    :on-path [:bat :cmd :com :exe :ps1]}
+            (doseq [ext [:bat :cmd :com :exe]
+                    :let [program (u/test-program ext)
+                          desc (format "program: %s" program)]]
+              (is (= (u/etpo {:exedir :on-path
+                              :exename program
+                              :workdir expected-workdir})
+                     (plines program dir))
+                  desc)))
+          (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                    :workdir [:bat :cmd :com :exe :ps1]}
+            (doseq [ext [:bat :cmd :com :exe]
+                    :let [program (u/test-program ext)
+                          desc (format "program: %s" program)]]
+              (is (thrown-with-msg? Exception #"Cannot resolve"
+                                    (plines program dir))
+                  desc))))
+        (testing "program `.\\a` resolves from cwd and workdir"
+          (doseq [[expected-ext scenario-exts]
+                  [[:com [:bat :cmd :com :exe :ps1]]
+                   [:exe [:bat :cmd :exe :ps1]]
+                   [:bat [:bat :cmd :ps1]]
+                   [:cmd [:cmd :ps1]]]
+                  :let [desc (format "expected-ext: %s scenario-exts: %s" expected-ext scenario-exts)]]
+            (u/with-program-scenario {:cwd     scenario-exts
+                                      :workdir scenario-exts
+                                      :on-path [:bat :cmd :com :exe :ps1]}
+              (is (= (u/etpo {:exedir expected-workdir
+                              :exename (u/test-program expected-ext)
+                              :workdir expected-workdir})
+                     (plines (str ".\\" (u/test-program))
+                               dir))
+                  desc)))
+          (u/with-program-scenario {:cwd     [:ps1]
+                                    :workdir [:ps1]
+                                    :on-path [:bat :cmd :com :exe :ps1]}
+            (is (thrown-with-msg? Exception #"Cannot resolve"
+                                  (plines (str ".\\" (u/test-program))
+                                            dir))))))
+      (testing "program `.\\a.<ext>` resolves from cwd and workdir"
+        (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                  :workdir [:bat :cmd :com :exe :ps1]
+                                  :on-path [:bat :cmd :com :exe :ps1]}
+          (doseq [ext [:bat :cmd :com :exe]
+                  :let [program (str ".\\" (u/test-program ext))
+                        desc (format "program: %s" program)]]
+            (is (= (u/etpo {:exedir expected-workdir
+                            :exename program
+                            :workdir expected-workdir})
+                   (plines program dir))
+                desc))))
+      (testing "program absolute path of `a.<ext>` resolves"
+        (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                  :workdir [:bat :cmd :com :exe :ps1]
+                                  :on-path [:bat :cmd :com :exe :ps1]}
+          (doseq [path [:cwd :workdir :on-path]
+                  ext [:bat :cmd :com :exe]
+                  :let [program (-> (fs/file (u/real-dir path) (u/test-program ext))
+                                    fs/canonicalize str)
+                        desc (format "program: %s" program)]]
+            (is (= (u/etpo {:exedir path
+                            :exename (u/test-program ext)
+                            :workdir expected-workdir})
+                   (plines program dir))
+                desc))))
+      (testing "program absolute path of `a` resolves"
+        (doseq [path [:cwd :workdir :on-path]
+                [expected-ext scenario-exts] [[:com [:bat :cmd :com :exe :ps1]]
+                                              [:exe [:bat :cmd :exe :ps1]]
+                                              [:bat [:bat :cmd :ps1]]
+                                              [:cmd [:cmd :ps1]]]
+                :let [program (-> (fs/file (u/real-dir path) (u/test-program))
+                                  fs/canonicalize str)
+                      desc (format "program: %s expected-ext: %s" program expected-ext)]]
+          (u/with-program-scenario (-> {:cwd     [:bat :cmd :com :exe :ps1]
+                                        :workdir [:bat :cmd :com :exe :ps1]
+                                        :on-path [:bat :cmd :com :exe :ps1]}
+                                       (assoc path scenario-exts))
+            (is (= (u/etpo {:exedir path
+                            :exename (u/test-program expected-ext)
+                            :workdir expected-workdir})
+                   (plines program dir))
+                desc)))
+        (u/with-program-scenario {:cwd [:ps1]
+                                  :workdir [:ps1]
+                                  :on-path [:ps1]}
+          (doseq [path [:cwd :workdir :on-path]
+                  :let [program (-> (fs/file (u/real-dir path) (u/test-program))
+                                    fs/canonicalize str)
+                        desc (format "program: %s" program)]]
+            (is (thrown-with-msg? Exception #"Cannot resolve"
+                                  (plines program dir))
+                desc))))
+      (testing "can launch `.ps1` script through powershell"
+        (u/with-program-scenario {:cwd [:ps1]
+                                  :workdir [:ps1]}
+          (is (= (u/etpo {:exedir expected-workdir
+                          :exename (u/test-program :ps1)
+                          :workdir expected-workdir})
+                 (-> (process {:out :string :dir dir}
+                              "powershell.exe -File" (str ".\\" (u/test-program :ps1)))
+                     check
+                     :out
+                     str/split-lines))))))))
 
 (deftest process-env-option-test
   (when-let [bb (u/find-bb)]

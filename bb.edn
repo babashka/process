@@ -3,13 +3,58 @@
         #_{:local/root "../../quickdoc"}
         {:git/url "https://github.com/borkdude/quickdoc"
          :git/sha "32e726cd6d785d00e49d4e614a05f7436d3831c0"}
-        org.clj-commons/digest {:mvn/version "1.4.100"} }
+        org.clj-commons/digest {:mvn/version "1.4.100"}}
+
  :tasks
- {:requires ([babashka.fs :as fs])
+ {:requires ([babashka.cli :as cli]
+             [babashka.fs :as fs])
+  :init (do
+          (def shell-opts {:extra-env
+                           {(if (fs/windows?) "Path" "PATH")
+                            (str (fs/canonicalize "target/test/on-path") fs/path-separator (System/getenv "PATH"))}})
+          (defn parse-repl-args [args]
+            (let [cli-spec {:spec
+                            {:host {:desc "Bind to host (use 0.0.0.0 to allow anyone to connect)"
+                                    :alias :h
+                                    :default "localhost"}}
+                            :restrict true}]
+                (cli/parse-opts args cli-spec))))
   clean {:doc "Delete build work"
          :task (do
                  (fs/delete-tree "target")
                  (shell {:dir "test-native"} "bb clean"))}
+
+  dev:jvm {:doc "Start a jvm nREPL server with PATH appropriatly setup for tests"
+           :task (let [opts (parse-repl-args *command-line-args*)
+                       host (:host opts)]
+                   (shell shell-opts
+                          "clj" "-M:clj-1.11:test:nrepl/jvm" "-h" host "-b" host))}
+
+  -bb {:doc "Internal - launched by dev:bb, test:bb"
+            :extra-paths ["test"]
+            :extra-deps  {;; inherit base deps from deps.edn
+                          babashka/process {:local/root "."}
+                          ;; repeat necessary :test deps from deps.edn
+                          io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+            :requires ([cognitect.test-runner])
+       :task (let [target (cli/coerce (first *command-line-args*) :keyword) ;; should be either :test or :dev
+                   args (rest *command-line-args*)]
+               ;; flag: sub-process should reload babashka.process
+               (System/setProperty "babashka.process.test.reload" "true")
+               ;; flag: force use of bb even if natively compiled version of run-exec exists
+               (System/setProperty "babashka.process.test.run-exec" "bb")
+               ;; run from babashka.process sources, not built-in babaska.process
+               (require '[babashka.process] :reload)
+               (case target
+                 :test (apply cognitect.test-runner.-main args)
+                 :dev (let [opts (parse-repl-args args)]
+                        (babashka.nrepl.server/start-server! opts)
+                        (deref (promise)))))}
+
+  dev:bb {:doc "Start a bb nREPL server with PATH appropriately setup for tests"
+          :task (apply shell shell-opts
+                       "bb -bb :dev" *command-line-args*)}
+
   quickdoc {:doc "Invoke quickdoc"
             :requires ([quickdoc.api :as api])
             :task (api/quickdoc {:git/branch "master"
@@ -22,23 +67,12 @@
 
   test:native {:doc "Run exec tests with native runner (requires GraalVM compilation)."
                :depends [-prep-native-exec]
-               :task (apply clojure "-M:test:clj-1.11" "--namespace" "babashka.process-exec-test" *command-line-args*)}
+               :task (apply clojure shell-opts
+                            "-M:test:clj-1.11" "--namespace" "babashka.process-exec-test" *command-line-args*)}
 
   test:bb {:doc "Run all tests under bb"
-           :extra-paths ["test"]
-           :extra-deps  {;; inherit base deps from deps.edn
-                         babashka/process {:local/root "."}
-                         ;; repeat necessary :test deps from deps.edn
-                         io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
-           :requires ([cognitect.test-runner])
-           :task (do
-                   ;; flag: sub-process should reload babashka.process
-                   (System/setProperty "babashka.process.test.reload" "true")
-                   ;; flag: force use of bb even if natively compiled version of run-exec exists
-                   (System/setProperty "babashka.process.test.run-exec" "bb")
-                   ;; run from babashka.process sources, not built-in babaska.process
-                   (require '[babashka.process] :reload)
-                   (apply cognitect.test-runner.-main *command-line-args*))}
+           :task (apply shell shell-opts
+                        "bb -bb :test" *command-line-args*)}
 
   test:jvm {:doc "Run jvm tests, optionally specify clj-version (ex. :clj-1.10 :clj-1.11(default) or :clj-all)"
             :requires ([clojure.string :as str]
@@ -72,7 +106,9 @@
                     (doseq [alias aliases]
                       (do
                         (println (format "-[Running jvm tests for %s]-" alias))
-                        (apply clojure (str "-M:test" alias) "--namespace" "babashka.process-test" args))))}
+                        (apply clojure
+                               shell-opts
+                               (str "-M:test" alias) "--namespace" "babashka.process-test" args))))}
 
   ;; hidden CI support tasks
   -ci-install-jdk {:doc "Helper to download and install jdk under ~/tools on circleci"
