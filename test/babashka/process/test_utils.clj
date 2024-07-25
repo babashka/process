@@ -1,7 +1,6 @@
 (ns babashka.process.test-utils
   "Common test utilitities used by not only our tests but also bb build scripting."
   (:require  [babashka.fs :as fs]
-             [babashka.process :as p]
              [clojure.java.shell :as shell]
              [clojure.string :as str]))
 
