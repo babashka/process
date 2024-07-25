@@ -189,23 +189,24 @@
   ;; see also babashka.process-exec-test/resolve-program-macos-linux-test
   (deftest process-resolve-program-macos-linux-test
     (doseq [{:keys [dir expected-workdir]} (dirs-for [nil :workdir])]
-      (u/with-program-scenario {:cwd     [:sh]
-                                :workdir [:sh]
-                                :on-path [:sh]}
-        (doseq [[program expected-exedir]
-                [[(u/test-program :sh)               :on-path]
-                 [(str "./" (u/test-program :sh))    expected-workdir]
-                 [(u/test-program-abs :workdir :sh)  :workdir]]
-                :let [desc (format "program: %s expected-exedir %s" program expected-exedir)]]
-          (is (= (u/etpo {:exedir expected-exedir
-                          :exename (u/test-program :sh)
-                          :workdir expected-workdir})
-                 (plines program dir))
-              desc)))
-      (u/with-program-scenario {:cwd     [:sh]
-                                :workdir [:sh]}
-        (is (thrown-with-msg? Exception #"No such file"
-                              (plines (u/test-program :sh) dir)))))))
+      (testing (format "dir: %s" (or dir "<not specified>"))
+        (u/with-program-scenario {:cwd     [:sh]
+                                  :workdir [:sh]
+                                  :on-path [:sh]}
+          (doseq [[program expected-exedir]
+                  [[(u/test-program :sh)               :on-path]
+                   [(str "./" (u/test-program :sh))    expected-workdir]
+                   [(u/test-program-abs :workdir :sh)  :workdir]]
+                  :let [desc (format "program: %s expected-exedir %s" program expected-exedir)]]
+            (is (= (u/etpo {:exedir expected-exedir
+                            :exename (u/test-program :sh)
+                            :workdir expected-workdir})
+                   (plines program dir))
+                desc)))
+        (u/with-program-scenario {:cwd     [:sh]
+                                  :workdir [:sh]}
+          (is (thrown-with-msg? Exception #"No such file"
+                                (plines (u/test-program :sh) dir))))))))
 
 (when (fs/windows?)
   ;; see also babashka.process-exec-test/resolve-program-win-test
