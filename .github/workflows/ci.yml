@@ -45,13 +45,13 @@ jobs:
         java -version
         bb --version
 
-    - name: Run bb tests
-      run: |
-        bb test:bb
-
     - name: Run JVM tests
       run: |
         bb test:jvm :clj-all
+
+    - name: Run bb tests
+      run: |
+        bb test:bb
 
   test-native:
     strategy:
