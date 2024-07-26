@@ -193,8 +193,9 @@
                       (fs/which program) ;; to resolve any extensions
 
                       (fs/parent program)
-                      (fs/which (fs/file (or dir (fs/cwd))
-                                         program))
+                      (if dir
+                        (fs/which (fs/file dir program))
+                        (fs/which program))
 
                       :else
                       (fs/which program))]
