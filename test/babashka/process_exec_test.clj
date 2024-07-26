@@ -159,9 +159,7 @@
 (deftest pre-start-fn-test
   ;; shows that pre-start-fn is active and that executable is resolved
   (when-let [bb (u/find-bb)]
-    (is (= {:out (u/ols (format "Pre-start-fn output {:cmd [%s %s :out foobar]}\nfoobar\n"
-                                (-> bb fs/which fs/absolutize fs/normalize)
-                                u/wd))
+    (is (= {:out (u/ols (format "Pre-start-fn output {:cmd [%s %s :out foobar]}\nfoobar\n" (fs/which bb) u/wd))
             :err ""
             :exit 0 }
            ;; runner will always used a canned pre-start-fn, this should excercise the feature
