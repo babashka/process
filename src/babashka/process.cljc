@@ -194,12 +194,13 @@
 
                       (fs/parent program)
                       (if dir
-                        (fs/which (fs/file dir program))
+                        ;; we need to absolutize here to overcome a bug in Windows ProcessBuilder
+                        (some-> (fs/which (fs/file dir program)) fs/absolutize)
                         (fs/which program))
 
                       :else
                       (fs/which program))]
-    (-> resolved fs/absolutize fs/normalize str)
+    (str resolved)
     (throw (ex-info (str "Cannot resolve program: " program) {}))))
 
 (defn ^:no-doc default-program-resolver
