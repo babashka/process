@@ -45,10 +45,10 @@
   "call with a list of `args` for `babashka.process/exec`
 
   for adhoc (under bash, Windows shell will have different escaping rules):
-  bb exec-run.clj \"({:arg0 'new-arg0'} bb wd.clj :out foo :exit 3)\"
+  bb run-exec.clj \"({:arg0 'new-arg0'} bb wd.clj :out foo :exit 3)\"
 
   to avoid shell command escaping hell can also read args from edn file
-  bb exec-run.clj --file some/path/here.edn"
+  bb run-exec.clj --file some/path/here.edn"
   [& args]
   (let [exec-args (parse-args args)]
     (try
@@ -59,7 +59,7 @@
       (System/exit 42)
       (catch Exception ex
         ;; an error occurred launching exec
-        (println (pr-str (Throwable->map ex)))))))
+        (println (pr-str {:bbp-test-run-exec-exception (Throwable->map ex)}))))))
 
 ;; support invocation from babashka when run as script
 (when (= *file* (System/getProperty "babashka.file"))

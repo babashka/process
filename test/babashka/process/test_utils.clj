@@ -50,6 +50,9 @@
   [s]
   (str/replace s "\n" (System/getProperty "line.separator")))
 
+(defn- bb-test-env []
+  (System/getenv "BABASHKA_TEST_ENV"))
+
 (defn find-bb
   "Tests launch an os-agnostic bb script that emits/behaves in ways useful
   to exercising babashka.process. Any test that uses bb should find it via
@@ -63,6 +66,72 @@
   be caught."
   []
   (or (*find-bb)
-      (if (= "jvm" (System/getenv "BABASHKA_TEST_ENV"))
+      (if (= "jvm" (bb-test-env))
         (println "WARNING: Skipping test because bb not found in path or current dir.")
         (throw (ex-info "ERROR: bb not found in path or current dir" {})))))
+
+(defn test-program
+  "Return name of program for program resolution tests.
+  Optionally specify `ext` (meaningful examples: `:bat` `:exe` `:com` `:cmd` `:sh`)"
+  ([] (test-program nil))
+  ([ext] (str "bbp-test-program" (when ext (str "." (name ext))))))
+
+(defn- proj-relative-file
+  "Support running tests from babashka itself, in this case process is a submodule"
+  [f]
+  (if (bb-test-env)
+    (str (fs/file "process" f))
+    f))
+
+(defn real-dir
+ "Abstractions for dirs for program resolution tests"
+  [k]
+  (case k
+    :on-path (proj-relative-file "target/test/on-path")
+    :workdir (proj-relative-file "target/test/workdir")
+    ;; would be nice to isolate cwd but, it is our actual current working directory
+    :cwd (System/getProperty "user.dir")))
+
+(defn test-program-abs
+  "Return canonical path for test program with (optinal) `ext` in `dir`."
+  [dir ext]
+  (-> (fs/file (real-dir dir) (test-program ext))
+      fs/canonicalize str))
+
+(defn- test-program-source
+  "Return test program source for program resolution tests."
+  [ext]
+  (let [src-ext (if (= :com ext) :exe ext)] ;; map .com to .exe
+    (proj-relative-file
+      (str "test-resources/print-dirs." (name src-ext)))))
+
+(defn program-scenario
+  "Setup a scenario for program resolution tests.
+
+  `scenario` describes what files should be in what dirs by their extensions, for example:
+  - `{:cwd [:sh] :workdir [:sh] :on-path [:sh]}`
+  - `{:cwd [:bat :exe] :on-path [:bat :cmd :com :exe :ps1]}`"
+  [scenario]
+  (doseq [p [:on-path :cwd :workdir]
+          :let [dest-dir (fs/file (real-dir p))]]
+    (fs/create-dirs dest-dir)
+    (doseq [ext [:bat :cmd :exe :ps1 :com :sh]]
+      (let [dest (fs/file (real-dir p) (test-program ext))]
+        (fs/delete-if-exists dest)
+        (when (some-> scenario p set ext)
+          (fs/copy (test-program-source ext) dest))))))
+
+(defmacro with-program-scenario
+  "Sets up a program scenario for `body` and cleans up afterward."
+  [scenario & body]
+  `(try
+    (program-scenario ~scenario)
+    ~@body
+    (finally
+      (program-scenario {}))))
+
+(defn etpo
+  "Expected test program output from program resolution tests."
+  [{:keys [exedir exename workdir]}]
+  [(str "exepath: " (-> (fs/file (real-dir exedir) exename) fs/canonicalize str))
+   (str "workdir: " (-> (real-dir workdir) fs/canonicalize str))])

@@ -178,17 +178,30 @@
       (str/includes? "windows")))
 
 (defn- -program-resolver [{:keys [program dir]}]
-  ;; this should make life easier and not cause any bugs that weren't there previously
-  ;; on exception we just return the program as is
-  (try
-    (if (fs/relative? program)
-      (if-let [f (fs/which (if dir
-                             (-> (fs/file dir program) fs/absolutize)
-                             program))]
-        (str f)
-        program)
-      program)
-    (catch Throwable _ program)))
+  ;; Used by default:
+  ;; - for all program resolution when running on Windows
+  ;; - by `exec` on all OSes
+  ;; Default ProcessBuilder behaviour on macOS/Linux does this work naturally
+  ;; and is therefore unneeded.
+  ;;
+  ;; ProcessBuilder program resolution on Windows does not entirely match
+  ;; behaviour of CMD Shell nor PowerShell.
+  ;; Here we adapt resolution to match PowerShell (with the exclusion of resolving
+  ;; .ps1 scripts) which follows the same strategy as macOS/Linux.
+  (if-let [resolved (cond
+                      (fs/absolute? program)
+                      (fs/which program) ;; to resolve any extensions
+
+                      (fs/parent program)
+                      (if dir
+                        ;; we need to absolutize here to overcome a bug in Windows ProcessBuilder
+                        (some-> (fs/which (fs/file dir program)) fs/absolutize)
+                        (fs/which program))
+
+                      :else
+                      (fs/which program))]
+    (str resolved)
+    (throw (ex-info (str "Cannot resolve program: " program) {}))))
 
 (defn ^:no-doc default-program-resolver
   [{:keys [program] :as opts}]

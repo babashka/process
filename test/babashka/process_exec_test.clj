@@ -81,8 +81,14 @@
                    [(format "-D%s=%s" reload-prop reload-val)])]
     (fs/delete-on-exit exec-args-file)
     (spit exec-args-file (pr-str exec-args))
-    (-> (apply shell/sh (concat exec-runner svm-opts ["--file" exec-args-file]))
-        (select-keys [:out :err :exit]))))
+    (let [{:keys [out] :as res} (-> (apply shell/sh (concat exec-runner svm-opts ["--file" exec-args-file]))
+                  (select-keys [:out :err :exit]))]
+      (if (str/includes? out ":bbp-test-run-exec-exception")
+        (let [ex-map (-> (edn/read-string out) :bbp-test-run-exec-exception)
+              msg (str "runexec-relayed: " (:cause ex-map))]
+          (throw (ex-info msg {:type :bbp-test-run-exec-exception
+                               :res res})))
+        res))))
 
 (deftest exec-replaces-runner-that-launches-it-test
   ;; runner prints ERROR:... and returns 42 if not replaced
@@ -91,14 +97,6 @@
             :err (u/ols "noprobs\n")
             :exit 100}
            (run-exec (format "%s %s :err noprobs :out hello :exit 100" bb u/wd))))))
-
-(deftest exec-failure-to-launch-throws-an-exception-test
-  ;; runner dumps serialized exeption on failure to launch
-  (is (= "Path wontfindme does not point to executable file"
-         (-> (run-exec "wontfindme")
-             :out
-             edn/read-string
-             :cause))))
 
 (when (fs/windows?)
   (deftest arg0-windows-test
@@ -161,7 +159,9 @@
 (deftest pre-start-fn-test
   ;; shows that pre-start-fn is active and that executable is resolved
   (when-let [bb (u/find-bb)]
-    (is (= {:out (u/ols (format "Pre-start-fn output {:cmd [%s %s :out foobar]}\nfoobar\n" (fs/which bb) u/wd))
+    (is (= {:out (u/ols (format "Pre-start-fn output {:cmd [%s %s :out foobar]}\nfoobar\n"
+                                (-> bb fs/which fs/absolutize fs/normalize)
+                                u/wd))
             :err ""
             :exit 0 }
            ;; runner will always used a canned pre-start-fn, this should excercise the feature
@@ -169,20 +169,161 @@
            (run-exec {:pre-start-fn :canned}
                      (format "%s %s :out foobar" bb u/wd))))))
 
-(deftest resolves-program-test
-  ;; use java -version instead of --version, it is supported even on jdk8
-  (let [expected (shell/sh "java" "-version")]
-    (is (zero? (:exit expected)) "sanity expected exit")
-    (is (str/blank? (:out expected)) "sanity expected out" )
-    (is (re-find #"(?i)(jdk|java)" (:err expected)) "sanity expected err")
-    (testing "on-path"
-      (is (= expected (run-exec "java -version"))))
-    (testing "absolute"
-      (is (= expected (run-exec (format "'%s' -version" (fs/canonicalize (fs/which "java")))))))
-    (testing "relative"
-      (let [java-dir (-> (fs/which "java") fs/parent fs/absolutize str)]
-        (shell/with-sh-dir java-dir
-          (= expected (run-exec "./java -version")))))))
+(defn elines
+  "Convenience fn to return stdout from execed `program` as vector of lines.
+  (Exec does not support `:dir`)"
+  [program]
+  (-> (run-exec {:out :string}
+                program)
+      :out
+      str/split-lines))
+
+(when (not (fs/windows?))
+  ;; see also babashka.process-test/process-resolve-program-macos-linux-test
+  (deftest resolve-program-macos-linux-test
+    (u/with-program-scenario {:cwd     [:sh]
+                              :workdir [:sh]
+                              :on-path [:sh]}
+      (doseq [[program expected-exedir]
+              [[(u/test-program :sh)               :on-path]
+               [(str "./" (u/test-program :sh))    :cwd]
+               [(u/test-program-abs :workdir :sh)  :workdir]]
+              :let [desc (format "program: %s expected-exedir %s" program expected-exedir)]]
+        (is (= (u/etpo {:exedir expected-exedir
+                        :exename (u/test-program :sh)
+                        :workdir :cwd})
+               (elines program))
+            desc))
+      (u/with-program-scenario {:cwd     [:sh]
+                                :workdir [:sh]}
+        (is (thrown-with-msg? Exception #"runexec-relayed: Cannot resolve"
+                              (elines (u/test-program :sh))))))))
+
+(when (fs/windows?)
+  ;; see also babashka.process-test/process-resolve-program-win-test
+  (deftest resolve-program-win-test
+    (testing "program `a` resolves from PATH but not cwd"
+      (doseq [[expected-ext on-path-scenario]
+              [[:com [:bat :cmd :com :exe :ps1]]
+               [:exe [:bat :cmd :exe :ps1]]
+               [:bat [:bat :cmd :ps1]]
+               [:cmd [:cmd :ps1]]]
+              :let [desc (format "expected-ext: %s on-path: %s" expected-ext on-path-scenario)]]
+        (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                  :on-path on-path-scenario}
+          (is (= (u/etpo {:exedir :on-path
+                          :exename (u/test-program expected-ext)
+                          :workdir :cwd})
+                 (elines (u/test-program)))
+              desc)))
+      (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                :on-path [:ps1]}
+        (is (thrown-with-msg? Exception #"runexec-relayed: Cannot resolve"
+                              (elines (u/test-program))))))
+    (testing "program `a.<ext>` resolves from PATH but not cwd nor workdir"
+      (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                :workdir [:bat :cmd :com :exe :ps1]
+                                :on-path [:bat :cmd :com :exe :ps1]}
+        (doseq [ext [:bat :cmd :com :exe]
+                :let [program (u/test-program ext)
+                      desc (format "program: %s" program)]]
+          (is (= (u/etpo {:exedir :on-path
+                          :exename program
+                          :workdir :cwd})
+                 (elines program))
+              desc)))
+      (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                :workdir [:bat :cmd :com :exe :ps1]}
+        (doseq [ext [:bat :cmd :com :exe]
+                :let [program (u/test-program ext)
+                      desc (format "program: %s" program)]]
+          (is (thrown-with-msg? Exception #"runexec-relayed: Cannot resolve"
+                                (elines program))
+              desc))))
+    (testing "program `.\\a` resolves from cwd and workdir"
+      (doseq [[expected-ext scenario-exts]
+              [[:com [:bat :cmd :com :exe :ps1]]
+               [:exe [:bat :cmd :exe :ps1]]
+               [:bat [:bat :cmd :ps1]]
+               [:cmd [:cmd :ps1]]]
+              :let [desc (format "expected-ext: %s scenario-exts: %s" expected-ext scenario-exts)]]
+        (u/with-program-scenario {:cwd     scenario-exts
+                                  :workdir scenario-exts
+                                  :on-path [:bat :cmd :com :exe :ps1]}
+          (is (= (u/etpo {:exedir  :cwd
+                          :exename (u/test-program expected-ext)
+                          :workdir :cwd})
+                 (elines (str ".\\" (u/test-program))))
+              desc)))
+      (u/with-program-scenario {:cwd     [:ps1]
+                                :workdir [:ps1]
+                                :on-path [:bat :cmd :com :exe :ps1]}
+        (is (thrown-with-msg? Exception #"runexec-relayed: Cannot resolve"
+                              (elines (str ".\\" (u/test-program)))))))
+    (testing "program `.\\a.<ext>` resolves from cwd and workdir"
+      (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                :workdir [:bat :cmd :com :exe :ps1]
+                                :on-path [:bat :cmd :com :exe :ps1]}
+        (doseq [ext [:bat :cmd :com :exe]
+                :let [program (str ".\\" (u/test-program ext))
+                      desc (format "program: %s" program)]]
+          (is (= (u/etpo {:exedir :cwd
+                          :exename program
+                          :workdir :cwd})
+                 (elines program))
+              desc))))
+    (testing "program absolute path of `a.<ext>` resolves"
+      (u/with-program-scenario {:cwd     [:bat :cmd :com :exe :ps1]
+                                :workdir [:bat :cmd :com :exe :ps1]
+                                :on-path [:bat :cmd :com :exe :ps1]}
+        (doseq [path [:cwd :workdir :on-path]
+                ext [:bat :cmd :com :exe]
+                :let [program (-> (fs/file (u/real-dir path) (u/test-program ext))
+                                  fs/canonicalize str)
+                      desc (format "program: %s" program)]]
+          (is (= (u/etpo {:exedir path
+                          :exename (u/test-program ext)
+                          :workdir :cwd})
+                 (elines program))
+              desc))))
+    (testing "program absolute path of `a` resolves"
+      (doseq [path [:cwd :workdir :on-path]
+              [expected-ext scenario-exts] [[:com [:bat :cmd :com :exe :ps1]]
+                                            [:exe [:bat :cmd :exe :ps1]]
+                                            [:bat [:bat :cmd :ps1]]
+                                            [:cmd [:cmd :ps1]]]
+              :let [program (-> (fs/file (u/real-dir path) (u/test-program))
+                                fs/canonicalize str)
+                    desc (format "program: %s expected-ext: %s" program expected-ext)]]
+        (u/with-program-scenario (-> {:cwd     [:bat :cmd :com :exe :ps1]
+                                      :workdir [:bat :cmd :com :exe :ps1]
+                                      :on-path [:bat :cmd :com :exe :ps1]}
+                                     (assoc path scenario-exts))
+          (is (= (u/etpo {:exedir path
+                          :exename (u/test-program expected-ext)
+                          :workdir :cwd})
+                 (elines program))
+              desc)))
+      (u/with-program-scenario {:cwd [:ps1]
+                                :workdir [:ps1]
+                                :on-path [:ps1]}
+        (doseq [path [:cwd :workdir :on-path]
+                :let [program (-> (fs/file (u/real-dir path) (u/test-program))
+                                  fs/canonicalize str)
+                      desc (format "program: %s" program)]]
+          (is (thrown-with-msg? Exception #"runexec-relayed: Cannot resolve"
+                                (elines program))
+              desc))))
+    (testing "can launch `.ps1` script through powershell"
+      (u/with-program-scenario {:cwd [:ps1]
+                                :workdir [:ps1]}
+        (is (= (u/etpo {:exedir :cwd
+                        :exename (u/test-program :ps1)
+                        :workdir :cwd})
+               (-> (run-exec {:out :string}
+                            "powershell.exe -File" (str ".\\" (u/test-program :ps1)))
+                   :out
+                   str/split-lines)))))))
 
 (deftest cmd-opt-test
   (when-let [bb (u/find-bb)]

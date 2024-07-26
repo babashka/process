@@ -96,7 +96,7 @@ ls: nothing: No such file or directory
 Execution error (ExceptionInfo) at babashka.process/check (process.cljc:113).
 ```
 
-To avoid throwing when the command's exit code is non-zero, use `:continue true`. 
+To avoid throwing when the command's exit code is non-zero, use `:continue true`.
 You will still see the error printed to stderr, but no exception will be thrown. This is convenient
 when you want to handle the `:exit` code yourself:
 
@@ -489,6 +489,31 @@ nil
 ```
 
 Another solution is to let bash handle the pipes by shelling out with `bash -c`.
+
+## Program Resolution
+
+### macOS & Linux
+On macOS & Linux, programs are resolved the way you expect:
+
+- `a` resolves against the system `PATH`
+- `./a` resolves against `:dir` if specified, otherwise the current working directory
+- `/some/absolute/a` resolves absolutely
+
+In all cases, the working directory for `a` is `:dir`, if specified, otherwise your current working directory.
+
+### Windows
+
+Windows executable files have extensions, which, if not specified, are resolved in order: `.com`,`.exe`,`.bat`,`.cmd`.
+Programs are resolved in directories using the same rules as macOS, Linux, and Windows PowerShell.
+
+> **Windows .ps1 TIP**: Babashka process will never resolve to, and cannot launch, `.ps1` scripts directly.
+To launch a `.ps1` script, you must do so through PowerShell.
+Example:
+> ```Clojure
+> (p/shell "powershell.exe -File .\\a.ps1")
+> ```
+
+> **Windows TIP**: If you prefer a more CMD Shell-like experience where programs are resolved first in the current working directory, then on the `PATH`, and are OK with the security implications of doing so, you can override the default `:program-resolver` with your own.
 
 ## Differences with `clojure.java.shell/sh`
 
