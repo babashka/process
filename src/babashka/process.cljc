@@ -199,7 +199,7 @@
 
                       :else
                       (fs/which program))]
-    resolved
+    (str resolved)
     (throw (ex-info (str "Cannot resolve program: " program) {}))))
 
 (defn ^:no-doc default-program-resolver
