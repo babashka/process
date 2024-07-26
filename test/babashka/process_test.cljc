@@ -23,7 +23,7 @@
   "For the purposes of these tests, we sometimes need to expect how babashka process will resolve an exe for :cmd."
   [exe]
   (if (fs/windows?)
-    (-> exe fs/which fs/absolutize fs/normalize str)
+    (-> exe fs/which str)
     exe))
 
 (deftest tokenize-test
