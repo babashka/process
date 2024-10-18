@@ -68,10 +68,9 @@
                           graal (conj (format "export GRAALVM_HOME=\"%s\"" java-home))))]
       (println "writing to:" dest-file)
       (doseq [p env-entries]
-        (do
-          (println p) ;; nice for debugging locally and on circleci
-          (when on-ci
-            (spit dest-file (format "%s\n" p) :append true)))) )))
+        (println p) ;; nice for debugging locally and on circleci
+        (when on-ci
+          (spit dest-file (format "%s\n" p) :append true))) )))
 
 (defn- parse-jdk
   "Disco distro for graal includes the major.jdk ex graalvm_ce19, so we don't have client respecify it."
@@ -171,13 +170,12 @@
       :direct_download_uri)
   ;; => "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.23%2B9/OpenJDK11U-jdk_aarch64_mac_hotspot_11.0.23_9.tar.gz"
 
-  (-> (jdk-info {:os "macos"
+  (-> (jdk-info {:os "linux"
                  :arch "amd64"
-                 :jdk-major "11"
+                 :jdk-major "17"
                  :distro "temurin"
                  :archive-type "tar.gz"})
-      (select-keys [:architecture :operating_system]))
-  ;; => {:architecture "x64", :operating_system "macos"}
+      :direct_download_uri)
 
 
 
@@ -204,7 +202,7 @@
   (install-jdk* {:os "macos" :arch "x64" :distro-jdk-major "temurin@11"})
   (install-jdk* {:os "macos" :arch "arm64" :distro-jdk-major "temurin@11"})
   (install-jdk* {:os "windows" :arch "x64" :distro-jdk-major "temurin@17"})
-  (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "temurin@11"})
+  (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "temurin@17"})
 
   (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "graalvm@21"} )
   (install-jdk* {:os "linux" :arch "x64" :distro-jdk-major "graalvm_community@21"} )
