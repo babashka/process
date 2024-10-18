@@ -134,7 +134,6 @@
 (defmethod print-method Process [proc ^java.io.Writer w]
   (.write w (pr-str (into {} proc))))
 
-#_{:clj-kondo/ignore [:unused-private-var]}
 (defn- proc->Process [^java.lang.Process proc cmd prev]
   (let [stdin (.getOutputStream proc)
         stdout (.getInputStream proc)
@@ -351,6 +350,36 @@
     (io/copy in out :encoding encoding)
     (post-fn out)))
 
+(defn output-wrapper
+  [^java.io.InputStream stream f]
+  (let [buf (byte-array 1024)
+        buffer (atom nil)]
+    (future
+      (loop []
+        (try
+          (let [read (.read stream buf)]
+            (when-not (= -1 read)
+              (let [s (String. buf 0 read)
+                    last-newline (str/last-index-of s \newline)
+                    before-last-newline (when last-newline (subs s 0 last-newline))
+                    after-last-newline (if last-newline
+                                         (subs s (inc last-newline))
+                                         s)]
+                (when before-last-newline
+                  (let [buffered @buffer
+                        _ (reset! buffer nil)
+                        lines (str/split-lines (str buffered before-last-newline))]
+                    (doseq [l lines]
+                      (f l))))
+                (swap! buffer (fn [buffer]
+                                (if after-last-newline
+                                  (str buffer after-last-newline)
+                                  buffer)))
+                )))
+          (catch Exception e (binding [*out* *err*]
+                               (prn e))))
+        (recur)))))
+
 (defn process*
   "Same as with `process` but called with parsed arguments (the result from `parse-args`)"
   [{:keys [prev cmd opts]}]
@@ -383,6 +412,14 @@
         stdin (.getOutputStream proc)
         stdout (.getInputStream proc)
         stderr (.getErrorStream proc)
+        stdout (if-let [f (:out-line-fn opts)]
+                 (do (output-wrapper stdout f)
+                     nil)
+                 stdout)
+        stdout (if-let [f (:err-line-fn opts)]
+                 (do (output-wrapper stderr f)
+                     nil)
+                 stdout)
         out (if (and out (or (identical? :string out)
                              (identical? :bytes out)
                              (not (keyword? out))))
