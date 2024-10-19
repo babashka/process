@@ -732,13 +732,16 @@
          proc-fn (fn [command]
                    (let [id (swap! counter inc)]
                      (prn "command" command)
-                     (apply process
-                            {:in :inherit
-                             :out-line-fn (fn [line]
-                                            (println (format "[%s]" id) line))
-                             :err-line-fn (fn [line]
-                                            (println (format "[%s]" id) line))}
-                            command)))
+                     (let [command (if (string? command)
+                                     [command]
+                                     command)]
+                       (apply process
+                              {:in :inherit
+                               :out-line-fn (fn [line]
+                                              (println (format "[%s]" id) line))
+                               :err-line-fn (fn [line]
+                                              (println (format "[%s]" id) line))}
+                              command))))
          procs (map proc-fn commands)]
      (doseq [p procs]
        (check p)))))
