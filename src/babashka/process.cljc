@@ -724,3 +724,20 @@
    :clj
    (when (contains? (loaded-libs) 'clojure.pprint) ;; pprint was already loaded, e.g. by nREPL
      (require '[babashka.process.pprint])))
+
+(defn concurrently
+  ([commands] (concurrently nil commands))
+  ([_opts commands]
+   (let [counter (atom -1)
+         proc-fn (fn [command]
+                   (let [id (swap! counter inc)]
+                     (prn "command" command)
+                     (apply process
+                            {:out-line-fn (fn [line]
+                                            (println (format "[%s]" id) line))
+                             :err-line-fn (fn [line]
+                                            (println (format "[%s]" id) line))}
+                            command)))
+         procs (map proc-fn commands)]
+     (doseq [p procs]
+       (check p)))))
