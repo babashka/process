@@ -736,7 +736,8 @@
                                      [command]
                                      command)]
                        (apply process
-                              {:in :inherit
+                              {:extra-env {"FORCE_COLOR" "1"}
+                               :in :inherit
                                :out-line-fn (fn [line]
                                               (println (format "[%s]" id) line))
                                :err-line-fn (fn [line]
