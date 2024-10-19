@@ -733,7 +733,8 @@
                    (let [id (swap! counter inc)]
                      (prn "command" command)
                      (apply process
-                            {:out-line-fn (fn [line]
+                            {:in :inherit
+                             :out-line-fn (fn [line]
                                             (println (format "[%s]" id) line))
                              :err-line-fn (fn [line]
                                             (println (format "[%s]" id) line))}
