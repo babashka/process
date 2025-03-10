@@ -7,7 +7,12 @@
     -  [`destroy`](#babashka.process/destroy) - Destroys the process and returns the input arg.
     -  [`destroy-tree`](#babashka.process/destroy-tree) - Same as <code>destroy</code> but also destroys all descendants.
     -  [`exec`](#babashka.process/exec) - Replaces the current process image with the process image specified by the given path invoked with the given args.
-    -  [`parse-args`](#babashka.process/parse-args) - Parses arguments to <code>process</code> to map with: * <code>:prev</code>: a (previous) process whose input is piped into the current process * <code>:cmd</code>: a vector of command line argument strings * <code>:opts</code>: options map Note that this function bridges the legacy <code>[cmds ?opts]</code> syntax to the newer recommended syntax <code>[?opts & args]</code> and therefore looks unnecessarily complex.
+    -  [`parse-args`](#babashka.process/parse-args) - Parses arguments to <code>process</code> to map with:
+       - <code>:prev</code>: a (previous) process whose input is piped into the current process
+       - <code>:cmd</code>: a vector of command line argument strings
+       - <code>:opts</code>: options map
+
+         Note that this function bridges the legacy <code>[cmds ?opts]</code> syntax to the newer recommended syntax <code>[?opts & args]</code> and therefore looks unnecessarily complex.
     -  [`pb`](#babashka.process/pb) - Returns a process builder (as record).
     -  [`pipeline`](#babashka.process/pipeline) - Returns the processes for one pipe created with -> or creates pipeline from multiple process builders.
     -  [`process`](#babashka.process/process) - Creates a child process.
