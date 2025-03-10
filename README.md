@@ -609,6 +609,6 @@ in the following way. This requires `:exit-fn` which was released in version
 
 ## License
 
-Copyright © 2020-2022 Michiel Borkent
+Copyright © 2020-2025 Michiel Borkent
 
 Distributed under the EPL License. See LICENSE.
