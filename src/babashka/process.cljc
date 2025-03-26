@@ -413,8 +413,16 @@
                          prev
                          cmd)]
       (when shutdown
-        (-> (Runtime/getRuntime)
-            (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+        (let [hook (Thread. (fn [] (shutdown res)))]
+          (-> (Runtime/getRuntime)
+              (.addShutdownHook hook))
+          (if-before-jdk8
+           nil ;; throwing an exception here would commit breakage, therefore accept the memory leak for jdk8
+           (-> (.onExit proc)
+               (.thenRun (fn []
+                           ;; To avoid a memory leak remove the hook when the process ends:
+                           (-> (Runtime/getRuntime)
+                               (.removeShutdownHook hook))))))))
       (when exit-fn
         (if-before-jdk8
          (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
