@@ -38,7 +38,7 @@ Function.
 Convenience macro around [`process`](#babashka.process/process). Takes command as varargs. Options can
   be passed via metadata on the form or as a first map arg. Supports
   interpolation via `~`
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L537-L567">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L563-L593">Source</a></sub></p>
 
 ## <a name="babashka.process/*defaults*">`*defaults*`</a><a name="babashka.process/*defaults*"></a>
 
@@ -47,7 +47,7 @@ Convenience macro around [`process`](#babashka.process/process). Takes command a
 
 Dynamic var containing overridable default options. Use
   `alter-var-root` to change permanently or `binding` to change temporarily.
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L202-L207">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L215-L220">Source</a></sub></p>
 
 ## <a name="babashka.process/alive?">`alive?`</a><a name="babashka.process/alive?"></a>
 ``` clojure
@@ -56,7 +56,7 @@ Dynamic var containing overridable default options. Use
 ```
 
 Returns `true` if the process is still running and false otherwise.
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L664-L667">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L694-L697">Source</a></sub></p>
 
 ## <a name="babashka.process/check">`check`</a><a name="babashka.process/check"></a>
 ``` clojure
@@ -100,7 +100,7 @@ Replaces the current process image with the process image specified
   Supported `opts`
   - `:arg0`: override first argument (the executable). No-op on Windows.
   - `:cmd`, `:env`,`:extra-env`, `:escape`,`:pre-start-fn` : see [`process`](#babashka.process/process).
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L592-L630">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L618-L656">Source</a></sub></p>
 
 ## <a name="babashka.process/parse-args">`parse-args`</a><a name="babashka.process/parse-args"></a>
 ``` clojure
@@ -117,7 +117,7 @@ Parses arguments to [`process`](#babashka.process/process) to map with:
   Note that this function bridges the legacy `[cmds ?opts]` syntax to
   the newer recommended syntax `[?opts & args]` and therefore looks
   unnecessarily complex.
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L271-L320">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L284-L333">Source</a></sub></p>
 
 ## <a name="babashka.process/pb">`pb`</a><a name="babashka.process/pb"></a>
 ``` clojure
@@ -126,7 +126,7 @@ Parses arguments to [`process`](#babashka.process/process) to map with:
 ```
 
 Returns a process builder (as record).
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L322-L329">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L335-L342">Source</a></sub></p>
 
 ## <a name="babashka.process/pipeline">`pipeline`</a><a name="babashka.process/pipeline"></a>
 ``` clojure
@@ -144,7 +144,7 @@ Returns the processes for one pipe created with -> or creates
 
   Also see [Pipelines](/README.md#pipelines).
   
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L482-L516">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L508-L542">Source</a></sub></p>
 
 ## <a name="babashka.process/process">`process`</a><a name="babashka.process/process"></a>
 ``` clojure
@@ -199,9 +199,10 @@ Creates a child process. Takes a command (vector of strings or
       - `:cmd` - a vector of the tokens of the command to be executed (e.g. `["ls" "foo"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with [`destroy`](#babashka.process/destroy) or [`destroy-tree`](#babashka.process/destroy-tree) to ensure long
-      running processes are cleaned up on shutdown.
+      running processes are cleaned up on shutdown. The shutdown hook is
+      executed as soon as the child process ends.
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+.
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L413-L465">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L438-L491">Source</a></sub></p>
 
 ## <a name="babashka.process/process*">`process*`</a><a name="babashka.process/process*"></a>
 ``` clojure
@@ -210,7 +211,7 @@ Creates a child process. Takes a command (vector of strings or
 ```
 
 Same as with [`process`](#babashka.process/process) but called with parsed arguments (the result from [`parse-args`](#babashka.process/parse-args))
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L341-L411">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L354-L436">Source</a></sub></p>
 
 ## <a name="babashka.process/sh">`sh`</a><a name="babashka.process/sh"></a>
 ``` clojure
@@ -222,7 +223,7 @@ Convenience function similar to `clojure.java.shell/sh` that sets
   `:out` and `:err` to `:string` by default and blocks. Similar to
   `cjs/sh` it does not check the exit code (this can be done with
   [`check`](#babashka.process/check)).
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L569-L579">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L595-L605">Source</a></sub></p>
 
 ## <a name="babashka.process/shell">`shell`</a><a name="babashka.process/shell"></a>
 ``` clojure
@@ -230,9 +231,9 @@ Convenience function similar to `clojure.java.shell/sh` that sets
 (shell opts? & args)
 ```
 
-Convenience function around [`process`](#babashka.process/process) that was originally in `babashka.tasks`.
+Convenience function around [[`process`](#babashka.process/process)](#babashka.process/process) that was originally in `babashka.tasks`.
   Defaults to inheriting I/O: input is read and output is printed
-  while the process runs. Throws on non-zero exit codes. Kills all
+  while the process runs. Defaults to throwing on non-zero exit codes. Kills all
   subprocesses on shutdown. Optional options map can be passed as the
   first argument, followed by multiple command line arguments. The
   first command line argument is automatically tokenized. Counter to
@@ -240,13 +241,17 @@ Convenience function around [`process`](#babashka.process/process) that was orig
   new (bash, etc.) shell, it just shells out to a program. As such, it
   does not support bash syntax like `ls *.clj`.
 
+  Supported options:
+  - `:continue`: if `true`, suppresses throwing on non-zero process exit code.
+  - see [[`process`](#babashka.process/process)](#babashka.process/process) for other options
+
   Examples:
 
   - `(shell "ls -la")` ;; `"ls -la"` is tokenized as `["ls" "-la"]`
   - `(shell {:out "/tmp/log.txt"} "git commit -m" "WIP")` ;; `"git commit -m"` is tokenized as `["git" "commit" "-m"]` and `"WIP"` is an additional argument
 
   Also see the [`shell`](#babashka.process/shell) entry in the babashka book [here](https://book.babashka.org/#_shell).
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L638-L662">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L664-L692">Source</a></sub></p>
 
 ## <a name="babashka.process/start">`start`</a><a name="babashka.process/start"></a>
 ``` clojure
@@ -255,7 +260,7 @@ Convenience function around [`process`](#babashka.process/process) that was orig
 ```
 
 Takes a process builder, calls start and returns a process (as record).
-<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L518-L524">Source</a></sub></p>
+<p><sub><a href="https://github.com/babashka/process/blob/master/src/babashka/process.cljc#L544-L550">Source</a></sub></p>
 
 ## <a name="babashka.process/tokenize">`tokenize`</a><a name="babashka.process/tokenize"></a>
 ``` clojure
