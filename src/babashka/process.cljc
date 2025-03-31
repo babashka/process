@@ -413,8 +413,20 @@
                          prev
                          cmd)]
       (when shutdown
-        (-> (Runtime/getRuntime)
-            (.addShutdownHook (Thread. (fn [] (shutdown res))))))
+        (let [hook (Thread. (fn [] (shutdown res)))]
+          (-> (Runtime/getRuntime)
+              (.addShutdownHook hook))
+          (if-before-jdk8
+           nil ;; throwing an exception here would commit breakage, therefore accept the memory leak for jdk8
+           (-> (.onExit proc)
+               (.thenRun (fn []
+                           ;; To avoid a memory leak remove the hook when the process ends:
+                           (-> (Runtime/getRuntime)
+                               (.removeShutdownHook hook))
+                           ;; But run the shutdown hook to ensure that cleanup
+                           ;; tasks are executed:
+                           (.start hook)
+                           ))))))
       (when exit-fn
         (if-before-jdk8
          (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
@@ -471,7 +483,8 @@
       - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
    - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
       map. Typically used with `destroy` or `destroy-tree` to ensure long
-      running processes are cleaned up on shutdown.
+      running processes are cleaned up on shutdown. The shutdown hook is
+      executed as soon as the child process ends.
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
   {:arglists '([opts? & args])}
   [& args]
