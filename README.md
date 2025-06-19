@@ -205,12 +205,20 @@ user=> (-> @(process {:out :bytes} "head -c 10 /dev/urandom") :out seq)
 ## Piping output
 
 Both `shell` and `process` support piping output from one process to the next
-using but note that `shell` writes the output to the system's stdout by
+using `:in`, but note that `shell` writes the output to the system's stdout by
 default, so you have to provide it with `{:out :string}` for the next process to
 capture the input, while `process` uses the default `java.lang.ProcessBuilder`
 setting which defaults to writing to a stream:
 
 ``` clojure
+user=> (let [ls-result (shell {:out :string} "ls")]
+        (shell {:in (:out ls-result)} "grep md"))
+
+API.md
+CHANGELOG.md
+README.md
+...
+
 user=> (let [stream (-> (process "ls") :out)]
          @(process {:in stream
                     :out :inherit} "cat")
