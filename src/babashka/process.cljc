@@ -604,10 +604,16 @@
                      :err :string} opts)]
     @(process* {:cmd cmd :opts opts :prev prev})))
 
-(def ^:private exec-meth
-  (delay (try (.getMethod (Class/forName "org.graalvm.nativeimage.ProcessProperties") "exec"
-                          (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map]))
-              (catch Exception _ nil))))
+(def ^:private has-exec?
+  (boolean (try (.getMethod ^Class
+                 (resolve 'org.graalvm.nativeimage.ProcessProperties) "exec"
+                            (into-array [java.nio.file.Path (Class/forName "[Ljava.lang.String;") java.util.Map]))
+                (catch Exception _ false))))
+
+(defmacro ^:no-doc
+  if-has-exec [then else]
+  (if has-exec?
+    then else))
 
 (defn exec
   "Replaces the current process image with the process image specified
@@ -643,10 +649,10 @@
           ^java.util.Map env (into (or (as-string-map env)
                                        (into {} (System/getenv)))
                                    (as-string-map extra-env))]
-      (if-let [^java.lang.reflect.Method meth @exec-meth]
-        (.invoke meth nil (into-array Object [(fs/path program)
-                                              (into-array String args)
-                                              env]))
+      (if-has-exec
+       (org.graalvm.nativeimage.ProcessProperties/exec (fs/path program)
+                                                       (into-array String args)
+                                                       env)
        (throw (ex-info "exec is not supported in non-GraalVM environments" {:cmd cmd}))))))
 
 (def ^:private default-shell-opts

@@ -45,14 +45,6 @@ jobs:
         java -version
         bb --version
 
-    - name: 🔧 Install bb from dev build (until next release)
-      shell: bash
-      run: |
-        curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
-        chmod +x ./install
-        ./install --dev-build --dir /tmp
-        cp /tmp/bb "$(which bb)"
-
     - name: Run bb tests
       run: |
         bb test:bb
