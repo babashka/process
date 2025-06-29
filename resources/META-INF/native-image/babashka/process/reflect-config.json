@@ -1,0 +1,4 @@
+[ {
+  "name" : "org.graalvm.nativeimage.ProcessProperties",
+  "methods": [{"name": "exec"}]
+} ]
