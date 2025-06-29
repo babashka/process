@@ -7,6 +7,7 @@
             :url "https://www.eclipse.org/legal/epl-1.0/"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [babashka/fs "0.4.18"]]
+  :source-paths ["src" "resources"]
   :deploy-repositories [["clojars" {:url "https://clojars.org/repo"
                                     :username :env/clojars_user
                                     :password :env/clojars_pass
