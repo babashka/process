@@ -46,7 +46,7 @@
                ;; run from babashka.process sources, not built-in babaska.process
                (require '[babashka.process] :reload)
                (case target
-                 :test (apply cognitect.test-runner.-main args)
+                 :test (apply cognitect.test-runner/-main args)
                  :dev (let [opts (parse-repl-args args)]
                         (babashka.nrepl.server/start-server! opts)
                         (deref (promise)))))}
