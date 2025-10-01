@@ -135,7 +135,7 @@
                      :out
                      edn/read-string)
             expected-vars (u/always-present-env-vars)]
-        (is (= expected-vars (keys vars)))))
+        (is (empty? (remove expected-vars (keys vars))))))
     (testing "add to existing env"
       (is (= (-> (into {} (System/getenv)) (assoc "FOO" "BAR"))
              (-> (run-exec {:extra-env {"FOO" "BAR"}}

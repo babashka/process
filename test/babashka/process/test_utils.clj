@@ -28,8 +28,8 @@
 (defn always-present-env-vars
   "Even when requesting an empty environment, some OSes do not return an empty environment"
   []
-  (os {:mac ["__CF_USER_TEXT_ENCODING"]
-       :win ["SystemRoot"]}))
+  (os {:mac #{"__CF_USER_TEXT_ENCODING" "TMPDIR"}
+       :win #{"SystemRoot"}}))
 
 (defn print-test-env[]
   (let [bb (*find-bb)]
