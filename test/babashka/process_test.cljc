@@ -627,3 +627,11 @@
                      :out)]
       (is (bytes? result))
       (is (= (seq ba) (seq result))))))
+
+(deftest discard-test
+  (when-let [bb (u/find-bb)]
+    (doseq [out [:discard java.lang.ProcessBuilder$Redirect/DISCARD]]
+      (is (= "" (slurp (:out @(p/process {:out out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))")))))
+      (is (= (with-out-str (println :bye)) (slurp (:err @(p/process {:out out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))")))))
+      (is (= "" (slurp (:err @(p/process {:err out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))")))))
+      (is (= (with-out-str (println :dude)) (slurp (:out @(p/process {:err out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))"))))))))
