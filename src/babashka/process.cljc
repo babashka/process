@@ -219,7 +219,12 @@
    :escape default-escape
    :program-resolver default-program-resolver})
 
-(defn- normalize-opts [{:keys [:out :err :in :inherit] :as opts}]
+(def ^java.io.File null-file
+  (delay (io/file (if windows?
+                    "NUL"
+                    "/dev/null"))))
+
+(defn- normalize-opts [{:keys [out err in inherit] :as opts}]
   (cond-> opts
     (and inherit (not out))
     (-> (assoc :out :inherit))
@@ -265,12 +270,18 @@
        :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
        :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file (str out-file))))
        :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file (str out-file))))
+       :discard (.redirectOutput pb (if-before-jdk8
+                                      (ProcessBuilder$Redirect/to @null-file)
+                                      ProcessBuilder$Redirect/DISCARD))
        nil)
      (case err
        :out (.redirectErrorStream pb true)
        :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
        :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file (str err-file))))
        :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file (str err-file))))
+       :discard (.redirectOutput pb (if-before-jdk8
+                                        (ProcessBuilder$Redirect/to @null-file)
+                                      ProcessBuilder$Redirect/DISCARD))
        nil)
      (case in
        :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)
