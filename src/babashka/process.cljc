@@ -219,7 +219,12 @@
    :escape default-escape
    :program-resolver default-program-resolver})
 
-(defn- normalize-opts [{:keys [:out :err :in :inherit] :as opts}]
+(def ^java.io.File null-file
+  (delay (io/file (if windows?
+                    "NUL"
+                    "/dev/null"))))
+
+(defn- normalize-opts [{:keys [out err in inherit] :as opts}]
   (cond-> opts
     (and inherit (not out))
     (-> (assoc :out :inherit))
@@ -265,13 +270,21 @@
        :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
        :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file (str out-file))))
        :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file (str out-file))))
-       nil)
+       :discard (.redirectOutput pb (if-before-jdk8
+                                        (ProcessBuilder$Redirect/to @null-file)
+                                      ProcessBuilder$Redirect/DISCARD))
+       (when (instance? java.lang.ProcessBuilder$Redirect out)
+         (.redirectOutput pb out)))
      (case err
        :out (.redirectErrorStream pb true)
        :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
        :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file (str err-file))))
        :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file (str err-file))))
-       nil)
+       :discard (.redirectError pb (if-before-jdk8
+                                       (ProcessBuilder$Redirect/to @null-file)
+                                     ProcessBuilder$Redirect/DISCARD))
+       (when (instance? java.lang.ProcessBuilder$Redirect err)
+         (.redirectError pb err)))
      (case in
        :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)
        (when (or (instance? java.io.File in)
@@ -385,12 +398,14 @@
         stderr (.getErrorStream proc)
         out (if (and out (or (identical? :string out)
                              (identical? :bytes out)
-                             (not (keyword? out))))
+                             (and (not (keyword? out))
+                                  (not (instance? java.lang.ProcessBuilder$Redirect out)))))
               (future (copy stdout out out-enc))
               stdout)
         err (if (and err (or (identical? :string err)
                              (identical? :bytes err)
-                             (not (keyword? err))))
+                             (and (not (keyword? err))
+                                  (not (instance? java.lang.ProcessBuilder$Redirect err)))))
               (future (copy stderr err err-enc))
               stderr)]
     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
@@ -470,6 +485,7 @@
       For writing output to a file, you can set `:out` and `:err` to a `java.io.File` object, or a keyword:
        - `:write` + an additional `:out-file`/`:err-file` + file to write to the file.
        - `:append` + an additional `:out-file`/`:err-file` + file to append to the file.
+      To discard `:out` or `:err`, use `:discard`
    - `:prev`: output from `:prev` will be piped to the input of this process. Overrides `:in`.
    - `:inherit`: if true, sets `:in`, `:out` and `:err` to `:inherit`.
    - `:dir`: working directory.
