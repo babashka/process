@@ -274,7 +274,7 @@
                                         (ProcessBuilder$Redirect/to @null-file)
                                       ProcessBuilder$Redirect/DISCARD))
        (when (instance? java.lang.ProcessBuilder$Redirect out)
-         (.redirectOutput pb out)))
+         (.redirectOutput pb ^java.lang.ProcessBuilder$Redirect out)))
      (case err
        :out (.redirectErrorStream pb true)
        :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
@@ -284,7 +284,7 @@
                                        (ProcessBuilder$Redirect/to @null-file)
                                      ProcessBuilder$Redirect/DISCARD))
        (when (instance? java.lang.ProcessBuilder$Redirect err)
-         (.redirectError pb err)))
+         (.redirectError pb ^java.lang.ProcessBuilder$Redirect err)))
      (case in
        :inherit (.redirectInput pb ProcessBuilder$Redirect/INHERIT)
        (when (or (instance? java.io.File in)
