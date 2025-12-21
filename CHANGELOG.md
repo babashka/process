@@ -3,6 +3,10 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## 0.6.25 (2025-12-21)
+
+- Fix reflection warnings
+
 ## 0.6.24 (2025-12-07)
 
 - [#181](https://github.com/babashka/process/issues/181): support `:discard` or `ProcessBuilder$Redirect` as `:out` and `:err` options
