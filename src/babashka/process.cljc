@@ -297,7 +297,7 @@
 (defn parse-args
   "Parses arguments to `process` to map with:
 
-  * `:prev`: a (previous) process whose input is piped into the current process
+  * `:prev`: a (previous) process whose output is piped into the current process
   * `:cmd`: a vector of command line argument strings
   * `:opts`: options map
 
