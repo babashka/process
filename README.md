@@ -321,6 +321,28 @@ stream of numbers, line by line and print it ourselves:
 (p/destroy-tree number-stream)
 ```
 
+### Choosing a shutdown hook
+
+`process` defaults to `:shutdown nil`. A JVM shutdown hook retains the
+callback and the process it captures until the hook is removed or the JVM
+exits. Registering one for every short-lived child can keep many process
+objects alive. Opt in when the child should stop with your application:
+
+``` clojure
+(require '[babashka.process :as p])
+
+(let [child (p/process {:shutdown p/destroy} "java" "-version")]
+  (try
+    (p/check child)
+    (finally (p/destroy child))))
+```
+
+Use `destroy-tree` to stop descendants as well on JDK 9 or later. For a
+child started with `process` on those JDKs, child exit also removes the
+hook and starts its callback. On JDK 8 the hook stays registered until JVM
+shutdown. Hooks set on individual process builders in a multi-builder
+`pipeline` likewise stay registered until shutdown.
+
 ## Printing command
 
 The `:pre-start-fn` option can be used to report commands being run:

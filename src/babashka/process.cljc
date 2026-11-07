@@ -497,10 +497,10 @@
       map of process info just before the process is started. Can be useful for debugging
       or reporting. Any return value from the function is discarded. Map contents:
       - `:cmd` - a vector of the tokens of the command to be executed (e.g. `[\"ls\" \"foo\"]`)
-   - `:shutdown`: shutdown hook, defaults to `nil`. Takes process
-      map. Typically used with `destroy` or `destroy-tree` to ensure long
-      running processes are cleaned up on shutdown. The shutdown hook is
-      executed as soon as the child process ends.
+   - `:shutdown`: optional JVM shutdown hook. Receives the process map.
+      Defaults to `nil`; use `destroy` or `destroy-tree` to stop the child on shutdown.
+      On JDK 9+, the hook also runs when the child exits.
+      See [Choosing a shutdown hook](/README.md#choosing-a-shutdown-hook).
    - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
   {:arglists '([opts? & args])}
   [& args]
