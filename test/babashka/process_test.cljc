@@ -601,6 +601,48 @@
                (is (= (u/ols "HELLO\n") (slurp (:out chain))))
                (is (= [[resolved-bb u/wd ":out" "hello"]
                        [resolved-bb u/wd ":upper"]] (map :cmd (pipeline chain))))))))
+       (deftest pipeline-input-test
+         (when-let [bb (u/find-bb)]
+           (let [text "hello \u03bb"
+                 bytes (.getBytes text "UTF-16LE")
+                 echo [bb u/wd ":echo"]]
+             (doseq [[input expected] [[text bytes] [bytes bytes]
+                                       [(java.io.ByteArrayInputStream. bytes) bytes]
+                                       ["" (byte-array 0)]]]
+               (let [[source sink] (pipeline (pb echo {:in input :in-enc "UTF-16LE"})
+                                             (pb echo))]
+                 (try
+                   (let [finished (.waitFor ^Process (:proc sink) 5 java.util.concurrent.TimeUnit/SECONDS)]
+                     (is finished "the first process receives EOF after its input")
+                     (when finished
+                       (is (zero? (:exit @source)))
+                       (is (zero? (:exit @sink)))
+                       (let [out (java.io.ByteArrayOutputStream.)]
+                         (clojure.java.io/copy (:out sink) out)
+                         (is (= (seq expected) (seq (.toByteArray out)))))))
+                   (finally
+                     (p/destroy source)
+                     (p/destroy sink))))))))
+       (deftest pipeline-input-redirection-test
+         (when-let [bb (u/find-bb)]
+           (let [echo [bb u/wd ":echo"]
+                 file (doto (fs/create-temp-file) fs/delete-on-exit)
+                 text "manual or redirected"]
+             (spit (fs/file file) text)
+             (doseq [input [nil (fs/file file) file :inherit]]
+               (let [cmd (if (= :inherit input) [bb u/wd ":out" text] echo)
+                     [a b] (pipeline (pb cmd {:in input}) (pb echo))]
+                 (try
+                   (when (nil? input)
+                     (with-open [writer (io/writer (:in a))] (.write writer text)))
+                   (let [finished (.waitFor ^Process (:proc b) 5 java.util.concurrent.TimeUnit/SECONDS)]
+                     (is finished)
+                     (when finished
+                       (is (= [0 0] [(:exit @a) (:exit @b)]))
+                       (is (= text (str/trim-newline (slurp (:out b)))))))
+                   (finally
+                     (p/destroy a)
+                     (p/destroy b))))))))
        (deftest exit-fn-test
          (when-let [bb (u/find-bb)]
            (let [exit-code (promise)]

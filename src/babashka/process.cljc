@@ -364,6 +364,18 @@
     (io/copy in out :encoding encoding)
     (post-fn out)))
 
+(defn- copy-input [in ^java.io.OutputStream stdin encoding]
+  (when (and in
+             (not (or (instance? java.io.File in)
+                      (instance? java.nio.file.Path in)))
+             (not (keyword? in)))
+    (future
+      (try (with-open [stdin stdin]
+             (io/copy in stdin :encoding encoding))
+           (catch Exception e
+             (binding [*out* *err*]
+               (println "ERROR while copying :in option: " (.getMessage e))))))))
+
 (defn process*
   "Same as with `process` but called with parsed arguments (the result from `parse-args`)"
   [{:keys [prev cmd opts]}]
@@ -409,16 +421,7 @@
               (future (copy stderr err err-enc))
               stderr)]
     ;; wrap in futures, see https://github.com/clojure/clojure/commit/7def88afe28221ad78f8d045ddbd87b5230cb03e
-    (when (and in
-               (not (or (instance? java.io.File in)
-                        (instance? java.nio.file.Path in)))
-               (not (keyword? in)))
-      (future
-        (try (with-open [stdin stdin] ;; needed to close stdin after writing
-               (io/copy in stdin :encoding in-enc))
-             (catch Exception e
-               (binding [*out* *err*]
-                 (println "ERROR while copying :in option: " (.getMessage e)))))))
+    (copy-input in stdin in-enc)
     (let [;; bb doesn't support map->Process at the moment
           res (->Process proc
                          nil
@@ -547,6 +550,8 @@
                           cmd (.command ^java.lang.ProcessBuilder pb)
                           new-proc (proc->Process proc cmd prev)
                           new-procs (conj procs new-proc)]
+                      (when-not prev
+                        (copy-input (:in opts) (:in new-proc) (:in-enc opts)))
                       (when shutdown
                         (-> (Runtime/getRuntime)
                             (.addShutdownHook (Thread.
