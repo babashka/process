@@ -6,6 +6,7 @@ Clojure library for shelling out / spawning sub-processes
 ## Unreleased
 
 - [#188](https://github.com/babashka/process/issues/188): add `pid` ([@markokocic](https://github.com/markokocic))
+- [#190](https://github.com/babashka/process/issues/190): add `:force` option to `destroy` and `destroy-tree` ([@markokocic](https://github.com/markokocic))
 - Drop JDK 8 support
 
 ## 0.6.25 (2025-12-21)

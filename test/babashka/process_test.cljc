@@ -602,9 +602,57 @@
       @res
       (is (false? (p/alive? res))))))
 
+(defn- wait-for-exit
+  [proc timeout-ms]
+  (let [deadline (+ (System/nanoTime) (* timeout-ms 1000000))]
+    (loop []
+      (cond
+        (not (p/alive? proc)) true
+        (< (System/nanoTime) deadline) (do (Thread/sleep 25) (recur))
+        :else false))))
+
+(deftest destroy-force-test
+  (when-let [bb (u/find-bb)]
+    (testing "one-arity destroy-tree keeps returning the process"
+      (let [res (process bb u/wd ":sleep" "60000")]
+        (try
+          (is (identical? res (p/destroy-tree res)))
+          (is (wait-for-exit res 5000))
+          (finally
+            (try (p/destroy-tree res {:force true}) (catch Exception _ nil))))))
+    (testing "force destroys the process"
+      (let [res (process bb u/wd ":sleep" "60000")]
+        (try
+          (is (identical? res (p/destroy res {:force true})))
+          (is (wait-for-exit res 5000))
+          (finally
+            (try (p/destroy-tree res {:force true}) (catch Exception _ nil))))))
+    (testing "force destroys a process that ignores graceful termination"
+      (when-not (fs/windows?)
+        (doseq [[fn-name destroy-fn] [["destroy" p/destroy] ["destroy-tree" p/destroy-tree]]]
+          (testing fn-name
+            (let [ready (fs/file "target/test" (str "destroy-ready-" (System/nanoTime)))
+                  _ (fs/create-dirs (fs/parent ready))
+                  res (process "sh" "-c"
+                               (str "trap '' TERM; touch " ready "; sleep 60; true"))]
+              (try
+                (loop [i 0]
+                  (when (and (not (fs/exists? ready)) (< i 100))
+                    (Thread/sleep 50)
+                    (recur (inc i))))
+                (is (fs/exists? ready) "the process installed the TERM trap")
+                (destroy-fn res)
+                (Thread/sleep 200)
+                (is (p/alive? res) "graceful destroy left it running")
+                (is (identical? res (destroy-fn res {:force true})))
+                (is (wait-for-exit res 5000) "forced destroy terminated it")
+                (finally
+                  (try (p/destroy-tree res {:force true}) (catch Exception _ nil))
+                  (fs/delete-if-exists ready))))))))))
+
 (deftest pid-test
   (when-let [bb (u/find-bb)]
-    (let [res (process [bb u/wd ":out" "hello"])]
+    (let [res (process bb u/wd ":out" "hello")]
       (is (pos-int? (p/pid res)))
       @res)))
 
