@@ -153,24 +153,36 @@
     pre-9
     post-8))
 
+(defn- destroy-process
+  [^java.lang.Process proc force]
+  (if force
+    (.destroyForcibly proc)
+    (.destroy proc)))
+
 (defn destroy
   "Destroys the process and returns the input arg. Takes process or map
-  with :proc (`java.lang.ProcessBuilder`). "
-  [proc]
-  (.destroy ^java.lang.Process (:proc proc))
-  proc)
+  with :proc (`java.lang.Process`). With `{:force true}`, forcibly
+  destroys the process instead of requesting a graceful shutdown."
+  ([proc] (destroy proc nil))
+  ([proc {:keys [force]}]
+   (destroy-process (:proc proc) force)
+   proc))
 
 (if-before-jdk8
  (def destroy-tree destroy)
  (defn destroy-tree
    "Same as `destroy` but also destroys all descendants. JDK9+
-  only. Falls back to `destroy` on older JVM versions."
-   [proc]
-   (let [handle (.toHandle ^java.lang.Process (:proc proc))]
-     (run! (fn [^java.lang.ProcessHandle handle]
-             (.destroy handle))
-           (cons handle (iterator-seq (.iterator (.descendants handle))))))
-   proc))
+  only. Falls back to `destroy` on older JVM versions. With
+  `{:force true}`, forcibly destroys the process and each descendant."
+   ([proc] (destroy-tree proc nil))
+   ([proc {:keys [force]}]
+    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
+      (run! (fn [^java.lang.ProcessHandle handle]
+              (if force
+                (.destroyForcibly handle)
+                (.destroy handle)))
+            (cons handle (iterator-seq (.iterator (.descendants handle))))))
+    proc)))
 
 (def ^:private windows?
   (-> (System/getProperty "os.name")
