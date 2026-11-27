@@ -618,6 +618,17 @@
       @res
       (is (false? (p/alive? res))))))
 
+(deftest close-stdin-test
+  (testing "nil and missing streams are no-ops"
+    (is (nil? (p/close-stdin! nil)))
+    (is (= {} (p/close-stdin! {}))))
+  (when-let [bb (u/find-bb)]
+    (let [res (process [bb u/wd ":echo"] {:in :pipe :out :string})]
+      (is (identical? res (p/close-stdin! res)))
+      (is (identical? res (p/close-stdin! res)) "closing again is a no-op")
+      (is (zero? (:exit @res)))
+      (is (= "" (:out @res))))))
+
 (deftest byte-array-out-test
   (when-let [bb (u/find-bb)]
     (let [ba (byte-array (range 1000))

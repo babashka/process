@@ -712,6 +712,17 @@
   [p]
   (.isAlive ^java.lang.Process (:proc p)))
 
+(defn close-stdin!
+  "Closes the stdin stream of `proc`, a process map returned by `process`
+  or `process*`, sending EOF to the child. A missing or already-closed
+  stream is a no-op. Returns `proc`, or nil when `proc` is nil."
+  [proc]
+  (when-let [in (:in proc)]
+    (try
+      (.close ^java.io.Closeable in)
+      (catch Exception _ nil)))
+  proc)
+
 #?(:bb nil
    :clj
    (when (contains? (loaded-libs) 'clojure.pprint) ;; pprint was already loaded, e.g. by nREPL
