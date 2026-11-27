@@ -712,6 +712,24 @@
   [p]
   (.isAlive ^java.lang.Process (:proc p)))
 
+(if-before-jdk8
+ (defn pid
+   "Returns the OS process id of `proc`, a process map returned by
+  `process` or `process*`. Returns nil when the pid is unavailable, for
+  example on JDK 8, or when `proc` is nil or malformed."
+   [_proc]
+   nil)
+ (defn pid
+   "Returns the OS process id of `proc`, a process map returned by
+  `process` or `process*`. Returns nil when the pid is unavailable, for
+  example on JDK 8, or when `proc` is nil or malformed."
+   [proc]
+   (let [^java.lang.Process p (:proc proc)]
+     (when p
+       (try
+         (.pid p)
+         (catch Exception _ nil))))))
+
 #?(:bb nil
    :clj
    (when (contains? (loaded-libs) 'clojure.pprint) ;; pprint was already loaded, e.g. by nREPL

@@ -618,6 +618,29 @@
       @res
       (is (false? (p/alive? res))))))
 
+(def ^:private jdk9?
+  (try
+    (import 'java.lang.ProcessHandle)
+    true
+    (catch Exception _ false)))
+
+(deftest pid-test
+  (testing "nil and malformed input returns nil"
+    (is (nil? (p/pid nil)))
+    (is (nil? (p/pid {})))
+    (is (nil? (p/pid {:proc nil})))
+    (is (nil? (p/pid {:proc :not-a-process}))))
+  (when-let [bb (u/find-bb)]
+    (let [res (process [bb u/wd ":out" "hello"])]
+      (try
+        (if jdk9?
+          (let [pid (p/pid res)]
+            (is (integer? pid))
+            (is (pos? pid)))
+          (is (nil? (p/pid res))))
+        (finally
+          @res)))))
+
 (deftest byte-array-out-test
   (when-let [bb (u/find-bb)]
     (let [ba (byte-array (range 1000))
