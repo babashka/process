@@ -147,42 +147,30 @@
                prev
                cmd)))
 
-(defmacro ^:private if-before-jdk8 [pre-9 post-8]
-  (if (identical? ::ex (try (import 'java.lang.ProcessHandle)
-                            (catch Exception _ ::ex)))
-    pre-9
-    post-8))
-
-(defn- destroy-process
-  [^java.lang.Process proc force]
-  (if force
-    (.destroyForcibly proc)
-    (.destroy proc)))
-
 (defn destroy
   "Destroys the process and returns the input arg. Takes process or map
   with :proc (`java.lang.Process`). With `{:force true}`, forcibly
   destroys the process instead of requesting a graceful shutdown."
   ([proc] (destroy proc nil))
   ([proc {:keys [force]}]
-   (destroy-process (:proc proc) force)
+   (let [^java.lang.Process p (:proc proc)]
+     (if force
+       (.destroyForcibly p)
+       (.destroy p)))
    proc))
 
-(if-before-jdk8
- (def destroy-tree destroy)
- (defn destroy-tree
-   "Same as `destroy` but also destroys all descendants. JDK9+
-  only. Falls back to `destroy` on older JVM versions. With
+(defn destroy-tree
+  "Same as `destroy` but also destroys all descendants. With
   `{:force true}`, forcibly destroys the process and each descendant."
-   ([proc] (destroy-tree proc nil))
-   ([proc {:keys [force]}]
-    (let [handle (.toHandle ^java.lang.Process (:proc proc))]
-      (run! (fn [^java.lang.ProcessHandle handle]
-              (if force
-                (.destroyForcibly handle)
-                (.destroy handle)))
-            (cons handle (iterator-seq (.iterator (.descendants handle))))))
-    proc)))
+  ([proc] (destroy-tree proc nil))
+  ([proc {:keys [force]}]
+   (let [handle (.toHandle ^java.lang.Process (:proc proc))]
+     (run! (fn [^java.lang.ProcessHandle handle]
+             (if force
+               (.destroyForcibly handle)
+               (.destroy handle)))
+           (cons handle (iterator-seq (.iterator (.descendants handle))))))
+   proc))
 
 (def ^:private windows?
   (-> (System/getProperty "os.name")
@@ -282,9 +270,7 @@
        :inherit (.redirectOutput pb ProcessBuilder$Redirect/INHERIT)
        :write (.redirectOutput pb (ProcessBuilder$Redirect/to (io/file (str out-file))))
        :append (.redirectOutput pb (ProcessBuilder$Redirect/appendTo (io/file (str out-file))))
-       :discard (.redirectOutput pb (if-before-jdk8
-                                        (ProcessBuilder$Redirect/to @null-file)
-                                      ProcessBuilder$Redirect/DISCARD))
+       :discard (.redirectOutput pb ProcessBuilder$Redirect/DISCARD)
        (when (instance? java.lang.ProcessBuilder$Redirect out)
          (.redirectOutput pb ^java.lang.ProcessBuilder$Redirect out)))
      (case err
@@ -292,9 +278,7 @@
        :inherit (.redirectError pb ProcessBuilder$Redirect/INHERIT)
        :write (.redirectError pb (ProcessBuilder$Redirect/to (io/file (str err-file))))
        :append (.redirectError pb (ProcessBuilder$Redirect/appendTo (io/file (str err-file))))
-       :discard (.redirectError pb (if-before-jdk8
-                                       (ProcessBuilder$Redirect/to @null-file)
-                                     ProcessBuilder$Redirect/DISCARD))
+       :discard (.redirectError pb ProcessBuilder$Redirect/DISCARD)
        (when (instance? java.lang.ProcessBuilder$Redirect err)
          (.redirectError pb ^java.lang.ProcessBuilder$Redirect err)))
      (case in
@@ -443,23 +427,18 @@
         (let [hook (Thread. (fn [] (shutdown res)))]
           (-> (Runtime/getRuntime)
               (.addShutdownHook hook))
-          (if-before-jdk8
-           nil ;; throwing an exception here would commit breakage, therefore accept the memory leak for jdk8
-           (-> (.onExit proc)
-               (.thenRun (fn []
-                           ;; To avoid a memory leak remove the hook when the process ends:
-                           (-> (Runtime/getRuntime)
-                               (.removeShutdownHook hook))
-                           ;; But run the shutdown hook to ensure that cleanup
-                           ;; tasks are executed:
-                           (.start hook)
-                           ))))))
+          (-> (.onExit proc)
+              (.thenRun (fn []
+                          ;; To avoid a memory leak remove the hook when the process ends:
+                          (-> (Runtime/getRuntime)
+                              (.removeShutdownHook hook))
+                          ;; But run the shutdown hook to ensure that cleanup
+                          ;; tasks are executed:
+                          (.start hook))))))
       (when exit-fn
-        (if-before-jdk8
-         (throw (ex-info "The `:exit-fn` option is not support on JDK 8 and lower." res))
-         (-> (.onExit proc)
-             (.thenRun (fn []
-                         (exit-fn @res))))))
+        (-> (.onExit proc)
+            (.thenRun (fn []
+                        (exit-fn @res)))))
       res)))
 
 (defn process
@@ -513,61 +492,46 @@
       map. Typically used with `destroy` or `destroy-tree` to ensure long
       running processes are cleaned up on shutdown. The shutdown hook is
       executed as soon as the child process ends.
-   - `:exit-fn`: a function which is executed upon exit. Receives process map as argument. Only supported in JDK11+."
+   - `:exit-fn`: a function which is executed upon exit. Receives process map as argument."
   {:arglists '([opts? & args])}
   [& args]
   (process* (parse-args args)))
 
-(if-before-jdk8
- (defn pipeline
-   "Returns the processes for one pipe created with -> or creates
+(defn pipeline
+  "Returns the processes for one pipe created with -> or creates
   pipeline from multiple process builders.
 
   - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
   - When passing two or more process builders created with `pb`: creates a
-    pipeline as a vector of processes (JDK9+ only).
+    pipeline as a vector of processes.
 
   Also see [Pipelines](/README.md#pipelines).
   "
-   ([proc]
-    (if-let [prev (:prev proc)]
-      (conj (pipeline prev) proc)
-      [proc])))
- (defn pipeline
-   "Returns the processes for one pipe created with -> or creates
-  pipeline from multiple process builders.
-
-  - When passing a process, returns a vector of processes of a pipeline created with `->` or `pipeline`.
-  - When passing two or more process builders created with `pb`: creates a
-    pipeline as a vector of processes (JDK9+ only).
-
-  Also see [Pipelines](/README.md#pipelines).
-  "
-   ([proc]
-    (if-let [prev (:prev proc)]
-      (conj (pipeline prev) proc)
-      [proc]))
-   ([pb & pbs]
-    (let [pbs (cons pb pbs)
-          opts (map :opts pbs)
-          pbs (map :pb pbs)
-          procs (java.lang.ProcessBuilder/startPipeline pbs)
-          pbs+opts+procs (map vector pbs opts procs)]
-      (-> (reduce (fn [{:keys [:prev :procs]}
-                       [pb opts proc]]
-                    (let [shutdown (:shutdown opts)
-                          cmd (.command ^java.lang.ProcessBuilder pb)
-                          new-proc (proc->Process proc cmd prev)
-                          new-procs (conj procs new-proc)]
-                      (when shutdown
-                        (-> (Runtime/getRuntime)
-                            (.addShutdownHook (Thread.
-                                               (fn []
-                                                 (shutdown new-proc))))))
-                      {:prev new-proc :procs new-procs}))
-                  {:prev nil :procs []}
-                  pbs+opts+procs)
-          :procs)))))
+  ([proc]
+   (if-let [prev (:prev proc)]
+     (conj (pipeline prev) proc)
+     [proc]))
+  ([pb & pbs]
+   (let [pbs (cons pb pbs)
+         opts (map :opts pbs)
+         pbs (map :pb pbs)
+         procs (java.lang.ProcessBuilder/startPipeline pbs)
+         pbs+opts+procs (map vector pbs opts procs)]
+     (-> (reduce (fn [{:keys [:prev :procs]}
+                      [pb opts proc]]
+                   (let [shutdown (:shutdown opts)
+                         cmd (.command ^java.lang.ProcessBuilder pb)
+                         new-proc (proc->Process proc cmd prev)
+                         new-procs (conj procs new-proc)]
+                     (when shutdown
+                       (-> (Runtime/getRuntime)
+                           (.addShutdownHook (Thread.
+                                              (fn []
+                                                (shutdown new-proc))))))
+                     {:prev new-proc :procs new-procs}))
+                 {:prev nil :procs []}
+                 pbs+opts+procs)
+         :procs))))
 
 (defn start
   "Takes a process builder, calls start and returns a process (as record)."
@@ -723,6 +687,12 @@
   "Returns `true` if the process is still running and false otherwise."
   [p]
   (.isAlive ^java.lang.Process (:proc p)))
+
+(defn pid
+  "Returns the OS process id of `proc`, a process map returned by
+  `process` or `process*`."
+  [proc]
+  (.pid ^java.lang.Process (:proc proc)))
 
 #?(:bb nil
    :clj
