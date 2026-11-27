@@ -3,6 +3,11 @@
 [Babashka process](https://github.com/babashka/process)
 Clojure library for shelling out / spawning sub-processes
 
+## Unreleased
+
+- [#188](https://github.com/babashka/process/issues/188): add `pid` ([@markokocic](https://github.com/markokocic))
+- Drop JDK 8 support
+
 ## 0.6.25 (2025-12-21)
 
 - Fix reflection warnings

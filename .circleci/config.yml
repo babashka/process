@@ -178,7 +178,7 @@ jobs:
   deploy:
     resource_class: large
     docker:
-      - image: circleci/clojure:openjdk-8-lein
+      - image: circleci/clojure:openjdk-11-lein
     working_directory: ~/repo
     environment:
       LEIN_ROOT: "true"
@@ -197,10 +197,7 @@ workflows:
           matrix:
             parameters:
               os: [linux, macos, windows]
-              jdk: ['temurin@8','temurin@11','temurin@17','temurin@21']
-            exclude:
-              - os: macos
-                jdk: 'temurin@8'
+              jdk: ['temurin@11','temurin@17','temurin@21']
       - test-native:
           name: test-<< matrix.os >>-<< matrix.jdk>>
           matrix:

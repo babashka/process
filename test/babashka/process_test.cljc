@@ -1,6 +1,6 @@
 (ns babashka.process-test
   (:require [babashka.fs :as fs]
-            [babashka.process :refer [tokenize process check sh $ pb start] :as p]
+            [babashka.process :refer [tokenize process check sh $ pb pipeline start] :as p]
             [babashka.process.test-utils :as u]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
@@ -539,76 +539,60 @@
         (is (= (u/ols (format "Running %s %s :exit 32\n" resolved-bb u/wd))
                (with-out-str (sh (format "%s %s :exit 32" bb u/wd) p))))))))
 
-(defmacro ^:private jdk9+ []
-  (if (identical? ::pre-jdk9
-                  (try (import 'java.lang.ProcessHandle)
-                       (catch Exception _ ::pre-jdk9)))
-    '(do
-       (require '[babashka.process :refer [pipeline]])
-       (deftest pipeline-prejdk9-test
-         (when-let [bb (u/find-bb)]
-           (testing "pipeline returns processes nested with ->"
-             (let [resolved-bb (resolve-exe bb)]
-               (is (= [[resolved-bb u/wd ":out" "foo"]
-                       [resolved-bb u/wd ":upper"]]
-                      (map :cmd (pipeline (-> (process [bb u/wd ":out" "foo"])
-                                              (process [bb u/wd ":upper"])))))))))))
-    '(do
-       (require '[babashka.process :refer [pipeline pb]])
-       (deftest inherit-test
-         (when-let [bb (u/find-bb)]
-           (let [proc (process (format "%s %s :out ''" bb u/wd) {:shutdown p/destroy-tree
-                                                               :inherit true})
-                 null-input-stream-class (class (:out proc))
-                 null-output-stream-class (class (:in proc))]
-             (is (= null-input-stream-class (class (:err proc))))
-             (let [x (process [bb u/wd ":upper"] {:shutdown p/destroy-tree
-                                                :inherit true
-                                                :in "foo"})]
-               (is (not= null-output-stream-class (class (:in x))))
-               (is (= null-input-stream-class (class (:out x))))
-               (is (= null-input-stream-class (class (:err x)))))
-             (let [x (process [bb u/wd ":upper"] {:shutdown p/destroy-tree
-                                                :inherit true
-                                                :out :string})]
-               (is (= null-output-stream-class (class (:in x))))
-               (is (not= null-input-stream-class (class (:out x))))
-               (is (= null-input-stream-class (class (:err x)))))
-             (let [x (process [bb u/wd ":upper"] {:shutdown p/destroy-tree
-                                                :inherit true
-                                                :err :string})]
-               (is (= null-output-stream-class (class (:in x))))
-               (is (= null-input-stream-class (class (:out x))))
-               (is (not= null-input-stream-class (class (:err x))))))))
-       (deftest pipeline-test
-         (when-let [bb (u/find-bb)]
-           (testing "pipeline returns processes nested with ->"
-             (let [resolved-bb (resolve-exe bb)]
-               (is (= [[resolved-bb u/wd ":out" "foo"]
-                       [resolved-bb u/wd ":upper"]]
-                      (map :cmd (pipeline (-> (process [bb u/wd ":out" "foo"])
-                                              (process [bb u/wd ":upper"]))))))))
-           (testing "pipeline returns processes created with pb"
-             (let [resolved-bb (resolve-exe bb)]
-               (is (= [[resolved-bb u/wd ":out" "foo"]
-                       [resolved-bb u/wd ":upper"]]
-                      (map :cmd (pipeline (pb [bb u/wd ":out" "foo"])
-                                          (pb [bb u/wd ":upper"])))))))
-           (testing "pbs can be chained with ->"
-             (let [chain (-> (pb [bb u/wd ":out" "hello"])
-                             (pb [bb u/wd ":upper"] {:out :string}) start deref)
-                   resolved-bb (resolve-exe bb)]
-               (is (= (u/ols "HELLO\n") (slurp (:out chain))))
-               (is (= [[resolved-bb u/wd ":out" "hello"]
-                       [resolved-bb u/wd ":upper"]] (map :cmd (pipeline chain))))))))
-       (deftest exit-fn-test
-         (when-let [bb (u/find-bb)]
-           (let [exit-code (promise)]
-             (process [bb u/wd ":exit" "42"]
-                      {:exit-fn (fn [proc] (deliver exit-code (:exit proc)))})
-             (is (= 42 @exit-code))))))))
+(deftest inherit-test
+  (when-let [bb (u/find-bb)]
+    (let [proc (process (format "%s %s :out ''" bb u/wd) {:shutdown p/destroy-tree
+                                                        :inherit true})
+          null-input-stream-class (class (:out proc))
+          null-output-stream-class (class (:in proc))]
+      (is (= null-input-stream-class (class (:err proc))))
+      (let [x (process [bb u/wd ":upper"] {:shutdown p/destroy-tree
+                                         :inherit true
+                                         :in "foo"})]
+        (is (not= null-output-stream-class (class (:in x))))
+        (is (= null-input-stream-class (class (:out x))))
+        (is (= null-input-stream-class (class (:err x)))))
+      (let [x (process [bb u/wd ":upper"] {:shutdown p/destroy-tree
+                                         :inherit true
+                                         :out :string})]
+        (is (= null-output-stream-class (class (:in x))))
+        (is (not= null-input-stream-class (class (:out x))))
+        (is (= null-input-stream-class (class (:err x)))))
+      (let [x (process [bb u/wd ":upper"] {:shutdown p/destroy-tree
+                                         :inherit true
+                                         :err :string})]
+        (is (= null-output-stream-class (class (:in x))))
+        (is (= null-input-stream-class (class (:out x))))
+        (is (not= null-input-stream-class (class (:err x))))))))
 
-(jdk9+)
+(deftest pipeline-test
+  (when-let [bb (u/find-bb)]
+    (testing "pipeline returns processes nested with ->"
+      (let [resolved-bb (resolve-exe bb)]
+        (is (= [[resolved-bb u/wd ":out" "foo"]
+                [resolved-bb u/wd ":upper"]]
+               (map :cmd (pipeline (-> (process [bb u/wd ":out" "foo"])
+                                       (process [bb u/wd ":upper"]))))))))
+    (testing "pipeline returns processes created with pb"
+      (let [resolved-bb (resolve-exe bb)]
+        (is (= [[resolved-bb u/wd ":out" "foo"]
+                [resolved-bb u/wd ":upper"]]
+               (map :cmd (pipeline (pb [bb u/wd ":out" "foo"])
+                                   (pb [bb u/wd ":upper"])))))))
+    (testing "pbs can be chained with ->"
+      (let [chain (-> (pb [bb u/wd ":out" "hello"])
+                      (pb [bb u/wd ":upper"] {:out :string}) start deref)
+            resolved-bb (resolve-exe bb)]
+        (is (= (u/ols "HELLO\n") (slurp (:out chain))))
+        (is (= [[resolved-bb u/wd ":out" "hello"]
+                [resolved-bb u/wd ":upper"]] (map :cmd (pipeline chain))))))))
+
+(deftest exit-fn-test
+  (when-let [bb (u/find-bb)]
+    (let [exit-code (promise)]
+      (process [bb u/wd ":exit" "42"]
+               {:exit-fn (fn [proc] (deliver exit-code (:exit proc)))})
+      (is (= 42 @exit-code)))))
 
 (deftest alive-lives-test
   (when-let [bb (u/find-bb)]
@@ -634,15 +618,9 @@
       (is (bytes? result))
       (is (= (seq ba) (seq result))))))
 
-(defmacro if-pre-jdk9+ [then else]
-  (if (identical? ::pre-jdk9
-                  (try (import 'java.lang.ProcessHandle)
-                       (catch Exception _ ::pre-jdk9)))
-    then else))
-
 (deftest discard-test
   (when-let [bb (u/find-bb)]
-    (doseq [out [:discard (if-pre-jdk9+ :discard java.lang.ProcessBuilder$Redirect/DISCARD)]]
+    (doseq [out [:discard java.lang.ProcessBuilder$Redirect/DISCARD]]
       (is (= "" (slurp (:out @(p/process {:out out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))")))))
       (is (= (with-out-str (println :bye)) (slurp (:err @(p/process {:out out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))")))))
       (is (= "" (slurp (:err @(p/process {:err out} bb "-e" "(println :dude) (binding [*out* *err*] (println :bye))")))))
