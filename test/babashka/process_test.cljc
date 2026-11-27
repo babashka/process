@@ -618,6 +618,97 @@
       @res
       (is (false? (p/alive? res))))))
 
+(deftest kill-process-tree-test
+  (testing "falls back to a process-table walk when group kill fails"
+    (let [calls (atom [])
+          process-impl (fn [argv _opts]
+                         (swap! calls conj argv)
+                         (delay
+                           (cond
+                             (= ["ps" "-eo" "pid=,ppid="] argv)
+                             {:exit 0
+                              :out "  10   1\n  11  10\n  12  10\n  13  12\n"}
+                             (= "sh" (first argv)) {:exit 1}
+                             :else {:exit 0})))]
+      (with-redefs-fn {#'p/windows? false}
+        (fn []
+          (with-redefs [p/process process-impl]
+            (is (nil? (p/kill-process-tree! 10))))))
+      (let [kills (filterv #(= "kill" (first %)) @calls)]
+        (is (= ["sh" "-c" "kill -9 -\"$1\"" "sh" "10"] (first @calls)))
+        (is (some #{["ps" "-eo" "pid=,ppid="]} @calls))
+        (is (= "10" (last (first kills))))
+        (is (= #{"11" "12"} (set (map last (take 2 (rest kills))))))
+        (is (= "13" (last (last kills)))))))
+  (testing "uses a successful group kill without walking the process table"
+    (let [calls (atom [])
+          process-impl (fn [argv _opts]
+                         (swap! calls conj argv)
+                         (delay {:exit 0}))]
+      (with-redefs-fn {#'p/windows? false}
+        (fn []
+          (with-redefs [p/process process-impl]
+            (is (nil? (p/kill-process-tree! 10))))))
+      (is (= [["sh" "-c" "kill -9 -\"$1\"" "sh" "10"]] @calls))))
+  (testing "uses taskkill on Windows"
+    (let [calls (atom [])
+          process-impl (fn [argv _opts]
+                         (swap! calls conj argv)
+                         (delay {:exit 0}))]
+      (with-redefs-fn {#'p/windows? true}
+        (fn []
+          (with-redefs [p/process process-impl]
+            (is (nil? (p/kill-process-tree! 10))))))
+      (is (= [["taskkill" "/F" "/T" "/PID" "10"]] @calls)))))
+
+(defn- wait-for-file
+  [file timeout-ms]
+  (let [deadline (+ (System/nanoTime) (* timeout-ms 1000000))]
+    (loop []
+      (cond
+        (fs/exists? file) true
+        (< (System/nanoTime) deadline) (do (Thread/sleep 25) (recur))
+        :else false))))
+
+(defn- pid-alive?
+  [pid]
+  (zero? (:exit @(p/process ["kill" "-0" (str pid)]
+                            {:out :discard :err :discard}))))
+
+(defn- wait-for-dead
+  [pid timeout-ms]
+  (let [deadline (+ (System/nanoTime) (* timeout-ms 1000000))]
+    (loop []
+      (cond
+        (not (pid-alive? pid)) true
+        (< (System/nanoTime) deadline) (do (Thread/sleep 25) (recur))
+        :else false))))
+
+(deftest ^:slow kill-process-tree-real-test
+  (when-not (fs/windows?)
+    (let [dir (fs/absolutize (fs/file "target/test" (str "kill-tree-" (System/nanoTime))))
+          _ (fs/create-dirs dir)
+          pid-file (fs/file dir "pid")
+          child-file (fs/file dir "child-pid")
+          script (fs/file dir "parent.sh")]
+      (spit (str script)
+            "#!/bin/sh\necho $$ > \"$1\"\nsleep 60 &\necho $! > \"$2\"\nwait\n")
+      (let [proc (process ["sh" (str script) (str pid-file) (str child-file)]
+                          {:dir (str dir) :out :discard :err :discard})]
+        (try
+          (is (wait-for-file pid-file 5000))
+          (is (wait-for-file child-file 5000))
+          (let [pid (Long/parseLong (str/trim (slurp (str pid-file))))
+                child-pid (Long/parseLong (str/trim (slurp (str child-file))))]
+            (is (pos? pid))
+            (is (pos? child-pid))
+            (is (nil? (p/kill-process-tree! pid)))
+            (is (wait-for-dead pid 5000) "the parent was killed")
+            (is (wait-for-dead child-pid 5000) "the child was killed"))
+          (finally
+            (try (p/destroy-tree proc) (catch Exception _ nil))
+            (fs/delete-tree dir)))))))
+
 (deftest byte-array-out-test
   (when-let [bb (u/find-bb)]
     (let [ba (byte-array (range 1000))

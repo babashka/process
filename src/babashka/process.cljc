@@ -712,6 +712,61 @@
   [p]
   (.isAlive ^java.lang.Process (:proc p)))
 
+(defn- collect-descendant-pids
+  "Collects descendant pids of PID by walking the process table, parents
+  before children. Returns an empty vector when the process table is
+  unavailable."
+  [pid]
+  (try
+    (let [result @(process ["ps" "-eo" "pid=,ppid="] {:out :string :err :discard})
+          parent-map (into {}
+                           (keep (fn [line]
+                                   (when-let [[_ child parent]
+                                              (re-find #"^\s*(\d+)\s+(\d+)" line)]
+                                     [(Long/parseLong child)
+                                      (Long/parseLong parent)])))
+                           (str/split-lines (:out result)))]
+      (loop [frontier #{pid}
+             found []]
+        (let [children (filterv (fn [[child parent]]
+                                  (and (contains? frontier parent)
+                                       (not (contains? frontier child))
+                                       (not (some #{child} found))))
+                                parent-map)]
+          (if (empty? children)
+            found
+            (let [level (mapv first children)]
+              (recur (set level) (into found level)))))))
+    (catch Exception _ [])))
+
+(defn- group-kill
+  "SIGKILLs the process group of PID. Returns the kill exit code, or -1
+  when the command could not be run."
+  [pid]
+  (try
+    (:exit @(process ["sh" "-c" "kill -9 -\"$1\"" "sh" (str pid)]
+                     {:out :discard :err :discard}))
+    (catch Exception _ -1)))
+
+(defn kill-process-tree!
+  "Kills PID and all its descendants with SIGKILL. On Windows uses
+  `taskkill /F /T`. On other platforms tries a process-group kill first,
+  which also catches background jobs reparented outside the ppid tree when
+  PID is a group leader (for example when spawned with setsid); otherwise
+  walks the process table and kills parents before children. Returns nil."
+  [pid]
+  (if windows?
+    (try
+      @(process ["taskkill" "/F" "/T" "/PID" (str pid)]
+                {:out :discard :err :discard})
+      (catch Exception _ nil))
+    (when-not (zero? (group-kill pid))
+      (doseq [p (cons pid (collect-descendant-pids pid))]
+        (try
+          @(process ["kill" "-9" (str p)] {:out :discard :err :discard})
+          (catch Exception _ nil)))))
+  nil)
+
 #?(:bb nil
    :clj
    (when (contains? (loaded-libs) 'clojure.pprint) ;; pprint was already loaded, e.g. by nREPL
