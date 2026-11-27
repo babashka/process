@@ -614,14 +614,14 @@
 (deftest destroy-force-test
   (when-let [bb (u/find-bb)]
     (testing "one-arity destroy-tree keeps returning the process"
-      (let [res (process [bb u/wd ":sleep" "60000"])]
+      (let [res (process bb u/wd ":sleep" "60000")]
         (try
           (is (identical? res (p/destroy-tree res)))
           (is (wait-for-exit res 5000))
           (finally
             (try (p/destroy-tree res {:force true}) (catch Exception _ nil))))))
     (testing "force destroys the process"
-      (let [res (process [bb u/wd ":sleep" "60000"])]
+      (let [res (process bb u/wd ":sleep" "60000")]
         (try
           (is (identical? res (p/destroy res {:force true})))
           (is (wait-for-exit res 5000))
@@ -633,8 +633,8 @@
           (testing fn-name
             (let [ready (fs/file "target/test" (str "destroy-ready-" (System/nanoTime)))
                   _ (fs/create-dirs (fs/parent ready))
-                  res (process ["sh" "-c"
-                                (str "trap '' TERM; touch " ready "; sleep 60; true")])]
+                  res (process "sh" "-c"
+                               (str "trap '' TERM; touch " ready "; sleep 60; true"))]
               (try
                 (loop [i 0]
                   (when (and (not (fs/exists? ready)) (< i 100))
@@ -652,7 +652,7 @@
 
 (deftest pid-test
   (when-let [bb (u/find-bb)]
-    (let [res (process [bb u/wd ":out" "hello"])]
+    (let [res (process bb u/wd ":out" "hello")]
       (is (pos-int? (p/pid res)))
       @res)))
 
